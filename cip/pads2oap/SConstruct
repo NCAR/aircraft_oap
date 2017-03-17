@@ -1,0 +1,12 @@
+# -*- python -*-
+
+import os
+env = Environment(platform = 'posix',ENV= os.environ)
+env['JLOCAL'] = os.environ['JLOCAL']
+
+env.Append(CXXFLAGS='-g -Werror -Wall')
+env.Append(CPPPATH="$JLOCAL/include")
+
+env.Program('pads2oap.cc')
+
+Alias('install', env.Install('$JLOCAL/bin', 'pads2oap'))
