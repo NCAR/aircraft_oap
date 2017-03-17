@@ -1,0 +1,247 @@
+<html>
+<head>
+
+<title>NCAR-RAF OAP File Format</title>
+   <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=iso-8859-1">
+
+<style type="text/css">
+<!--
+body { background: white; color: black; margin: 2em; margin-left: 3em; }
+h1,h2 { font-size: 1.5em }
+h3 { font-size: 1.3em }
+h4 { font-size: 1.2em }
+h1, h2, h3, h4 { font-style: normal; font-weight: normal; color: #3860B0; }
+span.runin { font-size: 1.1em; font-weight: bold; color: #3860B0; }
+a:link { color:navy; }
+a:visited { color:#386090; }
+li.toc { list-style: none; padding: .1em; }
+kbd.att { font-weight: normal; color: blue; }
+div.example { margin-left: 3em; margin-right: 3em; }
+div.definition { margin-left: 1em; }
+div.sidebar { margin-left: 50px; margin-right: 50px; padding: 20px; background-color: #f5deb4; }
+pre.CDL { color: brown; }
+table { padding: .25em; }
+span.new { background-color: #FF6666; }
+span.old { background-color: #FFFF88; text-decoration: line-through; }
+span.comment { background-color: #88FF88; font-style: italic; }
+-->
+</style>
+
+</head>
+
+<body>
+
+<h1 align=center>OAP File Format</h1>
+<h3 align=center>Version 1</h3>
+<hr>
+<h4 align=center>National Center for Atmospheric Research</h4>
+<h4 align=center>Research Aviation Facility</h4>
+
+<!--------------------------------------------------------------------------- ABS -->
+
+<hr>
+<h2><a name="toc">Table of Contents</a></h2>
+
+<ul>
+<li class="toc"><a href="#intro">Introduction</a></li>
+  <ul>
+  </ul>
+<li class="toc"><a href="#file">File Components</a></li>
+  <ul>
+  <li class="toc">1 &nbsp;<a href="#filehedaer">File header</a></li>
+  <li class="toc">2 &nbsp;<a href="#recordheader">Record header</a></li>
+  </ul>
+<li class="toc"><a href="#raf">RAF 2D Formats</a></li>
+</ul>
+
+
+<hr>
+<h2 align=center><a name="intro">Introduction</a></h2>
+The goal of this file format is to provide a common packaging for PMS2D, HVPS, 2DS, Greyscale, and other OAP probes that produce a 4,096 byte data record, regardless of the format of the contents of the 4KB record.
+<p>
+
+<p>
+Work may continue on a particle frame or record in the future.
+<p>
+<a href="http://www.eol.ucar.edu/data/software/pms2d/pms2d-data_format">NCAR-RAF OAP Format Page</a>  Contains more information on historical data, and formats of some of the internal 4KB buffers.
+<!--------------------------------------------------------------------------- ABS -->
+
+<hr>
+<h2 align=center><a name="file">File Component Descriptions</a></h2>
+
+
+<!--------------------------------------------------------------------------- ABS -->
+
+<h3><a name="fileheader">1 File header</a></h3>
+
+<p>The file header is in ASCII XML.  Example:
+
+<pre class="CDL">
+  &lt;?xml version="1.0" encoding="ISO-8859-1"?&gt;
+  &lt;OAP version="1"&gt;
+   &lt;Institution&gt;NCAR Research Aviation Facility&lt;/Institution&gt;
+   &lt;FormatURL&gt;http://www.eol.ucar.edu/raf/Software/OAPfiles.html&lt;/FormatURL&gt;
+   &lt;Project&gt;PLOWS&lt;/Project&gt;
+   &lt;Platform&gt;C130_N130AR&lt;/Platform&gt;
+   &lt;FlightNumber&gt;rf03&lt;/FlightNumber&gt;
+   &lt;FlightDate&gt;12/02/2009&lt;/FlightDate&gt;
+    &lt;probe id="C6" type="Fast2DC" resolution="10" nDiodes="64" serialnumber="F2DC002" suffix="_LPC"/&gt;
+    &lt;probe id="C4" type="Fast2DC" resolution="25" nDiodes="64" serialnumber="F2DC001" suffix="_RPC"/&gt;
+    &lt;probe id="P1" type="TwoDP" resolution="200" nDiodes="32" serialnumber="2DP10" suffix="_RWI"/&gt;
+  &lt;/OAP&gt;
+</pre>
+
+<p>
+Additional meta-data may present and is encouraged.  Each line is ended with a new-line character ('\n').
+<p>
+
+<h4>Required</h4>
+<table border="1">
+<tr>
+<th>Attribute</th>
+<th></th>
+<th></th>
+<th>Description</th>
+</tr>
+<tr>
+<td><pre class="CDL">probe</pre></td>
+<td></td>
+<td></td>
+<td>There will be one probe element for each probe that is present in the data file.</td>
+</tr>
+<tr>
+<td></td>
+<td><pre class="CDL">id</pre></td>
+<td>Required</td>
+<td>A two letter key or short integer that uniquily identify the probe in the file.  Some standard values are listed below.</td>
+</tr>
+<tr>
+<td></td>
+<td><pre class="CDL">resolution</pre></td>
+<td>Required</td>
+<td>Resolution of probe in micrometers.  Typically diode diameter.</td>
+</tr>
+<tr>
+<td></td>
+<td><pre class="CDL">nDiodes</pre></td>
+<td>Required</td>
+<td>Number of diodes in the probe.  32 for the traditional PMS2D probes.  128 for the 3V-CPI.</td>
+</tr>
+<tr>
+<td></td>
+<td><pre class="CDL">serialNumber</pre></td>
+<td>Highly recommended</td>
+<td>Probe serial number, for documentation purposes or calibration lookup.</td>
+</tr>
+<tr>
+<td></td>
+<td><pre class="CDL">type</pre></td>
+<td>Highly recommended</td>
+<td>Short description to identify probe type.</td>
+</tr>
+<tr>
+<td></td>
+<td><pre class="CDL">suffix</pre></td>
+<td>Optional</td>
+<td>For use in identifying location and grouping variables.  Should start with an undescore. Required for RAF processing use.</td>
+</tr>
+<tr>
+<td></td>
+<td><pre class="CDL">endian</pre></td>
+<td>Optional</td>
+<td>Identify byte order.  Options are "big" or "little".  Default is "big".</td>
+</tr>
+</table>
+
+
+<h4>Highly Recommended</h4>
+<table border="1">
+<tr>
+<th>Attribute</th>
+<th>Description</th>
+</tr>
+<tr>
+<td><pre class="CDL">FormatURL</pre></td>
+<td>URL pointing to this description.</td>
+</tr>
+<tr>
+<td><pre class="CDL">Project</pre></td>
+<td>The scientific project that produced the data.</td>
+</tr>
+<tr>
+<td><pre class="CDL">date_created</pre> or <pre class="CDL">FlightDate</pre></td>
+<td>The date on which the data was created.</td>
+</tr>
+</table>
+
+<!--------------------------------------------------------------------------- ABS -->
+
+<h3><a name="dtype">2 Record Format</a></h3>
+
+<p>The PMS-2D raw data comes in 4 kilo-byte records of 32 bit slices from the probe (1024 slices). The interface card then wraps a record header around that with time stamp and other pertinent information.
+
+The data is stored in big-endian format, so all data will need to be swapped when used on Intel architecture (Linux or MS Windows).
+
+ 
+<h5>OAP Logical Record Format</h5>
+<pre class="CDL">
+/* Values currently in use for the 'id' field. */
+#define PMS2D_C1         0x4331		// First PMS-2DC
+#define PMS2D_C2         0x4332		// Second PMS-2DC
+#define PMS2D_C4         0x4334         // First RAF 64 diode 25 um Fast 2DC
+#define PMS2D_C5         0x4335         // Second RAF 64 diode 25 um Fast 2DC
+#define PMS2D_C6         0x4336         // First RAF 64 diode 10 um Fast 2DC
+#define PMS2D_G1         0x4731		// First 2D Greyscale; unused to date
+#define PMS2D_H1         0x4831		// SPEC HVPS
+#define PMS2D_P1         0x5031		// First PMS-2DP
+#define PMS2D_P2         0x5032		// Second PMS-2DP
+#define PMS2D_P4         0x5034		// First RAF 64 diode 200 um Fast 2DP
+#define PMS2D_3V         0x3348		// 3V-CPI 2DS Vertical
+#define PMS2D_3H         0x3356		// 3V-CPI 2DS Horizontal
+
+struct P2d_rec {
+  int16_t id;				/* 'P1','C1','P2','C2', H1, etc */
+  int16_t hour;
+  int16_t minute;
+  int16_t second;
+  int16_t year;				/* starting in 2007 w/ PACDEX */
+  int16_t month;			/* starting in 2007 w/ PACDEX */
+  int16_t day;				/* starting in 2007 w/ PACDEX */
+  int16_t tas;				/* true air speed, m/s	*/
+  int16_t msec;				/* msec of this record	*/
+  int16_t overld;			/* overload time, msec	*/
+  unsigned char data[4096];		/* image buffer		*/
+  };
+typedef struct P2d_rec P2d_rec;
+</pre>
+<p>
+<h5>id</h5> The id word tells whether it is a 2d-C, 2d-P or an HVPS. The 1 or 2 signifies first or second probe. Hex values are 'C1' = 0x4331, 'P1' = 0x5031 etc.  <b>int16_t</b> is typically known as a 16 bit short.
+<p>
+<h5>Time stamp</h5> The hour, minute, second, and msec belong to the LAST slice of the record.  This is traditionally stamped by the data system after it is interrupted by the probe that it is ready to download data.
+<p>
+<h5>True Air Speed</h5> The true air speed (tas) truncated or rounded to the nearest meter per second.
+<p>
+<h5>Overload</h5> The overld value is the amount of time in milliseconds the probe was shut off while the interface card was unloading data.
+<p>
+<hr>
+<b>oapinfo</b> utility program
+<p>
+We have developed a useful command line utility program in C++ for ouputting data from these files.  Either just the XML file header, or the id, timestamp, and tas from each record header, or full hex dump, or simple histgram data of particle counts.  Please contact us for a copy.
+<!--------------------------------------------------------------------------- ABS -->
+<p>
+<hr>
+For further information contact:
+<p>
+Chris Webster<br>
+National Center for Atmospheric Research<br>
+Research Aviation Facility<br>
+(303) 497-1044
+<p>
+<address><a href="mail&#116;&#111;:cjw&#064;ucar.edu?Subject=from_RAF_Web_Software_Page_OAP">email</a></address>
+<hr>
+<font size=2>
+Last update:
+Thu Mar 28 10:36:34 MDT 2013
+</font>
+</body>
+</html>

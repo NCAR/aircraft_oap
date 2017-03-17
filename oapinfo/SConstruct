@@ -1,0 +1,12 @@
+# -*- python -*-
+
+import os
+env = Environment(platform = 'posix',ENV= os.environ)
+env['JLOCAL'] = os.environ['JLOCAL']
+
+env.Append(CXXFLAGS='-g -Werror')
+env.Append(CPPPATH="$JLOCAL/include")
+
+env.Program('oapinfo.cc')
+
+Alias('install', env.Install('$JLOCAL/bin', 'oapinfo'))

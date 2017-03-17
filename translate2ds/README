@@ -1,0 +1,10 @@
+Translator to translate 2DS data from the 3V-CPI into the RAF OAP file format.
+Decompress the data and repackages.
+
+See http://www.eol.ucar.edu/raf/Software/OAPfiles.html
+
+
+2D_compat_trans_v6.zip is the original code from SPEC.
+  It produces two output files for every input file, splitting H & V into
+  separate files.  We would prefer to have them integrated into a single
+  file, and have all files from a directory in one file.
