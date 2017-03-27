@@ -14,4 +14,4 @@ Directories:
 | process2d | 2D Processor to process 2D image data into size-distributions and other quantitative data. |
 | translate2ds | SPEC 2DS data translator. |
 | usb2diag | |
-| xpms2d | X Windows / Motif program for viewing image data from most OAP probes.|
+| xpms2d | X Windows / Motif program for viewing image data from most OAP probes. http://www.eol.ucar.edu/raf/software/xpms2d.html|
