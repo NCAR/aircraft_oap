@@ -2,7 +2,6 @@
 # xpms2d C++ class makefile
 #
 RAFINC=	${JLOCAL}/include
-I2D=	../src
 O2D=	../obj
 
 OBJS=	CanvasWindow.o Colors.o ControlWindow.o\
@@ -15,7 +14,7 @@ SRCS=	CanvasWindow.cc Colors.cc ControlWindow.cc\
 	Magnify.cc MagnifyCanvas.cc MagnifyWindow.cc\
 	MainCanvas.cc Probe.cc Histogram.cc
 
-HDRS=	${I2D}/define.h
+HDRS=	define.h
 
 all: ${OBJS}
 

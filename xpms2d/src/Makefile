@@ -13,9 +13,9 @@ O2D	= ../class
 #       Linux
 #
 DEFINES	= -D_FILE_OFFSET_BITS=64 -DPNG
-INCLUDES= -I../class -I../src -I${RAFINC}
+INCLUDES= -I../class -I${RAFINC}
 LIB_DIRS= -L${JLOCAL}/lib
-LIBS   = -lraf -lXm -lXt -lXext -lX11 -lpng -lz
+LIBS   = -lraf -lXm -lXt -lX11 -lpng -lz
 ANONFTP	= /net/ftp/pub/archive/RAF-src/bin.RHEL6
 
 # Mac OS X
@@ -32,16 +32,16 @@ ANONFTP	= /net/ftp/pub/archive/RAF-src/bin.RHEL6
 # Build libraf first.
 #
 #DEFINES	= -D_FILE_OFFSET_BITS=64 -DPNG -DPNG15
-#INCLUDES= -I../src -I${INC} -I${RAFINC} -I/opt/X11/include -I/usr/OpenMotif/include
+#INCLUDES= -I../class -I${INC} -I${RAFINC} -I/opt/X11/include -I/usr/OpenMotif/include
 #LIB_DIRS= -L/opt/X11/lib -L${JLOCAL}/lib -L/usr/OpenMotif/lib
-#LIBS   = -lraf -lXm -lXt -lICE -lXext -lX11 -lpng -lz
+#LIBS   = -lraf -lXm -lXt -lICE -lX11 -lpng -lz
 
 # Don't use optimization with gcc (2.95.2 and earlier) and C++.
 CXX	= g++
 CXXFLAGS= -Wall -Wno-write-strings -g -O ${INCLUDES} ${DEFINES}
 
 PROG	= xpms2d
-HDRS	= define.h
+HDRS	= ../class/define.h
 
 SRCS=	xpms2d.cc global.cc ccb.cc cb_canvas.cc cb_control.cc cb_mag.cc\
 	cb_menus.cc cb_printer.cc cb_text.cc process.cc xml.cc
