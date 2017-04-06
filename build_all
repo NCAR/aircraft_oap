@@ -1,0 +1,16 @@
+#!/bin/bash
+
+
+# Make sure all the [obvious] directories exist
+test -d ${JLOCAL}/bin || mkdir ${JLOCAL}/bin
+test -d ${JLOCAL}/man || mkdir ${JLOCAL}/man
+test -d ${JLOCAL}/man/man1 || mkdir ${JLOCAL}/man/man1
+test -d ${JLOCAL}/man/man3 || mkdir ${JLOCAL}/man/man3
+
+
+# Programs using 'scons' and 'scons install'.
+
+for file in cip/pads2oap cip/padsinfo oapinfo process2d translate2ds xpms2d 
+do
+  (cd $file; echo $file; scons install)
+done

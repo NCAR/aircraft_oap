@@ -1,0 +1,9 @@
+#!/bin/bash
+
+
+for file in cip/pads2oap cip/padsinfo oapinfo process2d translate2ds xpms2d 
+do
+  (cd $file; echo $file; scons -c)
+done
+
+find . -name .sconsign.dblite -exec rm {} \;
