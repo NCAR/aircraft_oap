@@ -1,0 +1,6 @@
+[submodule "xpms2d/raf"]
+	path = xpms2d/raf
+	url = https://github.com/ncar/libraf
+[submodule "xpms2d/site_scons"]
+	path = xpms2d/site_scons
+	url = https://github.com/ncareol/eol_scons
