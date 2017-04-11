@@ -1,11 +1,34 @@
 #!/bin/bash
 
+# Default install location to current working directory.
+PREFIX=`pwd`
+
+# Process arguments
+for i in "$@"
+do
+case $i in
+    --prefix=*)
+    PREFIX="${i#*=}"
+    shift # past argument
+    ;;
+    -h|--help)
+    echo "Usage: build_all [--prefix=/path/to/install]"
+    exit
+    ;;
+    *)
+            # unknown option
+    ;;
+esac
+done
+
+export PREFIX
+echo "Install path will be :" $PREFIX
 
 # Make sure all the [obvious] directories exist
-test -d ${JLOCAL}/bin || mkdir ${JLOCAL}/bin
-test -d ${JLOCAL}/man || mkdir ${JLOCAL}/man
-test -d ${JLOCAL}/man/man1 || mkdir ${JLOCAL}/man/man1
-test -d ${JLOCAL}/man/man3 || mkdir ${JLOCAL}/man/man3
+test -d ${PREFIX}/bin || mkdir ${PREFIX}/bin
+test -d ${PREFIX}/man || mkdir ${PREFIX}/man
+test -d ${PREFIX}/man/man1 || mkdir ${PREFIX}/man/man1
+test -d ${PREFIX}/man/man3 || mkdir ${PREFIX}/man/man3
 
 
 # Programs using 'scons' and 'scons install'.
