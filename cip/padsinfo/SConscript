@@ -1,12 +1,7 @@
 # -*- python -*-
 
-import os
-env = Environment(platform = 'posix',ENV= os.environ)
-env['JLOCAL'] = os.environ['JLOCAL']
-
-env.Append(CXXFLAGS='-g -Werror -Wall')
-env.Append(CPPPATH="$JLOCAL/include")
+Import('env')
 
 env.Program('padsinfo.cc')
 
-Alias('install', env.Install('$JLOCAL/bin', 'padsinfo'))
+Alias('install', env.Install('$BINDIR', 'padsinfo'))

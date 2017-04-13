@@ -1,23 +1,20 @@
 #!python
 
-import os
-import eol_scons
+Import('env')
 
-env = Environment(tools = ['default', 'openmotif'], ENV= os.environ)
+try:
+  import eol_scons
+  print('trying sites_scons')
+except:
+  print('trying .. sites_scons')
+  sys.path.append("../site_scons")
+  import eol_scons
 
-try: env['JLOCAL'] = os.environ['JLOCAL']
-except KeyError:
-    env.Append(CPPPATH=['#/raf'])
-    env.Append(LIBPATH=['#/raf'])
-else:
-    env.Append(CPPPATH=['$JLOCAL/include'])
-    env.Append(LIBPATH=['$JLOCAL/lib'])
+tools = ['default', 'openmotif']
 
-env.Append(CPPPATH=['#/class'])
+env.Append(CPPPATH=['class'])
 
-env.Append(CCFLAGS=['-Wall'])
 env.Append(CCFLAGS=['-Wno-write-strings'])
-env.Append(CCFLAGS=['-Wstrict-aliasing'])
 
 env.Append(CPPDEFINES=['-DPNG'])
 if env['PLATFORM'] == 'darwin':
@@ -27,10 +24,6 @@ if env['PLATFORM'] == 'darwin':
 env.Append(LIBS=['raf'])
 env.Append(LIBS=['png'])
 env.Append(LIBS=['z'])
-
-Export('env')
-
-SConscript('raf/SConscript')
 
 sources = Split("""
 class/CanvasWindow.cc
@@ -62,8 +55,4 @@ src/xpms2d.cc
 
 env.Program(target = 'src/xpms2d', source = sources)
 
-try: env['JLOCAL'] = os.environ['JLOCAL']
-except KeyError:
-  print('JLOCAL not defined.  No install location.')
-else:
-  env.Alias('install', env.Install([env['JLOCAL'] + '/bin'], 'src/xpms2d'))
+env.Alias('install', env.Install('$BINDIR', 'src/xpms2d'))
