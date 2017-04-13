@@ -706,11 +706,17 @@ int process2d(Config & cfg, netCDF & ncfile, ProbeInfo & probe)
   int iitq=0;		// current index of itq
   double bestfit[3]={0};
   double itq[nitq]={1};
+
+  int *count_it[numtimes];
+  for (int i = 0; i < numtimes; i++)
+  {
+    count_it[i] = new int [cfg.nInterarrivalBins+binoffset];
+    memset((void *)count_it[i], 0, sizeof(int)*(cfg.nInterarrivalBins+binoffset));
+  }
+
   float it_endpoints[cfg.nInterarrivalBins+1], it_midpoints[cfg.nInterarrivalBins], fitspec[cfg.nInterarrivalBins];
-  int count_it[numtimes][cfg.nInterarrivalBins+binoffset];
-  memset((void *)count_it, 0, sizeof(count_it));
-  for (int i=0; i <= cfg.nInterarrivalBins; i++) it_endpoints[i] = pow(10, ((float)i-35)/5.0);
-  for (int i=0; i < cfg.nInterarrivalBins; i++) it_midpoints[i] = pow(10, ((float)i-34.5)/5.0);
+  for (int i = 0; i <= cfg.nInterarrivalBins; i++) it_endpoints[i] = pow(10, ((float)i-35)/5.0);
+  for (int i = 0; i < cfg.nInterarrivalBins; i++) it_midpoints[i] = pow(10, ((float)i-34.5)/5.0);
 
   if (ncfile.hasTASX())
     ncfile.readTrueAirspeed(&data.tas[0], numtimes);
