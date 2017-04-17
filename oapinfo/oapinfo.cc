@@ -63,7 +63,7 @@ void processArgs(int argc, char *argv[])
   if (argc < 2)
     Usage();
 
-  for (size_t aCnt = 1; aCnt < argc; ++aCnt)
+  for (int aCnt = 1; aCnt < argc; ++aCnt)
   {
     if (argv[aCnt][0] == '-')
     {
@@ -174,9 +174,9 @@ void Output(char buff[])
   {
     size_t bytesPerSlice = nDiodes / 8;
     size_t nSlices = 4096 / bytesPerSlice;
-    for (int i = 0; i < nSlices; ++i)
+    for (size_t i = 0; i < nSlices; ++i)
     {
-      for (int j = 0; j < bytesPerSlice; ++j)
+      for (size_t j = 0; j < bytesPerSlice; ++j)
       {
         cout << hex << setw(2) << setfill('0') << (int)p2d->data[(i*bytesPerSlice) + j];
       }
@@ -198,7 +198,7 @@ void OutputParticleCount(P2d_hdr *p, size_t counts[], size_t n, bool output_msec
     cout << "." << setw(3) << setfill('0') << p->msec;
   cout << " - ";
 
-  for (int i = 0; i < n; ++i)
+  for (size_t i = 0; i < n; ++i)
   {
      cout << counts[i] << ' ';
      total += counts[i];
@@ -208,7 +208,7 @@ void OutputParticleCount(P2d_hdr *p, size_t counts[], size_t n, bool output_msec
 }
 
 /* -------------------------------------------------------------------- */
-static const char syncWord[] = { 0xAA, 0xAA, 0xAA };
+static const unsigned char syncWord[] = { 0xAA, 0xAA, 0xAA };
 static const size_t nSyncB = 3;
 
 
@@ -237,7 +237,7 @@ void ParticleCount(P2d_rec *p2d, size_t nDiodes)
 
   size_t bytesPerSlice = nDiodes / 8;
   size_t nSlices = 4096 / bytesPerSlice;
-  for (int i = 0; i < nSlices; ++i)
+  for (size_t i = 0; i < nSlices; ++i)
   {
     // Check both little and big endian.
     if (memcmp(&p2d->data[i*bytesPerSlice+bytesPerSlice-3], syncWord, nSyncB) == 0 ||
