@@ -1,24 +1,21 @@
 #!python
 
-Import('env')
+import sys
+import eol_scons
 
-try:
-  import eol_scons
-  print('trying sites_scons')
-except:
-  print('trying .. sites_scons')
-  sys.path.append("../site_scons")
-  import eol_scons
+Import('PREFIX')
 
-tools = ['default', 'openmotif']
+env = Environment(tools = ['default', 'openmotif'])
 
-env.Append(CPPPATH=['class'])
 
-env.Append(CCFLAGS=['-Wno-write-strings'])
+env.Append(CPPPATH='class')
+env.Append(LIBPATH=PREFIX+'/lib')
 
-env.Append(CPPDEFINES=['-DPNG'])
+env.Append(CXXFLAGS='-Wall -Wno-write-strings')
+
+env.Append(CPPDEFINES=['PNG'])
 if env['PLATFORM'] == 'darwin':
-  env.Append(CPPDEFINES=['-DPNG15'])
+  env.Append(CPPDEFINES=['PNG15'])
 
 
 env.Append(LIBS=['raf'])
@@ -55,4 +52,4 @@ src/xpms2d.cc
 
 env.Program(target = 'src/xpms2d', source = sources)
 
-env.Alias('install', env.Install('$BINDIR', 'src/xpms2d'))
+env.Alias('install', env.Install(PREFIX+'/bin', 'src/xpms2d'))

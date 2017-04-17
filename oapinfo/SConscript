@@ -1,7 +1,11 @@
 # -*- python -*-
 
-Import('env')
+Import('PREFIX')
+
+env = Environment()
+
+env.Append(CCFLAGS='-g -Wall')
 
 env.Program('oapinfo.cc')
 
-Alias('install', env.Install('$BINDIR', 'oapinfo'))
+Alias('install', env.Install(PREFIX+'/bin', 'oapinfo'))

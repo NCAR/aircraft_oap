@@ -1,11 +1,15 @@
 # -*- python -*-
 
-Import('env')
+Import('PREFIX')
+
+env = Environment()
+
+env.Append(CCFLAGS='-g -Wall')
 
 tools = ['default', 'netcdf']
 
-env.Append(LIBS = ['VarDB', 'raf', '-lnetcdf_c++', '-lnetcdf', '-lhdf5_hl', '-lhdf5'])
+env.Append(LIBS = ['VarDB', 'raf', 'netcdf_c++', 'netcdf', 'hdf5_hl', 'hdf5'])
 
 process2d = env.Program('process2d', ['process2d.cpp', 'netcdf.cpp', 'probe.cpp', 'ProbeData.cpp'])
 
-Alias('install', env.Install('$BINDIR', process2d))
+Alias('install', env.Install(PREFIX+'/bin', process2d))

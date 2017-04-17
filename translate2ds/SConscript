@@ -1,14 +1,10 @@
 #!python
 
-import os
+Import('PREFIX')
 
-env = Environment(tools = ['default'], ENV= os.environ)
+env = Environment()
 
-env.Append(CCFLAGS=['-Wall'])
-
-env.Append(CPPDEFINES=['-DPNG'])
-if env['PLATFORM'] == 'darwin':
-  env.Append(CPPDEFINES=['-DPNG15'])
+env.Append(CCFLAGS='-g -Wall')
 
 sources = Split("""
 main.cc
@@ -17,8 +13,4 @@ main.cc
 
 env.Program(target = 'translate2ds', source = sources)
 
-try: env['JLOCAL'] = os.environ['JLOCAL']
-except KeyError:
-  print('JLOCAL not defined.  No install location.')
-else:
-  env.Alias('install', env.Install([env['JLOCAL'] + '/bin'], 'translate2ds'))
+env.Alias('install', env.Install(PREFIX+'/bin', 'translate2ds'))

@@ -1,7 +1,11 @@
 # -*- python -*-
 
-Import('env')
+Import('PREFIX')
+
+env = Environment()
+
+env.Append(CCFLAGS='-g -Wall')
 
 env.Program('padsinfo.cc')
 
-Alias('install', env.Install('$BINDIR', 'padsinfo'))
+Alias('install', env.Install(PREFIX+'/bin', 'padsinfo'))

@@ -1,7 +1,11 @@
 # -*- python -*-
 
-Import('env')
+Import('PREFIX')
+
+env = Environment()
+
+env.Append(CCFLAGS='-g -Wall')
 
 env.Program('pads2oap.cc')
 
-Alias('install', env.Install('$BINDIR', 'pads2oap'))
+Alias('install', env.Install(PREFIX+'/bin', 'pads2oap'))
