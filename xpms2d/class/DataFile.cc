@@ -12,10 +12,10 @@ COPYRIGHT:	University Corporation for Atmospheric Research, 1997-2001
 
 #define _LARGEFILE64_SOURCE
 
-#define htonll	ntohll
-
 
 #include "DataFile.h"
+
+#define htonll	ntohll
 
 #include <unistd.h>
 #include <algorithm>
@@ -631,7 +631,7 @@ void ADS_DataFile::buildIndices()
 
     if (5 != ntohl(5))		// If Intel architecture, swap bytes.
       for (size_t i = 0; i < len / sizeof(Index); ++i)
-        indices[i].index = ::ntohll(&indices[i].index);
+        indices[i].index = ntohll(&indices[i].index);
 
     nIndices = (len / sizeof(Index)) - 1;
     return;
@@ -734,7 +734,7 @@ void ADS_DataFile::buildIndices()
 
     if (5 != ntohl(5))		// Swap em back for current run.
       for (size_t i = 0; i < cnt+1; ++i)
-        indices[i].index = ::ntohll(&indices[i].index);
+        indices[i].index = ntohll(&indices[i].index);
     }
 
   nIndices = cnt;
@@ -760,7 +760,7 @@ void ADS_DataFile::SwapPMS2D(P2d_rec *buff)
     {
       long long *lp = (long long *)buff->data;
       for (size_t i = 0; i < nSlices_64bit; ++i, ++lp)
-        *lp = ::ntohll(lp);
+        *lp = ntohll(lp);
     }
     else
     if (ProbeType(buff) == HVPS)

@@ -22,6 +22,9 @@ COPYRIGHT:	University Corporation for Atmospheric Research, 1997
 
 #include <vector>
 
+#undef ntohll
+#undef htonll
+
 /* ADS image record types */
 #define ADS_WORD	0x4144
 #define HDR_WORD	0x5448
