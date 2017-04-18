@@ -8,6 +8,8 @@ env.Append(CCFLAGS='-g -Wall')
 
 tools = ['default', 'netcdf']
 
+env.Append(CPPPATH=PREFIX+'/include')
+env.Append(LIBPATH=PREFIX+'/lib')
 env.Append(LIBS = ['VarDB', 'raf', 'netcdf_c++', 'netcdf', 'hdf5_hl', 'hdf5'])
 
 process2d = env.Program('process2d', ['process2d.cpp', 'netcdf.cpp', 'probe.cpp', 'ProbeData.cpp'])
