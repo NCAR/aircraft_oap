@@ -24,8 +24,11 @@ Export('PREFIX')
 
 if env['PREFIX'] == '#':
     SConscript('raf/SConscript')
+else:
+    # Temporarily only build process2d if /opt/local install, until we get vardb submodule.
+    SConscript('raf/process2d')
 
-subdirs = ['cip/pads2oap', 'cip/padsinfo', 'oapinfo', 'process2d', 'translate2ds', 'xpms2d']
+subdirs = ['cip/pads2oap', 'cip/padsinfo', 'oapinfo', 'translate2ds', 'xpms2d']
 
 for subdir in subdirs:
     SConscript(os.path.join(subdir, 'SConscript'))
