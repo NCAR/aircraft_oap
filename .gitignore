@@ -1,0 +1,8 @@
+# ignore objects and archives, anywhere in the tree.
+*.[oa]
+xpms2d
+oapinfo
+process2d
+pads2oap
+padsinfo
+translate2ds
