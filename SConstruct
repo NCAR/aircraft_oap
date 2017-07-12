@@ -14,8 +14,7 @@ AddOption('--prefix',
   default='#',
   help='installation prefix')
 
-env = Environment(PREFIX = GetOption('prefix'),ENV= os.environ)
-#env = Environment(platform = 'posix',ENV= os.environ)
+env = Environment(PREFIX = GetOption('prefix'))
 
 # Can't figure out how to Export the rhs, so assign it out to local variable.
 PREFIX=env['PREFIX']
