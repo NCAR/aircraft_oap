@@ -24,8 +24,8 @@ struct Do3VCPI
 
 		if (file.is_open() == false) { return; }
 
-		g_Log << "Generating NCAR OAP .2d from file \"" << file_name << "\" of size "
-			<< file.MegaBytes() << " MB\n";
+		g_Log << "Generating NCAR OAP .2d from 3V-CPI/2DS file \"" << file_name << "\" of size "
+			<< file.MegaBytes() << " MB.\n";
 
 		std::string outfile = file_name;
 		outfile.erase(0, outfile.find("base"));	
@@ -55,8 +55,8 @@ struct Do2DS
 
 		if (file.is_open() == false) { return; }
 
-		g_Log	<< "Generating NCAR OAP .2d from file \"" << file_name << "\" of size "
-			<< file.MegaBytes() << " MB\n";
+		g_Log	<< "Generating NCAR OAP .2d from 2DS file \"" << file_name << "\" of size "
+			<< file.MegaBytes() << " MB.\n";
 
 		std::string outfile = file_name;
 		outfile.erase(0, outfile.find("base"));	
