@@ -53,6 +53,7 @@ namespace sp
 
 			process_block(block, writer);
 		}
+		//_log <<"\nTotal Housekeeping packets: " << nHouses <<"\n";
 	}
 
 	template< class Writer>
@@ -61,6 +62,7 @@ namespace sp
 		static int PC = 0;
 		static int NL = 0;
 	
+		//_log << "\n\n+++++++++++++++++NEW BLOCK++++++++++++++++++++\n\n";
 		size_t head = 0;
 		static ParticleRecord3VCPI particle;
 		try
@@ -80,12 +82,14 @@ namespace sp
 					HouseKeeping3VCPI hk;
 					block >> hk;
 					writer << hk;
+					//_log << "HouseK\n";
 					} break;
 
 				case MASK:
 					{
 					MaskData3VCPI md;
 					block >>md;
+					//_log << "(:Mask:)\n";
 					} break;
 
 				case DATA:
@@ -101,7 +105,7 @@ namespace sp
 					}*/
 					//	_log << particle2;
 
-				//	_log << "**ParticleFrame**\n";
+					//_log << "**ParticleFrame**\n";
 					} break;
 
 				case FLUSH:
@@ -114,12 +118,13 @@ namespace sp
 					particle.setData(false);
 					block >> particle;
 					NL++;
-				//	_log << "UNUSED FRAME\n";
-				//	block.go_to_end();			
+					//_log << "UNUSED FRAME\n";
+					//block.go_to_end();			
 					} break;
 
 				case 0:	// No data.  After a flush.
 					{
+					//_log << "END OF FRAME\n";
 					} break;
 
 				default:
@@ -130,7 +135,7 @@ namespace sp
 					char first = val >> 8;
 					char second = val & 0x00ff;
 
-					_log <<"\n3VCPI (" <<count << ")Got a packet header that isn't recognized : " << word(w) << "  ASCI: " << first << " " << second;
+					_log <<"\n3VCPI (" <<count << ")Got a packet header that isn't recognized : " << word(w) << "  ASCI: " << first << " " << second << "\n";
 					count++;*/
 					//head = block.head();
 					//block.go_to(head - sizeof(word)*5);

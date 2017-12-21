@@ -198,7 +198,7 @@ namespace sp
 		// uint32_t rar = TAS1 + (uint32_t(TAS2) << 16);
 		 uint32_t rar2 = TAS2 + (uint32_t(TAS1) << 16);
 		// float t1 = *(float*)&rar;
-		 float t2 = *(float*)&rar2;
+		//float t2 = *(float*)&rar2;
 
 		 in.TAS = *(float*)&rar2;
 
