@@ -67,10 +67,10 @@ struct Do2DS
 		// processor seems to process the 2DS data correctly, so just use that
 		// routine for this data.
 		sp::UCAR_Writer writer(outfile, *options, sp::HORIZONTAL_3VCPI, sp::VERTICAL_3VCPI,
-					"2DS", "10", "128", "2H", "2V");
+					"2DS", "10", "128", "_2H", "_2V");
 		device.ProcessData(file, writer);
 		//sp::UCAR_Writer writer(outfile, *options, sp::HORIZONTAL_2DS, sp::VERTICAL_2DS,
-		//			"2DS", "10", "128", "2H", "2V");
+		//			"2DS", "10", "128", "_2H", "_2V");
 		//device.Process(file, writer);
 	}
 };
