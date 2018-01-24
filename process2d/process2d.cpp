@@ -1242,7 +1242,8 @@ void ParseHeader(ifstream & input_file, Config & cfg, vector<ProbeInfo> & probe_
 
     if (line.find("Fast2D") != string::npos ||	// Found a line describing a FAST2D probe
         line.find("CIP") != string::npos ||	// or a DMT CIP
-        line.find("3V-CPI") != string::npos)	// or a 3V-CPI
+        line.find("2DS") != string::npos ||	// or a SPEC 2DS
+        line.find("3V-CPI") != string::npos)	// or a SPEC 3V-CPI
     {
       int ndiodes = atoi(extractAttribute(line, "nDiodes").c_str());
 
