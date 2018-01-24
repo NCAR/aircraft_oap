@@ -116,6 +116,7 @@ namespace sp
 					const char *hProbID, const std::string& hSuffix,
 					const char *vProbID, const std::string& vSuffix)
 		{
+			std::cout << "GenerateXMLHeader\n";
 			std::ofstream xml(file.c_str(),std::ios::binary);
 
 			std::string flightNum = _FileName;

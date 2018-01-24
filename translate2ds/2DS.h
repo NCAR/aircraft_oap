@@ -116,17 +116,17 @@ namespace sp
 				case 0: //indicates the end of the file it seems?
 					{
 					//	_log << "END OF FILE\n";
-					block.go_to_end();	
+					block.go_to_end();
 					}break;
 				default:
 					{
 					static int count = 0;
 					block.clear();
 					word val= w;
-					char first = val >> 8;
-					char second = val & 0x00ff;
+					char first = val >> 8;  // Push of last 8, so only first 8 remain
+					char second = val & 0x00ff; // Select second 8 using mask 0000000011111111
 
-					_log <<"\n2DS (" <<count << ")Got a packet header that isn't recognized : " << word(w) << "  ASCI: " << first << " " << second;
+					_log <<"\n2DS (" <<count << ")Got a packet header that isn't recognized : " << word(w) << "  ASCII: " << first << " " << second << "\n";
 					count++;
 					//head = block.head();
 					//block.go_to(head - sizeof(word)*5);
@@ -137,7 +137,7 @@ namespace sp
 					//	char first = val >> 8;
 					//	char second = val & 0x00ff;
 
-					//	_log <<"\nGot a packet header that isn't recognized : " << word(w) << "  ASCI: " << first << " " << second;
+					//	_log <<"\nGot a packet header that isn't recognized : " << word(w) << "  ASCII: " << first << " " << second;
 					//}
 					//		throw std::exception("bad");
 
