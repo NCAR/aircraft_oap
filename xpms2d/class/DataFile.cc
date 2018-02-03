@@ -109,7 +109,7 @@ ADS_DataFile::ADS_DataFile(const char fName[])
 #endif
     fp = fopen(_fileName.c_str(), "rb");
 
-  if ((_gzipped && gz_fd <= 0) || (!_gzipped && fp == NULL))
+  if ((_gzipped && gz_fd) || (!_gzipped && fp == NULL))
     {
     sprintf(buffer, "Can't open file %s", _fileName.c_str());
     ErrorMsg(buffer);
