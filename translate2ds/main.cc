@@ -24,8 +24,8 @@ struct Do3VCPI
 
 		if (file.is_open() == false) { return; }
 
-		g_Log << "Generating NCAR OAP .2d from file \"" << file_name << "\" of size "
-			<< file.MegaBytes() << " MB\n";
+		g_Log << "Generating NCAR OAP .2d from 3V-CPI/2DS file \"" << file_name << "\" of size "
+			<< file.MegaBytes() << " MB.\n";
 
 		std::string outfile = file_name;
 		outfile.erase(0, outfile.find("base"));	
@@ -50,21 +50,28 @@ struct Do2DS
 
 	void operator () (const std::string& file_name) const
 	{
-		sp::Device2DS	device;
+		//sp::Device2DS	device;
+		sp::Device3VCPI	device;
 		sp::File	file(file_name);
 
 		if (file.is_open() == false) { return; }
 
-		g_Log	<< "Generating NCAR OAP .2d from file \"" << file_name << "\" of size "
-			<< file.MegaBytes() << " MB\n";
+		g_Log	<< "Generating NCAR OAP .2d from 2DS file \"" << file_name << "\" of size "
+			<< file.MegaBytes() << " MB.\n";
 
 		std::string outfile = file_name;
 		outfile.erase(0, outfile.find("base"));	
 		outfile.erase(outfile.end() - 4, outfile.end()); // remove .2ds
 
-		sp::UCAR_Writer writer(outfile, *options, sp::HORIZONTAL_2DS, sp::VERTICAL_2DS,
-					"2DS", "10", "128", "2H", "2V");
-		device.Process(file, writer);
+		// The 2DS processor doesn't correctly process 2DS data, but the 2DSCPI
+		// processor seems to process the 2DS data correctly, so just use that
+		// routine for this data.
+		sp::UCAR_Writer writer(outfile, *options, sp::HORIZONTAL_3VCPI, sp::VERTICAL_3VCPI,
+					"2DS", "10", "128", "_2H", "_2V");
+		device.ProcessData(file, writer);
+		//sp::UCAR_Writer writer(outfile, *options, sp::HORIZONTAL_2DS, sp::VERTICAL_2DS,
+		//			"2DS", "10", "128", "_2H", "_2V");
+		//device.Process(file, writer);
 	}
 };
 
