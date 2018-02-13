@@ -559,7 +559,7 @@ int ADS_DataFile::NextPhysicalRecord(char buff[])
     case PMS2DP1: case PMS2DP2:	// Original 32 diode PMS2D P probes (200um).
     case PMS2DC4: case PMS2DC5:	// 64 diode 25 um 2DC.
     case PMS2DC6:		// 64 diode 10 um 2DC.
-    case PMS2DC8:		// CIP
+    case PMS2DC8: case PMS2DP8:	// CIP / PIP
     case PMS2DP4:		// 64 bit 2DP.
     case SPEC2DSH: case SPEC2DSV:	// SPEC 2DS
     case HVPS1: case HVPS2:	// HVPS

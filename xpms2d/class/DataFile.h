@@ -49,6 +49,8 @@ COPYRIGHT:	University Corporation for Atmospheric Research, 1997
 
 // 64 diode DMT CIP, 25um.
 #define PMS2DC8		0x4338
+// 64 diode DMT PIP, 100um.
+#define PMS2DP8		0x5038
 
 // Greyscale which we never flew.
 #define PMS2DG1		0x4731
