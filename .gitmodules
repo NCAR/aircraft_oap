@@ -10,3 +10,6 @@
 [submodule "site_scons"]
 	path = site_scons
 	url = https://github.com/ncareol/eol_scons
+[submodule "vardb"]
+	path = vardb
+	url = https://github.com/NCAR/aircraft_vardb
