@@ -8,10 +8,24 @@ env.Append(CCFLAGS='-g -Wall')
 
 tools = ['default', 'netcdf']
 
-env.Append(CPPPATH=PREFIX+'/include')
-env.Append(LIBPATH=PREFIX+'/lib')
+env.Append(CPPPATH = PREFIX)
+env.Append(CPPPATH = PREFIX+'/include')
+env.Append(CPPPATH = PREFIX+'/raf')
+env.Append(CPPPATH = PREFIX+'/vardb/lib')
+
+env.Append(LIBPATH = PREFIX+'/lib')
+env.Append(LIBPATH=[PREFIX+'/raf'])
+env.Append(LIBPATH=[PREFIX+'/vardb/lib'])
+
 env.Append(LIBS = ['VarDB', 'raf', 'netcdf_c++', 'netcdf', 'hdf5_hl', 'hdf5'])
 
-process2d = env.Program('process2d', ['process2d.cpp', 'netcdf.cpp', 'probe.cpp', 'ProbeData.cpp'])
+sources = Split("""
+process2d.cpp
+netcdf.cpp
+probe.cpp
+ProbeData.cpp
+""")
 
-Alias('install', env.Install(PREFIX+'/bin', process2d))
+env.Program(target = 'process2d', source = sources)
+
+env.Alias('install', env.Install(PREFIX+'/bin', 'process2d'))

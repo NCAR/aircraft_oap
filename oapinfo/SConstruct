@@ -7,5 +7,5 @@
 
 env = Environment()
 
-PREFIX='#'
+PREFIX='#/..'
 SConscript('SConscript', exports = ['PREFIX'])

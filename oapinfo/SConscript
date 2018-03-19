@@ -5,6 +5,7 @@ Import('PREFIX')
 env = Environment()
 
 env.Append(CCFLAGS='-g -Wall')
+env.Append(CPPPATH = PREFIX)
 
 env.Program('oapinfo.cc')
 
