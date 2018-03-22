@@ -15,3 +15,10 @@ Directories:
 | translate2ds | SPEC 2DS data translator. |
 | usb2diag | |
 | xpms2d | X Windows / Motif program for viewing image data from most OAP probes. http://www.eol.ucar.edu/raf/software/xpms2d.html |
+
+To install these programs on your computer:
+- git clone --recursive http://github.com/ncar/aircraft_oap
+- cd aircraft_oap
+- scons install
+All programs will be installed in aircraft_oap/bin by default.
+
