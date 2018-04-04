@@ -20,7 +20,7 @@ To install these programs on your computer:
 - install the following libraries if not already installed:
   - netcdf-cxx-devel (will pull in netcdf-cxx, netcdf-devel, and netcdf)
   - python-devel
-  - log4cpp
+  - log4cpp-devel
 - git clone --recursive http://github.com/ncar/aircraft_oap
 - cd aircraft_oap
 - scons install
