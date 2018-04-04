@@ -16,14 +16,3 @@ Directories:
 | usb2diag | |
 | xpms2d | X Windows / Motif program for viewing image data from most OAP probes. http://www.eol.ucar.edu/raf/software/xpms2d.html |
 
-To install these programs on your computer:
-- install the following libraries if not already installed:
-  - netcdf-cxx-devel (will pull in netcdf-cxx, netcdf-devel, and netcdf)
-  - python-devel
-  - log4cpp-devel
-- git clone --recursive http://github.com/ncar/aircraft_oap
-- cd aircraft_oap
-- scons install
-
-All programs will be installed in aircraft_oap/bin by default.
-
