@@ -18,6 +18,7 @@ Directories:
 
 To install these programs on your computer:
 - install netcdf-cxx-devel, if not already installed (will pull in netcdf-cxx, netcdf-devel, and netcdf)
+- install python-devel, if not already installed
 - git clone --recursive http://github.com/ncar/aircraft_oap
 - cd aircraft_oap
 - scons install
