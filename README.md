@@ -17,8 +17,10 @@ Directories:
 | xpms2d | X Windows / Motif program for viewing image data from most OAP probes. http://www.eol.ucar.edu/raf/software/xpms2d.html |
 
 To install these programs on your computer:
-- install netcdf-cxx-devel, if not already installed (will pull in netcdf-cxx, netcdf-devel, and netcdf)
-- install python-devel, if not already installed
+- install the following libraries if not already installed:
+  - netcdf-cxx-devel (will pull in netcdf-cxx, netcdf-devel, and netcdf)
+  - python-devel
+  - log4cpp
 - git clone --recursive http://github.com/ncar/aircraft_oap
 - cd aircraft_oap
 - scons install
