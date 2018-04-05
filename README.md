@@ -1,5 +1,5 @@
 # aircraft_oap
-A collection of programs for manipulating Optical Array Probe data.  Consists of several translators to convert native probe data into a common OAP file format, a processor, and a display program.
+A collection of programs for manipulating Optical Array Probe data.  Consists of several translators to convert native probe data into a common OAP file format, a processor, and a display program. See the [Wiki](https://github.com/NCAR/aircraft_oap/wiki) page associated with this GitHub repo for dependencies and installation instructions.
 
 The OAP file format can be found at http://www.eol.ucar.edu/raf/software/OAPfiles.html
 
