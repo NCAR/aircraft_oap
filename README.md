@@ -45,6 +45,6 @@ To install these programs on your computer, ensure the following libraries are i
 
  * git clone --recursive http://github.com/ncar/aircraft_oap
  * cd aircraft_oap
- * scons install
+ * scons install --site-dir=vardb/site_scons
 
 All programs will be installed in aircraft_oap/bin by default.
