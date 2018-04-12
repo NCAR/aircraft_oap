@@ -16,3 +16,35 @@ Directories:
 | usb2diag | |
 | xpms2d | X Windows / Motif program for viewing image data from most OAP probes. http://www.eol.ucar.edu/raf/software/xpms2d.html |
 
+### Documentation ###
+
+Documentation is available on a per-program basis.
+
+xpms2d - The users manual can be found online at 
+http://www.eol.ucar.edu/raf/software/xpms2d.html
+
+The OAP file format can be found at http://www.eol.ucar.edu/raf/software/OAPfiles.html
+
+### Environment ###
+The aircraft OAP utilities are written in C. They require netCDF library 3.0 or later.
+
+The utilities build and run on any Unix/Linux operating system, including Mac OS X.
+
+### Dependencies ###
+
+To install these programs on your computer, ensure the following libraries are installed:
+
+ * openmotif
+ * netcdf-cxx-devel (will pull in netcdf-cxx, netcdf-devel, and netcdf)
+ * python-devel (needed by vardb)
+ * log4cpp-devel (needed by vardb)
+ * xerces-c-devel (needed by vardb)
+ * boost-devel (needed by vardb)
+
+### Installation ###
+
+ * git clone --recursive http://github.com/ncar/aircraft_oap
+ * cd aircraft_oap
+ * scons install
+
+All programs will be installed in aircraft_oap/bin by default.
