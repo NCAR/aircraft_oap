@@ -1,12 +1,14 @@
 # -*- python -*-
 
-Import('PREFIX')
-
 env = Environment()
-
 env.Append(CCFLAGS='-g -Wall')
-env.Append(CPPPATH = PREFIX)
+env.Append(CPPPATH=["../"])
 
-env.Program('oapinfo.cc')
+sources = Split("""
+oapinfo.cc
+""")
 
-Alias('install', env.Install(PREFIX+'/bin', 'oapinfo'))
+oapinfo=env.Program(target = 'oapinfo', source = sources)
+env.Default(oapinfo)
+
+env.Install("$INSTALL_PREFIX/bin", 'oapinfo')

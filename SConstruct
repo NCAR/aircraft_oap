@@ -5,25 +5,18 @@
 import os
 import eol_scons
 
-AddOption('--prefix',
-  dest='prefix',
-  type='string',
-  nargs=1,
-  action='store',
-  metavar='DIR',
-  default='#',
-  help='installation prefix')
+def OAP_utils(env):
+    env.Require(['prefixoptions'])
+    env.Append(CPPPATH=[env['OPT_PREFIX']+'/vardb'])
+    env.Append(LIBPATH=[env['OPT_PREFIX']+'/vardb'])
+    env.Append(LIBPATH=[env['OPT_PREFIX']+'/vardb/raf'])
 
-env = Environment(PREFIX = GetOption('prefix'))
+env = Environment(GLOBAL_TOOLS = [OAP_utils])
 
-# Can't figure out how to Export the rhs, so assign it out to local variable.
-PREFIX=env['PREFIX']
-
-Export('PREFIX')
-
-if env['PREFIX'] == '#':
-    SConscript('raf/SConscript')
+if env['INSTALL_PREFIX'] == '#':
     SConscript('vardb/SConscript')
+    SConscript('vardb/raf/SConscript')
+
 
 subdirs = ['cip/pads2oap', 'cip/padsinfo', 'oapinfo', 'translate2ds', 'xpms2d', 'process2d']
 

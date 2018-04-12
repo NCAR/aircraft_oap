@@ -5,7 +5,9 @@
 # This dir can be built standalone by executing scons here, or together
 # by executing scons in a parent directory
 
-env = Environment()
+def Xpms2d(env):
+    env.Require(['prefixoptions'])
 
-PREFIX='#'
-SConscript('SConscript', exports = ['PREFIX'])
+env = Environment(GLOBAL_TOOLS = [Xpms2d])
+
+SConscript('SConscript')

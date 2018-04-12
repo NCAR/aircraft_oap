@@ -4,12 +4,6 @@
 [submodule "xpms2d/site_scons"]
 	path = xpms2d/site_scons
 	url = https://github.com/ncareol/eol_scons
-[submodule "raf"]
-	path = raf
-	url = https://github.com/ncar/libraf
-[submodule "site_scons"]
-	path = site_scons
-	url = https://github.com/ncareol/eol_scons
 [submodule "vardb"]
 	path = vardb
 	url = https://github.com/NCAR/aircraft_vardb

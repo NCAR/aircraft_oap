@@ -1,7 +1,5 @@
 #!python
 
-Import('PREFIX')
-
 env = Environment()
 
 env.Append(CCFLAGS='-g -Wall')
@@ -11,6 +9,7 @@ main.cc
 """)
 
 
-env.Program(target = 'translate2ds', source = sources)
+translate2ds = env.Program(target = 'translate2ds', source = sources)
+env.Default(translate2ds)
 
-env.Alias('install', env.Install(PREFIX+'/bin', 'translate2ds'))
+env.Install("$INSTALL_PREFIX/bin", 'translate2ds')

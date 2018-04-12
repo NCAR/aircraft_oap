@@ -1,15 +1,10 @@
 #!python
 
-import sys
-import eol_scons
-
-Import('PREFIX')
-
 env = Environment(tools = ['default', 'openmotif'])
 
 
 env.Append(CPPPATH='class')
-env.Append(LIBPATH=PREFIX+'/lib')
+env.Append(LIBPATH=["../lib"])
 
 env.Append(CXXFLAGS='-Wall -Wno-write-strings')
 
@@ -50,6 +45,6 @@ src/xpms2d.cc
 """)
 
 
-env.Program(target = 'src/xpms2d', source = sources)
+xpms2d = env.Program(target = 'src/xpms2d', source = sources)
 
-env.Alias('install', env.Install(PREFIX+'/bin', 'src/xpms2d'))
+env.Install("$INSTALL_PREFIX/bin", 'src/xpms2d')

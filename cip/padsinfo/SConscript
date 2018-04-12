@@ -1,11 +1,14 @@
 # -*- python -*-
 
-Import('PREFIX')
-
 env = Environment()
 
 env.Append(CCFLAGS='-g -Wall')
 
-env.Program('padsinfo.cc')
+sources = Split("""
+padsinfo.cc
+""")
 
-Alias('install', env.Install(PREFIX+'/bin', 'padsinfo'))
+padsinfo = env.Program(target = 'padsinfo', source = sources)
+env.Default(padsinfo)
+
+env.Install("$INSTALL_PREFIX/bin", 'padsinfo')
