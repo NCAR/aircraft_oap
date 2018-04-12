@@ -2,7 +2,6 @@
 
 env = Environment()
 env.Append(CCFLAGS='-g -Wall')
-env.Append(CPPPATH=["../"])
 
 sources = Split("""
 oapinfo.cc
