@@ -32,7 +32,7 @@ def VARDB_opt(env):
     env.Append(CPPPATH=[env['OPT_PREFIX']+'/vardb'])
     env.Append(LIBS=['VarDB'])
 
-if env['INSTALL_PREFIX'] == '#':
+if env['INSTALL_PREFIX'] == '$DEFAULT_INSTALL_PREFIX':
     SConscript('vardb/SConscript')
 else:
     vardb = VARDB_opt
