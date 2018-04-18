@@ -5,8 +5,10 @@
 # This dir can be built standalone by executing scons here, or together
 # by executing scons in a parent directory
 
+import eol_scons
+
 def Process2d(env):
-    env.Require(['prefixoptions'])
+    env['DEFAULT_INSTALL_PREFIX']="#"
 
 env = Environment(GLOBAL_TOOLS = [Process2d])
 

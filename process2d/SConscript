@@ -1,21 +1,10 @@
 # -*- python -*-
 
-env = Environment()
+tools = ['default', 'prefixoptions', 'netcdf', 'vardb']
+env = Environment(tools=tools)
 
 env.Append(CCFLAGS='-g -Wall')
-
-tools = ['default', 'netcdf']
-
-env.Append(CPPPATH = ["../"])
-env.Append(CPPPATH = ["../include"])
-env.Append(CPPPATH = ["../vardb"])
-env.Append(CPPPATH = ["../vardb/lib"])
-
-env.Append(LIBPATH = ["../lib"])
-env.Append(LIBPATH=["../vardb"])
-env.Append(LIBPATH=["../vardb/lib"])
-
-env.Append(LIBS = ['VarDB', 'raf', 'netcdf_c++', 'netcdf', 'hdf5_hl', 'hdf5'])
+env.Append(LIBS = ['raf'])
 
 sources = Split("""
 process2d.cpp
