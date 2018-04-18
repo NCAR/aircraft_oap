@@ -42,3 +42,7 @@ subdirs = ['cip/pads2oap', 'cip/padsinfo', 'oapinfo', 'translate2ds', 'xpms2d', 
 
 for subdir in subdirs:
     SConscript(os.path.join(subdir, 'SConscript'))
+
+variables = env.GlobalVariables()
+variables.Update(env)
+Help(variables.GenerateHelpText(env))
