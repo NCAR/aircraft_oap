@@ -16,12 +16,12 @@ AddOption('--prefix',
 
 def OAP_utils(env):
     if GetOption('prefix') != "#":
-        env.Replace(INSTALL_PREFIX = GetOption('prefix'))
-        env.Replace(OPT_PREFIX=GetOption('prefix'))
+        env.Replace(DEFAULT_INSTALL_PREFIX = GetOption('prefix'))
     else:
-        env['DEFAULT_OPT_PREFIX']="#"
         env['DEFAULT_INSTALL_PREFIX']="#"
-        env.Require(['prefixoptions'])
+
+    env['DEFAULT_OPT_PREFIX']="#"
+    env.Require(['prefixoptions'])
  
     env.Append(CPPPATH=[env['OPT_PREFIX']+'/include'])
     env.Append(LIBPATH=[env['OPT_PREFIX']+'/lib'])
