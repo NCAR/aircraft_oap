@@ -46,5 +46,6 @@ src/xpms2d.cc
 
 
 xpms2d = env.Program(target = 'src/xpms2d', source = sources)
+env.Default(xpms2d)
 
 env.Install("$INSTALL_PREFIX/bin", 'src/xpms2d')
