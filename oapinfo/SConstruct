@@ -5,8 +5,13 @@
 # This dir can be built standalone by executing scons here, or together
 # by executing scons in a parent directory
 
+import eol_scons
+
 def Oapinfo(env):
-    env.Require(['prefixoptions'])
+    env['DEFAULT_INSTALL_PREFIX']=".."
+    env['DEFAULT_OPT_PREFIX']=".."
+
+    env.Require(['default','prefixoptions'])
 
 env = Environment(GLOBAL_TOOLS = [Oapinfo])
 
