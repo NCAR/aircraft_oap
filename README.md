@@ -45,6 +45,16 @@ To install these programs on your computer, ensure the following libraries are i
 
  * git clone --recursive http://github.com/ncar/aircraft_oap
  * cd aircraft_oap
+ * scons --site-dir=vardb/site_scons
  * scons install --site-dir=vardb/site_scons
 
 All programs will be installed in aircraft_oap/bin by default.
+
+If you wish to compile just a single utility, cd to that utilities subdir (say xpms2d) and run
+ * scons -u . --site_dir=vardb/site_scons
+
+To install in a different directory, say your home dir, 
+ * scons --site-dir=vardb/site_scons
+ * scons install --site-dir=vardb/site_scons --prefix=~
+(One should be able to run the --prefix without building first, but so far I haven't fixed that.)
+This will put compiled programs in ~/bin
