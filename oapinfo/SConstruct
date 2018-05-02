@@ -13,6 +13,10 @@ def Oapinfo(env):
 
     env.Require(['default','prefixoptions'])
 
+    # It would be *better* to include the raf tool from vardb/raf, but 
+    # until I can figure out how to do that, this works.
+    env.Append(CPPPATH=['$DEFAULT_OPT_PREFIX/vardb'])
+
 env = Environment(GLOBAL_TOOLS = [Oapinfo])
 
 SConscript('SConscript')
