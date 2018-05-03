@@ -3,6 +3,11 @@
 # This SConstruct orchestrates building OAP programs.
 
 import os
+
+if GetOption('site_dir') != "vardb/site_scons":
+    print "Must include --site-dir=vardb/site_scons (or whatever path to site_scons is) as a command line option. Exiting"
+    Exit()
+
 import eol_scons
 
 AddOption('--prefix',
