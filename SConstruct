@@ -2,9 +2,20 @@
 
 # This SConstruct orchestrates building OAP programs.
 
+import re
 import os
 
-if GetOption('site_dir') != "vardb/site_scons":
+# Starting with version 2.3, scons searches for the following site_scons dirs in the 
+# order shown (taken from eol_scons documentation):
+#    /usr/share/scons/site_scons
+#    $HOME/.scons/site_scons
+#    ./site_scons
+# so check for these before asking user to provide path on command line
+if ((not os.path.exists("/usr/share/scons/site_scons")) and
+    (not os.path.exists(os.environ['HOME']+"/.scons/site_scons")) and
+    (not os.path.exists("./site_scons")) and
+    (not re.match(r'(.*)site_scons(.*)',str(GetOption('site_dir'))))
+   ):
     print "Must include --site-dir=vardb/site_scons (or whatever path to site_scons is) as a command line option. Exiting"
     Exit()
 
