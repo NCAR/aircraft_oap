@@ -43,7 +43,7 @@ To install these programs on your computer, ensure the following libraries are i
 
 ### Installation ###
 
- * git clone --recursive http://github.com/ncar/aircraft_oap
+ * git clone --recursive https://github.com/ncar/aircraft_oap
  * cd aircraft_oap
  * scons --site-dir=vardb/site_scons
  * scons install --site-dir=vardb/site_scons
