@@ -1,6 +1,6 @@
 #!python
 
-env = Environment(tools = ['default', 'openmotif'])
+env = Environment(tools = ['default', 'openmotif', 'raf'])
 
 
 env.Append(CPPPATH='class')
@@ -13,7 +13,6 @@ if env['PLATFORM'] == 'darwin':
   env.Append(CPPDEFINES=['PNG15'])
 
 
-env.Append(LIBS=['raf'])
 env.Append(LIBS=['png'])
 env.Append(LIBS=['z'])
 

@@ -1,10 +1,9 @@
 # -*- python -*-
 
-tools = ['default', 'prefixoptions', 'netcdf', 'vardb']
+tools = ['default', 'prefixoptions', 'netcdf', 'vardb', 'raf']
 env = Environment(tools=tools)
 
 env.Append(CCFLAGS='-g -Wall')
-env.Append(LIBS = ['raf'])
 
 sources = Split("""
 process2d.cpp
