@@ -26,6 +26,11 @@ def OAP_utils(env):
         env['DEFAULT_OPT_PREFIX']="#"
 
     env.Require(['prefixoptions'])
+
+    # The following line is necessary in order to build from within 
+    # process2d, etc using "scons -u". They are not necessary if building
+    # everything from aircraft_oap. I am not clear why...
+    env.Append(CPPPATH=[env['OPT_PREFIX']+'/include'])	
  
 env = Environment(GLOBAL_TOOLS = [OAP_utils])
 
