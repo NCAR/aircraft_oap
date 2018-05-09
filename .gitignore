@@ -6,3 +6,6 @@ process2d
 pads2oap
 padsinfo
 translate2ds
+.sconf_temp
+.sconsign.dblite
+config.log
