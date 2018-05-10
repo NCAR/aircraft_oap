@@ -596,7 +596,6 @@ void ADS_DataFile::buildIndices()
 {
   size_t cnt = 0;
   int	rc;
-  short	*word;
   FILE	*fpI;
   char	buffer[0x8000], *p, tmpFile[256];
 
@@ -640,8 +639,6 @@ void ADS_DataFile::buildIndices()
 
   printf("Building indices...."); fflush(stdout);
   FlushEvents();
-
-  word = (short *)buffer;
 
   if ((indices = (Index *)malloc(8000000 * sizeof(Index))) == NULL)
     {

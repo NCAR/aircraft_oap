@@ -9,11 +9,6 @@ namespace sp
 	struct XMLHeader
 	{
 		std::string		_header;
-		
-		std::string		GetFileName() const
-		{
-
-		}
 	};
 
 	template<class T>

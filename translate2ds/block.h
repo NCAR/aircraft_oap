@@ -14,7 +14,7 @@ namespace sp
 	class Block
 	{
 	public:
-		Block(unsigned int lineSize, Endianness s, Endianness d):_lineSize(lineSize), _head(0), _srcEnd(s), _dstEnd(d){_data.reserve(1024*1024*10);}
+		Block(unsigned int lineSize, Endianness s, Endianness d) : _head(0), _lineSize(lineSize), _srcEnd(s), _dstEnd(d){_data.reserve(1024*1024*10);}
 
 		Block&	operator >> (float32& in) {return read(in);}
 		Block&	operator >> (word& in) {return read(in);}
