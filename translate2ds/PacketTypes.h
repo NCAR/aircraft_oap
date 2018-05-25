@@ -4,9 +4,9 @@ namespace sp
 {
 	enum PacketType
 	{
-		HOUSEKEEPING = 0x484b,			//HK (= 0x484b in ASCII)
+		HOUSEKEEPING = 0x484b,			//HK (0x484b = HK in ASCII)
 		MASK = 0x4d4b,				//MK
-		DATA = 0x3253,				//2S
+		DATA = 0x3253,				//2S particle marker (NOT record marker)
 		FLUSH = 0x4e4c,				//NL
 		TAS_H = 0x5454,				//tt
 		TAS_V = 0x4141,				//aa
