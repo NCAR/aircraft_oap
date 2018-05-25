@@ -337,7 +337,7 @@ namespace sp
 			Project = "?";
 			FlightNumber = "?";
 			SerialNumber = "SPEC001";
-			MinParticle = 0;
+			MinParticle = 0;//Get rid of the first MinParticle particles in a record, good or bad.
 			MaxParticle = 0xFFFFFFFF;//std::numeric_limits<size_t>::max(); <-- limits appears to be missing from some cygwin installs
 			
 		}
