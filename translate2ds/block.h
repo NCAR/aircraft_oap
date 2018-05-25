@@ -2,6 +2,7 @@
 
 #include <vector>
 #include "common.h"
+#include "PacketTypes.h"
 
 namespace sp
 {
@@ -55,6 +56,29 @@ namespace sp
 		unsigned int fill_length()
 		{return _lineSize;}
 
+		int countParticles()
+		{
+			// Count the number of instances of DATA marker in block. This is equal to 
+			// the number of particles in the current record.
+			int count = 0;
+			unsigned short val;
+			for (int i = 0 ; i < _data.size(); i+=2) {
+				// Byte swap next 4 bytes, cast to unsigned short, and 
+				// compare with DATA from PacketTypes.h
+				val = (_data[i+1] <<8) | _data[i];
+				if (val == DATA) {count++;}
+			}
+			return count;
+		}
+
+		// Print the contents of a block (in hex). Useful for debugging.
+		void print() const
+		{
+			for (int i = 0 ; i < _data.size(); i++) {
+				printf("%x ",_data[i]);
+		 	}
+			printf("\n");
+		}
 
 		size_t size() const
 		{return _data.size();}
