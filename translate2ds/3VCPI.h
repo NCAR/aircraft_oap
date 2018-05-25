@@ -43,15 +43,38 @@ namespace sp
 		TimeStamp16	time_stamp;
 		Word		check_sum;
 		Block		block(SIZE_DATA_BUF, f.SourceEndian(), f.DestinationEndian());
+		size_t 		numParticlesInRecord;
 
 		while (!f.empty())
 		{
 			f >> time_stamp;
 			writer << time_stamp;
-			f >> block;
+			// Log time of block. Useful for debugging.
+			//_log <<"\nTime: " << time_stamp.toSimpleString().c_str() <<"\n";
+			f >> block;	// read in a block of data from the file
 			f >> check_sum;
 
-			process_block(block, writer);
+			// block should contain 4096 bytes, but this print statement shows it
+			// gets more if in a high-particle area. Not sure what this indicates,
+			// if anything.
+			//_log << "Block size: " << block.size() <<"\n";
+
+			// This will print out the contents of the block in hex. 
+			// Useful for debugging
+			//block.print();
+
+			// Only process records with more than 5 particles. A count of <5
+			// particles indicates a stuck bit. This was added to eliminate
+			// runaway stuck bits that make the output file huge.
+			numParticlesInRecord = block.countParticles();
+			//_log << "Found " << block.countParticles() << " particles in this record.\n";
+			if (numParticlesInRecord > 5) {
+				process_block(block, writer); 
+			} else {
+				// If don't process block, need to clear it before read next one.
+				block.go_to_end();
+				block.clear();
+			}
 		}
 		//_log <<"\nTotal Housekeeping packets: " << nHouses <<"\n";
 	}
@@ -59,9 +82,9 @@ namespace sp
 	template< class Writer>
 	void Device3VCPI::process_block( Block &block, Writer& writer )
 	{
-		static int PC = 0;
+		int PC = 0;
 		static int NL = 0;
-	
+
 		//_log << "\n\n+++++++++++++++++NEW BLOCK++++++++++++++++++++\n\n";
 		size_t head = 0;
 		static ParticleRecord3VCPI particle;
@@ -72,7 +95,7 @@ namespace sp
 			{
 				head = block.head();
 
-				block >> w;
+				block >> w; // Read a word and swap endian
 
 
 				switch(w)
@@ -160,6 +183,8 @@ namespace sp
 			//this means we ran into the end of the block before reading finished
 			block.go_to(head);
 		}
+		// Independent particle count from during processing - sanity check.
+		//_log <<"Total Particle Count for this record: "<< PC <<"\n";
 
 		block.clear();
 	}
