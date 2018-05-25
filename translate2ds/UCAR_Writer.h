@@ -444,6 +444,12 @@ namespace sp
 		template<class T>
 		void StoreParticle(Channel& channel, const T& imd, ImageSlice& slice, size_t particleCount, word CharacterCode)
 		{
+			//_log <<"Particle Count: " << particleCount <<"\n";
+			// This will get rid of the first MinParticle particles, good or bad, in the
+			// record. I suspect it was intended to get rid of particles when the record 
+			// contained a total of <MinParticle particles, but since it is called
+			// particle by particle, it doesn't work that way. Uncomment _log above
+			// to see what I mean. - JAA May 25, 2018
 			if(particleCount < _options.MinParticle || particleCount > _options.MaxParticle)
 				return;
 
@@ -539,7 +545,7 @@ namespace sp
 		/// Output file pointers, xml header and binary data.
 		std::ofstream		_xmlF, _file;
 
-		word			_TAS, _overloadTimeMS;
+		//word			_TAS, _overloadTimeMS;
 
 		const Options&		_options;
 	};

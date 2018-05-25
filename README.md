@@ -35,11 +35,14 @@ The utilities build and run on any Unix/Linux operating system, including Mac OS
 To install these programs on your computer, ensure the following libraries are installed:
 
  * openmotif
- * netcdf-cxx-devel (will pull in netcdf-cxx, netcdf-devel, and netcdf)
- * python-devel (needed by vardb)
- * log4cpp-devel (needed by vardb)
- * xerces-c-devel (needed by vardb)
- * boost-devel (needed by vardb)
+ * netcdf
+ * python (needed by vardb)
+ * log4cpp (needed by vardb)
+ * xerces-c (needed by vardb)
+ * boost (needed by vardb)
+ 
+ If you are still getting compile errors, you can look here for other things you may need (like Xcode)
+ https://github.com/ncareol/aspen/wiki/MacOS-Build-Environment
 
 ### Installation ###
 
