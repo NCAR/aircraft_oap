@@ -545,7 +545,7 @@ namespace sp
 		/// Output file pointers, xml header and binary data.
 		std::ofstream		_xmlF, _file;
 
-		word			_TAS, _overloadTimeMS;
+		//word			_TAS, _overloadTimeMS;
 
 		const Options&		_options;
 	};
