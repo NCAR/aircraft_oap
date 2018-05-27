@@ -24,7 +24,7 @@ namespace sp
 	enum CharacterCodes
 	{
 		HORIZONTAL_2DS = 0x5348, 	//SH
-		VERTICAL_2DS = 0x3356,	 	//SV
+		VERTICAL_2DS = 0x5356,	 	//SV
 		HORIZONTAL_3VCPI = 0x3348,	//3H
 		VERTICAL_3VCPI = 0x3356,	//3V
 
