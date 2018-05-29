@@ -75,7 +75,7 @@ ProbeType ProbeType(P2d_rec *record)
     return PMS2D;
   }
 
-  if (p[0] == '2' || p[0] == '3')
+  if (p[0] == '2' || p[0] == '3' || p[0] == 'S')
     return TWODS;
 
   if (p[0] == 'H')

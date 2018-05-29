@@ -811,7 +811,7 @@ bool ADS_DataFile::isValidProbe(const char *pr) const
     return(true);
 
   // SPEC 2DS
-  if ((pr[0] == '2' || pr[0] == '3') && (pr[1] == 'V' || pr[1] == 'H'))
+  if ((pr[0] == '2' || pr[0] == '3' || pr[0] == 'S') && (pr[1] == 'V' || pr[1] == 'H'))
     return(true);
 
   return(false);
