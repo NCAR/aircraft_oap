@@ -51,6 +51,7 @@ namespace sp
 			std::streamsize count =  _in.gcount();
 			if(count != size)
 			{
+				printf("Partial buffer read - reject\n");
 				_buffer.clear();
 			}
 			return;
