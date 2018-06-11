@@ -279,9 +279,10 @@ namespace sp
 		Word wSecond;
 		Word wMilliseconds;
 
-		double TimeAsSingleValue()const
+		double TimeAsSingleValue() const 
+		// in units of minutes, assuming all months have 30 days. 
 		{
-			return double(wYear)*60.0*24.0*30.0*12.0 + double(wMonth)*60.0*24.0*30.0 + double(wDay)*60.0*24.0 + double(wHour)*60.0 + double(wMinute) + double(wSecond)*(1.0/60.0) + double(wMilliseconds) /(1000.0);
+			return double(wYear)*60.0*24.0*30.0*12.0 + double(wMonth)*60.0*24.0*30.0 + double(wDay)*60.0*24.0 + double(wHour)*60.0 + double(wMinute) + double(wSecond)*(1.0/60.0) + double(wMilliseconds) /(60.0*1000.0);
 		}
 		std::string toSimpleString()
 		{
