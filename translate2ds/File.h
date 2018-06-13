@@ -76,8 +76,9 @@ namespace sp
 		{
 			_in.read(&_buffer[0],_buffer.size());
 			std::streamsize count = _in.gcount();
-
-			if(count < _buffer.size())
+                        //_buffer.size() is an unsigned int and count is a signed int.
+			//Cast to signed longto ensure all values can be handled.
+			if(long(count) < long(_buffer.size()))
 			{
 				_buffer.resize(count);
 			}

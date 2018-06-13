@@ -62,7 +62,9 @@ namespace sp
 			// the number of particles in the current record.
 			int count = 0;
 			unsigned short val;
-			for (int i = 0 ; i < _data.size(); i+=2) {
+		   	//_data.size() is an unsigned int, so cast to signed long
+			//to ensure all values can be handled.
+			for (long i = 0 ; i < long(_data.size()); i+=2) {
 				// Byte swap next 4 bytes, cast to unsigned short, and 
 				// compare with DATA from PacketTypes.h
 				val = (_data[i+1] <<8) | _data[i];
@@ -74,7 +76,9 @@ namespace sp
 		// Print the contents of a block (in hex). Useful for debugging.
 		void print() const
 		{
-			for (int i = 0 ; i < _data.size(); i++) {
+		   	//_data.size() is an unsigned int, so cast to signed long
+			//to ensure all values can be handled.
+			for (long i = 0 ; i < long(_data.size()); i++) {
 				printf("%x ",_data[i]);
 		 	}
 			printf("\n");
