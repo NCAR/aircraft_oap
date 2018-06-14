@@ -12,7 +12,7 @@ namespace sp
 	class Device3VCPI
 	{
 	public:
-		Device3VCPI()
+		Device3VCPI(Options& opt):_options(opt)
 		{
 		}
 		template<class Reader, class Writer>
@@ -23,6 +23,8 @@ namespace sp
 		void process_block( Block &block, Writer& writer );
 
 		Log _log;
+
+		Options&	_options;
 	};
 }
 
@@ -33,6 +35,7 @@ namespace sp
 #include "HouseKeeping3VCPI.h"
 #include "Mask3VCPI.h"
 #include "Particle3VCPI.h"
+#include "ctime"
 
 namespace sp
 {
@@ -48,9 +51,43 @@ namespace sp
 		while (!f.empty())
 		{
 			f >> time_stamp;
+			if (f.empty()) break;
+
+			// If a time offset was given on the command line, apply it here. Save
+			// time to tm struct so can use built-in time conversions to handle 
+			// day/month/year rollover, etc. Can't use tm everywhere because it doesn't
+			// include milli-seconds, which are critical for this data.
+			
+			// Log time. Useful for debugging.
+			//_log <<"\nTime before offset: " << time_stamp.toSimpleString().c_str() <<"\n";
+
+			// Create a tm struct to copy time info too.
+			struct tm timeinfo;
+
+			// Overwrite the initialized time with the record time.
+			//printf("%d\n",_options.TimeOffset);
+			timeinfo.tm_year = time_stamp.wYear - 1900;
+			timeinfo.tm_mon = time_stamp.wMonth -1;
+			timeinfo.tm_mday = time_stamp.wDay;
+			timeinfo.tm_hour = time_stamp.wHour + _options.TimeOffset;
+			// Offset is in hours, so read min/sec into tm struct, but don't have 
+			// to read them back out below since they don't change.
+			timeinfo.tm_min = time_stamp.wMinute;
+			timeinfo.tm_sec = time_stamp.wSecond;
+
+			// Let struct tm do it's magic (propogate offset to day/month/year as needed)
+			time_t t = mktime(&timeinfo); // mktime returns the time as localtime...
+			struct tm *tout = localtime(&t);// so use localtime to convert it back.
+
+			// Put the adjusted time back into the 2D time struct
+			time_stamp.wHour = tout->tm_hour;
+			time_stamp.wDay = tout->tm_mday;
+			time_stamp.wMonth = tout->tm_mon + 1;
+			time_stamp.wYear = tout->tm_year + 1900;
+
 			writer << time_stamp;
 			// Log time of block. Useful for debugging.
-			//_log <<"\nTime: " << time_stamp.toSimpleString().c_str() <<"\n";
+			//_log <<"Time  after offset: " << time_stamp.toSimpleString().c_str() <<"\n";
 			f >> block;	// read in a block of data from the file
 			f >> check_sum;
 

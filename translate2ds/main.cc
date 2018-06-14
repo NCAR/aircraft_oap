@@ -18,7 +18,7 @@ struct Do3VCPI
 
 	void operator () (const std::string& file_name) const
 	{
-		sp::Device3VCPI	device;
+		sp::Device3VCPI	device(*options);
 		sp::File	file(file_name);
 		sp::File	file_hk(file_name+"HK");
 
@@ -51,7 +51,7 @@ struct Do2DS
 	void operator () (const std::string& file_name) const
 	{
 		//sp::Device2DS	device;
-		sp::Device3VCPI	device;
+		sp::Device3VCPI	device(*options);
 		sp::File	file(file_name);
 
 		if (file.is_open() == false) { return; }

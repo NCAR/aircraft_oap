@@ -326,6 +326,7 @@ namespace sp
 		{
 			Compressed = false;
 			ascii_art = false;
+			TimeOffset = 0; //default to no offset
 			memset(&StartTime, 0, sizeof(StartTime)); //min date so defaults to always passing
 			memset(&EndTime, 255, sizeof(EndTime)); //max date so defaults to always passing
 			EndTime.wDay = 30;
@@ -350,6 +351,7 @@ namespace sp
 
 		TimeStamp16	StartTime;
 		TimeStamp16	EndTime;
+		int		TimeOffset;
 		std::string	OutputDir;
 		bool		Compressed;
 		bool		ascii_art;	//outputs ascii art that lets us see the particles in text form
