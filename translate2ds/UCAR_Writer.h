@@ -79,6 +79,8 @@ namespace sp
 			_SuffixV = SuffixV;
 
 			memset(&_MostRecentTimeStamp, 1, sizeof(_MostRecentTimeStamp));
+			memset(&_FirstTimeStamp, 1, sizeof(_FirstTimeStamp));
+			_FirstTimeStamp.wYear = 0;
 		}
 
 		~UCAR_Writer()
@@ -129,7 +131,7 @@ namespace sp
 				" <Project>" << _options.Project << "</Project>\n" <<
 				" <Platform>" << _options.Platform << "</Platform>\n" << 
 				" <FlightNumber>" << _options.FlightNumber << "</FlightNumber>\n" <<
-				" <FlightDate>" << _MostRecentTimeStamp.wMonth.toString() << "/" << _MostRecentTimeStamp.wDay.toString() << "/" << _MostRecentTimeStamp.wYear.toString() << "</FlightDate>\n" <<
+				" <FlightDate>" << _FirstTimeStamp.wMonth.toString() << "/" << _FirstTimeStamp.wDay.toString() << "/" << _FirstTimeStamp.wYear.toString() << "</FlightDate>\n" <<
 				" <probe id=\"" << hProbID[1] << hProbID[0] << "\" type=\"" << _ProbeType
 						<< "\" resolution=\"" << _resolution
 						<< "\" nDiodes=\"" << _nDiodes
@@ -147,7 +149,13 @@ namespace sp
 
 		UCAR_Writer& operator << (TimeStamp16& timeStamp)
 		{
+		    	// Set the time to be used for writing the particle (in WriteParticle)
 			_MostRecentTimeStamp = timeStamp;
+			// If first time through, set _FirstTimeStamp to be used to set date in XML header.
+			if ((_FirstTimeStamp.wYear.toString().compare("0")) == 0)
+			{
+			    _FirstTimeStamp = timeStamp;
+			}
 			return *this;
 		}
 
@@ -538,6 +546,7 @@ namespace sp
 
 		HouseKeeping		_MostRecentHouseKeeping;
 		TimeStamp16		_MostRecentTimeStamp;	
+		TimeStamp16		_FirstTimeStamp;	
 
 		Channel			_vChannel, _hChannel;
 		ImageSlice		_vImage, _hImage;
