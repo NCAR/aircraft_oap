@@ -1139,7 +1139,7 @@ void MainCanvas::drawSlice(PostScript *ps, int x, const unsigned char *slice, si
     if (memchrcmp(slice, 0x00, nBytes) == 0)
       ps->rLineTo(0, nDiodes);
     else
-    for (int i = nBytes-1; i >= 0; ++i)
+    for (int i = 0; i < nBytes; ++i)
       {
       for (size_t j = 0; j < 8; )
         {
