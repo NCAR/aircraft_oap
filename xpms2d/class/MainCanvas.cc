@@ -1027,8 +1027,8 @@ void MainCanvas::drawDiodeHistogram(P2d_rec *record, uint32_t syncWord)
   int histo[32];
   memset(histo, 0, sizeof(histo));
 
-  unsigned long *p = (unsigned long *)record->data;
-  for (size_t i = 0; i < nSlices_64bit; ++i, ++p)         /* 2DC and/or 2DP       */
+  uint32_t *p = (uint32_t *)record->data;
+  for (size_t i = 0; i < nSlices_32bit; ++i, ++p)         /* 2DC and/or 2DP       */
   {
     if ((*p & SyncWordMask) == syncWord)
       continue;
