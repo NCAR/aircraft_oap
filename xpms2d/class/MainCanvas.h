@@ -54,7 +54,6 @@ protected:
 
   void	drawSlice(PostScript *ps, int i, const unsigned char *slice, size_t nDiodes);
   void	drawSlice(PostScript *ps, int i, uint32_t slice);
-  void	drawSlice(PostScript *ps, int i, unsigned long long slice);
   void	enchiladaLineItem(PostScript *ps, int i, int cnt, Particle *cp);
 
   /**
@@ -71,7 +70,7 @@ protected:
   void drawDiodeHistogram(P2d_rec *record);
   void drawDiodeHistogram(P2d_rec *record, uint32_t sync);
 
-  void drawAccumHistogram(struct recStats &stats);
+  void drawAccumHistogram(struct recStats &stats, size_t xOffset);
 
   size_t uncompressCIP(unsigned char *dest, const unsigned char src[], int nbytes);
 

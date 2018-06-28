@@ -45,8 +45,12 @@ public:
   /// @returns Probe resolution per diode.
   int Resolution() const	{ return _resolution; }
 
+  /// @returns endianness of data, as we are operating on it.
+  int Endianness() const	{ return _resolution; }
+
   bool Display() const		{ return _displayed; }
   void setDisplay(bool b)	{ _displayed = b; }
+  void setEndian(Endian ne)	{ _endian = ne; }
 
 protected:
   std::string	_name;
@@ -58,6 +62,11 @@ protected:
   int	_resolution;
 
   bool	_displayed;
+
+  /* Store byte order we are going to operate the data on.
+   * Default is little, but Fast2D we keep in Big.
+   */
+  Endian	_endian;
 
 };	/* END PROBE.H */
 
