@@ -67,10 +67,10 @@ void Hex::Update(size_t nBuffs, P2d_rec sets[])
 
       if (i < nSlices)
       {
-        for (int k = nBytes-1; k >= 0; --k)
+        for (int k = 0; k < nBytes; ++k)
           sprintf(&buffer[strlen(buffer)], "%02X",
 		sets[j].data[(i*nBytes)+k]);
-          strcat(buffer, " ");
+        strcat(buffer, " ");
       }
     }
 

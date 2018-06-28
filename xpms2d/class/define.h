@@ -21,6 +21,9 @@ FULL NAME:	Include File to Include the Include Files
 
 #include <raf/Queue.h>
 
+#undef ntohll
+#undef htonll
+
 #ifndef ERR
 #define OK		(0)
 #define ERR		(-1)
@@ -47,13 +50,9 @@ const uint32_t SyncWordMask = 0xff000000;
 
 const unsigned long long CIP_Sync = 0xAAAAAAAAAAAAAAAALL;
 
-const unsigned long long Fast2D_Sync = 0xAAAAAA0000000000LL;
-const unsigned long long Fast2D_Overld = 0x5555AA0000000000LL;
-
-/* Mask should be all 'F's, but there appears to be an occasional flipped bit
- * at the end.  So use 'E' for the last nibble.
- */
-const unsigned long long Fast2D_Mask = 0xFFFFFE0000000000LL;
+const unsigned char BlankSlice[] = { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
+const unsigned char Fast2D_SyncString[] = { 0xaa, 0xaa, 0xaa };
+const unsigned char Fast2D_OverldString[] = { 0x55, 0x55, 0xaa };
 
 const size_t nSlices_32bit = 1024;
 const size_t nSlices_64bit = 512;
@@ -122,9 +121,14 @@ enum { RETURN, EXIT, IRET };
 
 enum ProbeType { UNKNOWN, PMS2D, HVPS, GREYSCALE, FAST2D, TWODS, CIP };
 
+/* Values for "HandleError"		*/
+enum Endian { LITTLE, BIG };
+
 extern char buffer[], *outFile, DataPath[], *timeSeg, pngPath[], psPath[];
 
 extern bool	Interactive, DataChanged, UTCseconds;
+
+long long ntohll(long long *p);
 
 void	GetDataFileName(Widget, XtPointer, XtPointer),
 	NewDataFile(Widget, XtPointer, XtPointer),
