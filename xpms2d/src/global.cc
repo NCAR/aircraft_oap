@@ -21,4 +21,17 @@ char	buffer[BUFFSIZE], DataPath[PATH_LEN], pngPath[PATH_LEN],
 int	UserStartTime[4], UserEndTime[4];	/* HH:MM:SS, 4th is seconds*/
 int	MinStartTime[4], MaxEndTime[4];		/* since midnight.	*/
 
+
+/* -------------------------------------------------------------------- */
+long long ntohll(long long *p)
+{
+  union {
+    long long v;
+    char b[8];
+  } u;
+  const char* cp = (const char*)p;
+  for (int i = 7; i >= 0; i--) u.b[i] = *cp++;
+  return u.v;
+}
+
 /* END GLOBAL.CC */

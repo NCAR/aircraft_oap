@@ -22,9 +22,6 @@ COPYRIGHT:	University Corporation for Atmospheric Research, 1997
 
 #include <vector>
 
-#undef ntohll
-#undef htonll
-
 /* ADS image record types */
 #define ADS_WORD	0x4144
 #define HDR_WORD	0x5448
@@ -132,7 +129,6 @@ protected:
 	if (i > nIndices) fprintf(stderr, "currPhys exceeds nInices\n");
 	return indices[i].index;
 	}
-  long long	ntohll(long long * p) const;
 
   void		buildIndices(), sort_the_table(int, int), SortIndices(int);
   void		SwapPMS2D(P2d_rec *);
