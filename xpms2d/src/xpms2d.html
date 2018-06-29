@@ -32,7 +32,7 @@ span.comment { background-color: #88FF88; font-style: italic; }
 
 
 <h1 align=CENTER>XPMS2D User's Guide</h1>
-<h1 align=CENTER>Version 2.7.1</h1>
+<h1 align=CENTER>Version 2.8.0</h1>
 <hr>
 <h1 align=CENTER>Table Of Contents</h1>
 <ol type=A>
@@ -84,7 +84,7 @@ span.comment { background-color: #88FF88; font-style: italic; }
 <b>xpms2d</b> is an interactive diagnostic and plotting tool for Unix/Linux workstations.  <b>xpms2d</b> allows the user to view PMS-2D, HVPS, CIP/PIP, and 64 bit Fast2DC images and computed quantitative information on a per record basis.
 <p>
 <p>
-<b>xpms2d</b> was written at the <a href="http://www.eol.ucar.edu/raf">Research
+<b>xpms2d</b> was written at the <a href="http://www.eol.ucar.edu">Research
 Aviation Facility</a> of <a href="http://www.ncar.ucar.edu/">The National Center for Atmospheric Research</a> to view and analyze our PMS-2D data.  
 Every effort has been made to make it "what you see is what you get" between
 the screen and printouts.
@@ -97,7 +97,7 @@ the screen and printouts.
 
 <dl>
 <dt><h3>Acquiring</h3>
-<dd><b>xpms2d</b> is available at <a href="https://github.com/ncar/aircraft_oap">https://github.com/ncar/aircraft_oap</a>.
+<dd><b>xpms2d</b> is available at <a href="https://github.com/ncar/aircraft_oap">https://github.com/ncar/aircraft_oap</a>.  Check out with 'git clone --recursive https://github.com/ncar/aircraft_oap'.
 
 
 <dt><h3>Installing</h3>
@@ -109,8 +109,8 @@ For single user, place the binary in ~/bin (Make sure ~/bin is in your
 
 <dt><h3>Environment</h3>
 <dd><b>xpms2d</b> is written in C++, requiring X11/R6 and Motif 2.0 (or later).
-Specifically it was developed on Redhat Linux, under Fedora 5, using
-the GNU compiler (<a href="http://gcc.gnu.org/">gcc</a> 3.4).  <b>xpms2d</b> has
+Specifically it was developed on Redhat Enterprise Linux, using
+the GNU compiler <a href="http://gcc.gnu.org/">gcc</a>.  <b>xpms2d</b> has
 been successfully compiled on Mac OS X, this does require, XCode and XQuartz.  See
 Makefile for more details.
 <p>
@@ -312,7 +312,7 @@ saved by first sizing the plot canvas.
  <dt><h4>View Hex</h4>
  <dd>Pops up a seperate window with an ASCII hex dump of each PMS2D record.
  <dt><h4>View Histograms</h4>
- <dd>Pops up a seperate window with ASCII sizing histogram data per 2D record.
+ <dd>Pops up a seperate window with ASCII bin count histogram data per 2D record.
 <p>
 <img src="http://www.eol.ucar.edu/raf/Software/x2dhisto.png">
 <p align=center>Figure 5.  Histogram for each record.  There are 64 columns for resolution(i) from 1 to 64.
@@ -321,10 +321,10 @@ saved by first sizing the plot canvas.
  <dd>Pops up a seperate window with particle by particle blow of the records being displayed.  Information includes particle height, width, area, time word, and whether the particle was rejected or accepted.  Printing, Saving, and Searching are available options.
 <p>
  <dt><h4>Normal</h4>
- <dd>This is the default ASCII output displayed below each record.
+ <dd>This is the default ASCII output displayed below each record.  I histogram of bin sizing will be displayed on the right.
 <p>
  <dt><h4>Diagnostic</h4>
- <dd>Changes the ASCII output below each record to display information about timing words and probe frequency.
+ <dd>Changes the ASCII output below each record to display information about timing words and probe frequency.  Diode count histogram will be displayed on the right.  this is the number of times each diode was shadowed, not inluding sync and timing words.
 <p>
  <dt><h4>Raw Data Records</h4>
  <dd>This will display the raw 2d record with no processing.  Just loop through all slices and draw them.  It will then display the processed record below the raw record.  Useful for debugging xpms2d.
@@ -349,7 +349,6 @@ saved by first sizing the plot canvas.
 <hr>
 <h1>Known Problems</h1>
 <ul>
-<li>Fedora Core 5 (and later?) : setenv XKEYSYMDB /usr/share/X11/XKeysymDB
 <li>If the menu and button text shows up as squares, then some fonts are missing.
 'yum install "xorg-x11-fonts*"' should solve the problem.  We have noticed this on
 Fedora 9 through 14.
@@ -367,6 +366,6 @@ Research Aviation Facility.<br>
 <hr>
 <font size=2>
 Last update:
-Wed Mar  6 15:28:35 MST 2013
+Fri Jun 29 07:01:52 MDT 2018
 </body>
 </html>
