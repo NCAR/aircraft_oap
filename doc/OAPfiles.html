@@ -224,9 +224,19 @@ typedef struct P2d_rec P2d_rec;
 <h5>Overload</h5> The overld value is the amount of time in milliseconds the probe was shut off while the interface card was unloading data.
 <p>
 <hr>
-<b>oapinfo</b> utility program
+<h3><a name="dtype">Utility Programs</a></h3>
+Software related to OAP probes is all located in one github repository <a href="https://github.com/ncar/aircraft_oap">https://github.com/ncar/aircraft_oap</a>.  Check out with 'git clone --recursive https://github.com/ncar/aircraft_oap'.
 <p>
-We have developed a useful command line utility program in C++ for ouputting data from these files.  Either just the XML file header, or the id, timestamp, and tas from each record header, or full hex dump, or simple histgram data of particle counts.  Please contact us for a copy.
+<ul>
+ <li><b>xpms2d</b> is our primary viewing and QC tool.</li>
+<p>
+ <li><b>oapinfo</b> and <b>padsinfo</b> command line utility programs to ouput text data from these files.  Either just the XML file header, or the id, timestamp, and tas from each record header, or full hex dump, or simple histgram data of particle counts.</li>
+<p>
+ <li><b>translate2ds</b> utility program to translate stock SPEC 2DS data into this format.  It will store the output as uncompressed data.</li>
+<p>
+ <li><b>pads2oap</b> utility program to translate stock DMT PADS PIP and CIP data into this format.  It will store the output compressed data.</li>
+</ul>
+<p>
 <!--------------------------------------------------------------------------- ABS -->
 <p>
 <hr>
@@ -241,7 +251,7 @@ Research Aviation Facility<br>
 <hr>
 <font size=2>
 Last update:
-Thu Mar 28 10:36:34 MDT 2013
+Fri Jun 29 07:23:32 MDT 2018
 </font>
 </body>
 </html>
