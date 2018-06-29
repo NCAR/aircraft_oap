@@ -792,7 +792,7 @@ int process2d(Config & cfg, netCDF & ncfile, ProbeInfo & probe)
      {
         bool syncWord = false;
 
-        if (probetype == '3')		// 3V-CPI
+        if (probetype == '3' || probetype == 'S')		// 3V-CPI / 2D-S
         {
            slice = *(unsigned long long *)&image_buff[islice*bytesPerSlice];
 
@@ -955,7 +955,7 @@ int process2d(Config & cfg, netCDF & ncfile, ProbeInfo & probe)
         else {
            // Found an image slice, make the next slice part of binary image
            int diode = 0;
-           if (probetype == '3')	// 3V-CPI
+           if (probetype == '3' || probetype == 'S')	// 3V-CPI / 2D-S
            {
              for (int byte = bytesPerSlice-1; byte >= 0; byte--)
                for (int bit = 7; bit >= 0; bit--)

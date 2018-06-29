@@ -48,9 +48,9 @@ static struct recStats	output;
 
 extern ControlWindow	*controlWindow;
 
-struct recStats &ProcessCIP(P2d_rec *record, float version);	// No implemented yet, stub only.
 struct recStats &ProcessFast2D(P2d_rec *record, float version);
 struct recStats &ProcessPMS2D(P2d_rec *record, float version);
+struct recStats &ProcessCIP(P2d_rec *record, float version);	// No implemented yet, stub only.
 struct recStats &ProcessHVPSrecord(P2d_rec *record, float version);
 
 static void computeDerived(double sv[], size_t nBins, double liveTime);
@@ -75,7 +75,7 @@ ProbeType ProbeType(P2d_rec *record)
     return PMS2D;
   }
 
-  if (p[0] == '2' || p[0] == '3')
+  if (p[0] == '2' || p[0] == '3' || p[0] == 'S')
     return TWODS;
 
   if (p[0] == 'H')
@@ -200,14 +200,14 @@ struct recStats &ProcessPMS2D(P2d_rec *record, float version)
 {
   int		startTime, overload;
   size_t	nBins, probeIdx;
-  uint32_t	*p, slice, ppSlice, pSlice, syncWord, startMilliSec;
+  uint32_t	*p, slice, pSlice, syncWord, startMilliSec;
   bool		overloadAdded = false;
   double	sampleVolume[maxDiodes], totalLiveTime;
   char		*probeID = (char *)&record->id;
 
   static P2d_hdr	prevHdr[MAX_PROBES];
   static uint32_t	prevTime[MAX_PROBES] = { 1,1,1,1 };
-  static uint32_t	prevSlice[MAX_PROBES][2];
+  static uint32_t	prevSlice[MAX_PROBES];
 
   if (version < 3.35)
     syncWord = SyncWordMask;
@@ -259,17 +259,14 @@ if (debug)
 
   // Scan record, compute tBarElapsedtime and stats.
   p = (uint32_t *)record->data;
-  ppSlice = prevSlice[probeIdx][0];
-  pSlice = prevSlice[probeIdx][1];
+  pSlice = prevSlice[probeIdx];
 
   startTime = prevTime[probeIdx] / 1000;
   startMilliSec = prevHdr[probeIdx].msec * 1000;
 
   // Loop through all slices in record.
-  for (size_t i = 0; i < nSlices_32bit; ++i, ++p)
+  for (size_t i = 0; i < nSlices_32bit; )
     {
-    slice = *p;
-
     if (i > 515 && overloadAdded == false)
       {
       startMilliSec += overload * 1000;
@@ -278,8 +275,8 @@ if (debug)
 
     /* Have particle, will travel.
      */
-if (debug) printf("%08x %08x %08x\n", ppSlice, pSlice, slice);
-    if (slice == syncWord && ppSlice == 0xffffffff && pSlice != 0xffffffff)
+if (debug) printf("%08x %08x %08x\n", pSlice, p[i], p[i+1]);
+    if (pSlice == 0xffffffff && (p[i] & 0x55) == 0x55 && ntohl(p[i+1]) == syncWord)
       {
       Particle * cp = new Particle();
       cp->time = startTime;
@@ -288,8 +285,10 @@ if (debug) printf("%08x %08x %08x\n", ppSlice, pSlice, slice);
       cp->w = 1;        // first slice of particle is in sync word
       cp->h = 1;
       cp->area = 1;	// assume at list 1 pixel hidden in sync-word.
+      cp->timeWord = 0;
 
-      cp->timeWord = pSlice & 0x00ffffff;
+      if ((ntohl(p[i]) & 0x00ffffff) != 0x00ffffff)
+        cp->timeWord = ntohl(p[i]) & 0x00ffffff;
       cp->deltaTime = (uint32_t)((float)cp->timeWord * output.frequency);
       output.minBar = std::min(output.minBar, cp->deltaTime);
       output.maxBar = std::max(output.maxBar, cp->deltaTime);
@@ -301,12 +300,12 @@ if (debug) printf("%08x %08x %08x\n", ppSlice, pSlice, slice);
 
       /* Determine height of particle.
        */
-      ++p; ++i;
-      for (; i < nSlices_32bit && *p != 0xffffffff; ++p, ++i)
+      i += 2;	// skip time & sync word.
+      for (; i < nSlices_32bit && p[i] != 0xffffffff && p[i] != 0x55; ++i)
         {
         ++cp->w;
 
-        slice = ~(*p);
+        slice = ~ntohl(p[i]);
 
         /* Potential problem/bug with computing of x1, x2.  Works good if all
          * edge touches are contigious (water), not so good for snow, where
@@ -329,11 +328,11 @@ if (debug) printf("%08x %08x %08x\n", ppSlice, pSlice, slice);
           cp->area += slice & 0x0001;
 
         int h = nDiodes;
-        slice = *p;
+        slice = ntohl(p[i]);
         for (size_t j = 0;
                 j < nDiodes && (slice & 0x80000000); slice <<= 1, ++j)
           --h;
-        slice = *p;
+        slice = ntohl(p[i]);
         for (size_t j = 0;
                 j < nDiodes && (slice & 0x00000001); slice >>= 1, ++j)
           --h;
@@ -370,9 +369,10 @@ if (debug)
         ++startTime;
         }
       }
+    else
+      ++i;
 
-    ppSlice = pSlice;
-    pSlice = slice;
+    pSlice = p[i-1];
     }
 
 output.tBarElapsedtime += (uint32_t)(nSlices_32bit * output.frequency);
@@ -394,8 +394,7 @@ output.tBarElapsedtime += (uint32_t)(nSlices_32bit * output.frequency);
   memcpy((char *)&prevHdr[probeIdx], (char *)record, sizeof(P2d_hdr));
 
   p = (uint32_t *)record->data;
-  prevSlice[probeIdx][0] = p[1022];
-  prevSlice[probeIdx][1] = p[1023];
+  prevSlice[probeIdx] = p[1023];
 
   return(output);
 
@@ -921,8 +920,9 @@ struct recStats &ProcessFast2D(P2d_rec *record, float version)
 {
   int		startTime, overload = 0;
   size_t	nBins, probeIdx = 0;
-  unsigned long long	*p, slice;
-  unsigned long		startMilliSec;
+  unsigned char	*p;
+  unsigned long long	slice;
+  unsigned long	startMilliSec;
   double	sampleVolume[maxDiodes], totalLiveTime;
 
   static Particle	*cp = new Particle();
@@ -957,26 +957,26 @@ if (debug)
     sampleVolume[i] = output.tas * (sampleAreaC[i] * 2) * 0.001;
   
   // Scan record, compute tBarElapsedtime and stats.
-  p = (unsigned long long *)record->data;
+  p = record->data;
 
   startTime = prevTime[probeIdx] / 1000;
   startMilliSec = prevHdr[probeIdx].msec;
 
   // Loop through all slices in record.
-  for (size_t i = 0; i < nSlices_64bit; ++i, ++p)
+  for (size_t i = 0; i < nSlices_64bit; ++i, p += sizeof(long long))
   {
-    slice = *p;
+    slice = ntohll((long long *)p);
   
     /* Have particle, will travel.
      */
-    if ((slice & Fast2D_Mask) == Fast2D_Sync || (slice & Fast2D_Mask) == Fast2D_Overld)
+    if (memcmp(p, Fast2D_SyncString, 2) == 0 || memcmp(p, Fast2D_OverldString, 2) == 0)
     {
       unsigned long long thisTimeWord = Fast2DTimeWord_Microseconds(slice);
 
       if (firstTimeWord == 0)
         firstTimeWord = thisTimeWord;
 
-      if ((slice & Fast2D_Mask) == Fast2D_Overld)
+      if (memcmp(p, Fast2D_OverldString, 2) == 0)
       {
         // Set 'overload' variable here.  There is no way to determine overload.
         // Leave zero, they are less than a milli-second anyways.
@@ -1014,12 +1014,12 @@ if (debug)
     }
 
 
-    if (*p == 0xffffffffffffffffLL)	// Skip blank slice.
+    if (memcmp(p, BlankSlice, 8) == 0)	// Skip blank slice.
       continue;
 
     ++cp->w;
 
-    slice = ~(*p);
+    slice = ~(ntohll((long long *)p));
 
     /* Potential problem/bug with computing of x1, x2.  Works good if all
      * edge touches are contigious (water), not so good for snow, where
@@ -1041,11 +1041,11 @@ if (debug)
     for (size_t j = 0; j < nDiodes; ++j, slice >>= 1)
       cp->area += slice & 0x0001;
 
-    slice = *p;
+    slice = ntohll((long long *)p);
     int h = nDiodes;
     for (size_t j = 0; j < nDiodes && (slice & 0x8000000000000000LL); slice <<= 1, ++j)
       --h;
-    slice = *p;
+    slice = ntohll((long long *)p);
     for (size_t j = 0; j < nDiodes && (slice & 0x00000001LL); slice >>= 1, ++j)
       --h;
 

@@ -14,13 +14,12 @@ COPYRIGHT:	University Corporation for Atmospheric Research, 1997
 
 
 /* -------------------------------------------------------------------- */
-Probe::Probe(const char xml_entry[], int recSize)
+Probe::Probe(const char xml_entry[], int recSize) : _displayed(false), _endian(LITTLE)
 {
   std::string XMLgetAttributeValue(const char s[], const char target[]);
 
   _lrLen = recSize;
   _lrPpr = 1;
-  _displayed = false;
 
   std::string id = XMLgetAttributeValue(xml_entry, "id");
   strcpy(_code, id.c_str());
@@ -34,7 +33,7 @@ printf("Probe:: id=%s, name=%s, resolution=%d\n", _code, _name.c_str(), _resolut
 }
 
 /* -------------------------------------------------------------------- */
-Probe::Probe(const char name[])
+Probe::Probe(const char name[]) : _displayed(false), _endian(LITTLE)
 {
   _name.push_back(name[0]);
   _name.push_back(name[1]);
@@ -43,7 +42,6 @@ Probe::Probe(const char name[])
 
   _lrLen = 4116;
   _lrPpr = 1;
-  _displayed = false;
 
   if (_name[0] == 'C')
     _resolution = 25;
@@ -55,7 +53,7 @@ printf("Probe:: %s, resolution = %d\n", _name.c_str(), _resolution);
 }
 
 /* -------------------------------------------------------------------- */
-Probe::Probe(Header * hdr, const Pms2 * p, int cnt)
+Probe::Probe(Header * hdr, const Pms2 * p, int cnt) : _displayed(false), _endian(LITTLE)
 {
   // Extract stuff from Header.
   _name = hdr->VariableName(p);
@@ -68,7 +66,6 @@ Probe::Probe(Header * hdr, const Pms2 * p, int cnt)
   _lrLen = hdr->lrLength(p);
   _lrPpr = hdr->lrPpr(p);
   _resolution = hdr->Resolution(p);
-  _displayed = false;
 
 printf("Probe:: %s - %s\n", _name.c_str(), _code);
 }

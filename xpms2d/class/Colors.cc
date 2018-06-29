@@ -248,7 +248,7 @@ void Colors::checkByteSwap(XImage *image)
 {
   int   i;
   bool	prog_byte_order;
-  uint32_t pixel, x;
+  uint32_t x;
 
   static bool firstTime = true;
 
@@ -259,12 +259,6 @@ void Colors::checkByteSwap(XImage *image)
 
 
   prog_byte_order = (1 == ntohl(1)) ? MSBFirst : LSBFirst;
-
-  if (image->depth == 16)
-    pixel = ((uint16_t *)image->data)[0];
-
-  if (image->depth > 16)
-    pixel = ((uint32_t *)image->data)[0];
 
   for (i = 0; i < numberColors; ++i)
     {

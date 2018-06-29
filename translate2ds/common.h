@@ -279,9 +279,10 @@ namespace sp
 		Word wSecond;
 		Word wMilliseconds;
 
-		double TimeAsSingleValue()const
+		double TimeAsSingleValue() const 
+		// in units of minutes, assuming all months have 30 days. 
 		{
-			return double(wYear)*60.0*24.0*30.0*12.0 + double(wMonth)*60.0*24.0*30.0 + double(wDay)*60.0*24.0 + double(wHour)*60.0 + double(wMinute) + double(wSecond)*(1.0/60.0) + double(wMilliseconds) /(1000.0);
+			return double(wYear)*60.0*24.0*30.0*12.0 + double(wMonth)*60.0*24.0*30.0 + double(wDay)*60.0*24.0 + double(wHour)*60.0 + double(wMinute) + double(wSecond)*(1.0/60.0) + double(wMilliseconds) /(60.0*1000.0);
 		}
 		std::string toSimpleString()
 		{
@@ -325,6 +326,7 @@ namespace sp
 		{
 			Compressed = false;
 			ascii_art = false;
+			TimeOffset = 0; //default to no offset
 			memset(&StartTime, 0, sizeof(StartTime)); //min date so defaults to always passing
 			memset(&EndTime, 255, sizeof(EndTime)); //max date so defaults to always passing
 			EndTime.wDay = 30;
@@ -337,7 +339,7 @@ namespace sp
 			Project = "?";
 			FlightNumber = "?";
 			SerialNumber = "SPEC001";
-			MinParticle = 0;
+			MinParticle = 0;//Get rid of the first MinParticle particles in a record, good or bad.
 			MaxParticle = 0xFFFFFFFF;//std::numeric_limits<size_t>::max(); <-- limits appears to be missing from some cygwin installs
 			
 		}
@@ -349,6 +351,7 @@ namespace sp
 
 		TimeStamp16	StartTime;
 		TimeStamp16	EndTime;
+		int		TimeOffset;
 		std::string	OutputDir;
 		bool		Compressed;
 		bool		ascii_art;	//outputs ascii art that lets us see the particles in text form

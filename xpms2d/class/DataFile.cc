@@ -596,7 +596,6 @@ void ADS_DataFile::buildIndices()
 {
   size_t cnt = 0;
   int	rc;
-  short	*word;
   FILE	*fpI;
   char	buffer[0x8000], *p, tmpFile[256];
 
@@ -640,8 +639,6 @@ void ADS_DataFile::buildIndices()
 
   printf("Building indices...."); fflush(stdout);
   FlushEvents();
-
-  word = (short *)buffer;
 
   if ((indices = (Index *)malloc(8000000 * sizeof(Index))) == NULL)
     {
@@ -747,21 +744,24 @@ void ADS_DataFile::SwapPMS2D(P2d_rec *buff)
   // Perform byte swapping on whole [data] record if required.
   if (1 != ntohs(1))
   {
-    uint32_t		*p;
     unsigned short	*sp = (unsigned short *)buff;
 
-    for (int i = 1; i < 10; ++i)
+    for (int i = 1; i < 10; ++i)	// Swap header
       sp[i] = ntohs(sp[i]);
 
     if (ProbeType(buff) == TWODS)
-      ;
-    else
-    if (ProbeType(buff) == FAST2D)
     {
-      long long *lp = (long long *)buff->data;
-      for (size_t i = 0; i < nSlices_64bit; ++i, ++lp)
-        *lp = ntohll(lp);
+      unsigned char tmp[16], *cp = (unsigned char *)buff->data;
+      for (size_t i = 0; i < nSlices_128bit; ++i, cp += 16)
+      {
+        for (size_t j = 0; j < 16; ++j)
+          tmp[j] = cp[15-j];
+        memcpy(cp, tmp, 16);
+      }
     }
+    else
+    if (ProbeType(buff) == FAST2D)	// Gonna keep this Big Endian
+      ;
     else
     if (ProbeType(buff) == HVPS)
     {
@@ -771,9 +771,9 @@ void ADS_DataFile::SwapPMS2D(P2d_rec *buff)
     }
     else
     {
-      p = (uint32_t *)buff->data;
-      for (size_t i = 0; i < nSlices_32bit; ++i, ++p)
-        *p = ntohl(*p);
+//      p = (uint32_t *)buff->data;
+//      for (size_t i = 0; i < nSlices_32bit; ++i, ++p)
+//        *p = ntohl(*p);
     }
   }
 
@@ -814,22 +814,10 @@ bool ADS_DataFile::isValidProbe(const char *pr) const
     return(true);
 
   // SPEC 2DS
-  if ((pr[0] == '2' || pr[0] == '3') && (pr[1] == 'V' || pr[1] == 'H'))
+  if ((pr[0] == '2' || pr[0] == '3' || pr[0] == 'S') && (pr[1] == 'V' || pr[1] == 'H'))
     return(true);
 
   return(false);
-}
-
-/* -------------------------------------------------------------------- */
-long long ADS_DataFile::ntohll(long long *p) const
-{
-  union {
-    long long v;
-    char b[8];
-  } u;
-  const char* cp = (const char*)p;
-  for (int i = 7; i >= 0; i--) u.b[i] = *cp++;
-  return u.v;
 }
 
 /* -------------------------------------------------------------------- */
@@ -887,20 +875,22 @@ void ADS_DataFile::check_rico_half_buff(P2d_rec *buff, size_t beg, size_t end)
 
   for (size_t i = beg; i < end; ++i, ++p)
   {
+    uint32_t slice = ntohl(*p);
+
     // There seemed to be lots of splatter at the start of the buffer,
     // skip until first sync word appears.
     if (!firstSyncWord)
     {
-      if ((*p & SyncWordMask) == 0x55000000)
+      if ((slice & SyncWordMask) == 0x55000000)
         firstSyncWord = true;
       else
         continue;
     }
 
-    if ((*p & SyncWordMask) == 0x55000000 || *p == 0xffffffff)
+    if ((slice & SyncWordMask) == 0x55000000 || slice == 0xffffffff)
       continue;
 
-    uint32_t slice = ~(*p);
+    slice = ~slice;
     for (size_t j = 0; j < 32; ++j)
       if (((slice >> j) & 0x01) == 0x01)
         ++spectra[j];
@@ -938,12 +928,13 @@ void ADS_DataFile::check_rico_half_buff(P2d_rec *buff, size_t beg, size_t end)
     uint32_t *p = (uint32_t *)buff->data;
     for (size_t i = beg; i < end; ++i, ++p)
     {
-      if ((*p & SyncWordMask) == 0x55000000 || *p == 0xffffffff)
+      uint32_t slice = *p;
+      if ((slice & SyncWordMask) == 0x55000000 || *p == 0xffffffff)
         continue;
 
-      uint32_t slice = ~(*p);
+      slice = ~slice;
       if ((slice & mask2) == mask1)
-        *p = ~(slice & ~mask1);
+        *p = htonl(~(slice & ~mask1));
     }
   }
 }

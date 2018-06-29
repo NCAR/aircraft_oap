@@ -22,9 +22,6 @@ COPYRIGHT:	University Corporation for Atmospheric Research, 1997
 
 #include <vector>
 
-#undef ntohll
-#undef htonll
-
 /* ADS image record types */
 #define ADS_WORD	0x4144
 #define HDR_WORD	0x5448
@@ -55,12 +52,16 @@ COPYRIGHT:	University Corporation for Atmospheric Research, 1997
 // Greyscale which we never flew.
 #define PMS2DG1		0x4731
 #define PMS2DG2		0x4732
+
 // SPEC HVPS
 #define HVPS1		0x4831
 #define HVPS2		0x4832
-// SPEC 2DS / 3V-CPI
-#define SPEC2DSH	0x3348
-#define SPEC2DSV	0x3356
+// SPEC 3V-CPI
+#define SPEC2D3H	0x3348
+#define SPEC2D3V	0x3356
+// SPEC 2DS
+#define SPEC2DSH	0x5348
+#define SPEC2DSV	0x5356
  
 
 #define PMS2_SIZE	4116
@@ -128,7 +129,6 @@ protected:
 	if (i > nIndices) fprintf(stderr, "currPhys exceeds nInices\n");
 	return indices[i].index;
 	}
-  long long	ntohll(long long * p) const;
 
   void		buildIndices(), sort_the_table(int, int), SortIndices(int);
   void		SwapPMS2D(P2d_rec *);

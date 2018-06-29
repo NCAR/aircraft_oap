@@ -27,6 +27,10 @@ public:
       armWidth = 5.08;
       dof_const = 5.13;
     }
+    if (id[0] == 'S') {		// 2D-S
+      armWidth = 5.08;
+      dof_const = 5.13;
+    }
     if (id[1] == '8') {		// CIP (C8)
       rle = true;
       armWidth = 10.0;

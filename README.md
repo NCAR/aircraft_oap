@@ -35,16 +35,26 @@ The utilities build and run on any Unix/Linux operating system, including Mac OS
 To install these programs on your computer, ensure the following libraries are installed:
 
  * openmotif
- * netcdf-cxx-devel (will pull in netcdf-cxx, netcdf-devel, and netcdf)
- * python-devel (needed by vardb)
- * log4cpp-devel (needed by vardb)
- * xerces-c-devel (needed by vardb)
- * boost-devel (needed by vardb)
+ * netcdf
+ * python (needed by vardb)
+ * log4cpp (needed by vardb)
+ * xerces-c (needed by vardb)
+ * boost (needed by vardb)
+ 
+ If you are still getting compile errors, you can look here for other things you may need (like Xcode)
+ https://github.com/ncareol/aspen/wiki/MacOS-Build-Environment
 
 ### Installation ###
 
- * git clone --recursive http://github.com/ncar/aircraft_oap
+ * git clone --recursive https://github.com/ncar/aircraft_oap
  * cd aircraft_oap
- * scons install --site-dir=vardb/site_scons
-
+ * scons
+ * scons install
 All programs will be installed in aircraft_oap/bin by default.
+
+If you wish to compile just a single utility, cd to that utilities subdir (say xpms2d) and run
+ * scons -u .
+
+To install in a different directory, say your home dir, 
+ * scons install --prefix=~
+This will put compiled programs in ~/bin

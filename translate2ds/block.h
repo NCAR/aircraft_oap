@@ -2,6 +2,7 @@
 
 #include <vector>
 #include "common.h"
+#include "PacketTypes.h"
 
 namespace sp
 {
@@ -14,7 +15,7 @@ namespace sp
 	class Block
 	{
 	public:
-		Block(unsigned int lineSize, Endianness s, Endianness d):_lineSize(lineSize), _head(0), _srcEnd(s), _dstEnd(d){_data.reserve(1024*1024*10);}
+		Block(unsigned int lineSize, Endianness s, Endianness d) : _head(0), _lineSize(lineSize), _srcEnd(s), _dstEnd(d){_data.reserve(1024*1024*10);}
 
 		Block&	operator >> (float32& in) {return read(in);}
 		Block&	operator >> (word& in) {return read(in);}
@@ -55,6 +56,33 @@ namespace sp
 		unsigned int fill_length()
 		{return _lineSize;}
 
+		int countParticles()
+		{
+			// Count the number of instances of DATA marker in block. This is equal to 
+			// the number of particles in the current record.
+			int count = 0;
+			unsigned short val;
+		   	//_data.size() is an unsigned int, so cast to signed long
+			//to ensure all values can be handled.
+			for (long i = 0 ; i < long(_data.size()); i+=2) {
+				// Byte swap next 4 bytes, cast to unsigned short, and 
+				// compare with DATA from PacketTypes.h
+				val = (_data[i+1] <<8) | _data[i];
+				if (val == DATA) {count++;}
+			}
+			return count;
+		}
+
+		// Print the contents of a block (in hex). Useful for debugging.
+		void print() const
+		{
+		   	//_data.size() is an unsigned int, so cast to signed long
+			//to ensure all values can be handled.
+			for (long i = 0 ; i < long(_data.size()); i++) {
+				printf("%x ",_data[i]);
+		 	}
+			printf("\n");
+		}
 
 		size_t size() const
 		{return _data.size();}

@@ -23,12 +23,12 @@ namespace sp
 
 	enum CharacterCodes
 	{
-		HORIZONTAL_2DS = 0x3248,
-		VERTICAL_2DS = 0x3256,
-		HORIZONTAL_3VCPI = 0x3348,
-		VERTICAL_3VCPI = 0x3356,
+		HORIZONTAL_2DS = 0x5348, 	//SH
+		VERTICAL_2DS = 0x5356,	 	//SV
+		HORIZONTAL_3VCPI = 0x3348,	//3H
+		VERTICAL_3VCPI = 0x3356,	//3V
 
-		HVPS = 0x5348,
+		HVPS = 0x4831,			//H1
 		SPEC_2D_128 = 0x5337
 	};
 
@@ -79,6 +79,8 @@ namespace sp
 			_SuffixV = SuffixV;
 
 			memset(&_MostRecentTimeStamp, 1, sizeof(_MostRecentTimeStamp));
+			memset(&_FirstTimeStamp, 1, sizeof(_FirstTimeStamp));
+			_FirstTimeStamp.wYear = 0;
 		}
 
 		~UCAR_Writer()
@@ -129,7 +131,7 @@ namespace sp
 				" <Project>" << _options.Project << "</Project>\n" <<
 				" <Platform>" << _options.Platform << "</Platform>\n" << 
 				" <FlightNumber>" << _options.FlightNumber << "</FlightNumber>\n" <<
-				" <FlightDate>" << _MostRecentTimeStamp.wMonth.toString() << "/" << _MostRecentTimeStamp.wDay.toString() << "/" << _MostRecentTimeStamp.wYear.toString() << "</FlightDate>\n" <<
+				" <FlightDate>" << _FirstTimeStamp.wMonth.toString() << "/" << _FirstTimeStamp.wDay.toString() << "/" << _FirstTimeStamp.wYear.toString() << "</FlightDate>\n" <<
 				" <probe id=\"" << hProbID[1] << hProbID[0] << "\" type=\"" << _ProbeType
 						<< "\" resolution=\"" << _resolution
 						<< "\" nDiodes=\"" << _nDiodes
@@ -147,7 +149,13 @@ namespace sp
 
 		UCAR_Writer& operator << (TimeStamp16& timeStamp)
 		{
+		    	// Set the time to be used for writing the particle (in WriteParticle)
 			_MostRecentTimeStamp = timeStamp;
+			// If first time through, set _FirstTimeStamp to be used to set date in XML header.
+			if ((_FirstTimeStamp.wYear.toString().compare("0")) == 0)
+			{
+			    _FirstTimeStamp = timeStamp;
+			}
 			return *this;
 		}
 
@@ -444,6 +452,12 @@ namespace sp
 		template<class T>
 		void StoreParticle(Channel& channel, const T& imd, ImageSlice& slice, size_t particleCount, word CharacterCode)
 		{
+			//_log <<"Particle Count: " << particleCount <<"\n";
+			// This will get rid of the first MinParticle particles, good or bad, in the
+			// record. I suspect it was intended to get rid of particles when the record 
+			// contained a total of <MinParticle particles, but since it is called
+			// particle by particle, it doesn't work that way. Uncomment _log above
+			// to see what I mean. - JAA May 25, 2018
 			if(particleCount < _options.MinParticle || particleCount > _options.MaxParticle)
 				return;
 
@@ -532,6 +546,7 @@ namespace sp
 
 		HouseKeeping		_MostRecentHouseKeeping;
 		TimeStamp16		_MostRecentTimeStamp;	
+		TimeStamp16		_FirstTimeStamp;	
 
 		Channel			_vChannel, _hChannel;
 		ImageSlice		_vImage, _hImage;
@@ -539,7 +554,7 @@ namespace sp
 		/// Output file pointers, xml header and binary data.
 		std::ofstream		_xmlF, _file;
 
-		word			_TAS, _overloadTimeMS;
+		//word			_TAS, _overloadTimeMS;
 
 		const Options&		_options;
 	};

@@ -28,6 +28,7 @@ namespace sp
 			SERIALNUMBER,
 			MINPARTICLE,
 			MAXPARTICLE,
+			TIME_OFFSET,
 			NONE
 		};
 
@@ -98,6 +99,10 @@ namespace sp
 				else if(op == "-flight")
 				{
 					state = FLIGHT_NUMBER;
+				}
+				else if(op == "-offset")
+				{
+					state = TIME_OFFSET;
 				}
 				else if(op == "-sn")
 				{
@@ -209,6 +214,9 @@ namespace sp
 			case FLIGHT_NUMBER:{
 				_options.FlightNumber = op;
 				}break;
+			case TIME_OFFSET:{
+				_options.TimeOffset = atoi(op.c_str());
+				}break;
 			case SERIALNUMBER:{
 				_options.SerialNumber = op;
 				}break;
@@ -249,6 +257,7 @@ namespace sp
 			 "Process Directory:  <-d> <directory name> <...>\n" <<
 			 "Start Time:  <-start_time> <year> <month> <day> <hour> <minute> <millisecond>\n" <<
 			  "End Time:  <-end_time> <year> <month> <day> <hour> <minute> <millisecond>\n" <<
+			  "Time Offset: <-offset> <hours>\n" <<
 			  "Set Output Directory:  <-o> <directory name>\n" <<
 			  "Set Project: <-project> <name>\n" <<
 			  "Set Platform: <-platform> <name>\n"<<
