@@ -12,7 +12,6 @@ probe.cpp
 ProbeData.cpp
 """)
 
-process2d = env.Program(target = 'process2d', source = sources)
+process2d = env.Program(target='process2d', source=sources)
 env.Default(process2d)
-
-env.Install("$INSTALL_PREFIX/bin", 'process2d')
+env.InstallProgram('process2d')

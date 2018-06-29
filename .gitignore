@@ -1,11 +1,9 @@
 # ignore objects and archives, anywhere in the tree.
 *.[oa]
-xpms2d
-oapinfo
-process2d
-pads2oap
-padsinfo
-translate2ds
-.sconf_temp
-.sconsign.dblite
-config.log
+*~
+/.scon*
+/config.log
+/include
+/man
+/bin
+/lib
