@@ -81,11 +81,12 @@ span.comment { background-color: #88FF88; font-style: italic; }
 <a name="oview"></a>
 <hr>
 <h1 align=CENTER>Overview</h1>
-<b>xpms2d</b> is an interactive diagnostic and plotting tool for Unix/Linux workstations.  <b>xpms2d</b> allows the user to view PMS-2D, HVPS, CIP/PIP, and 64 bit Fast2DC images and computed quantitative information on a per record basis.
+<b>xpms2d</b> is an interactive diagnostic and plotting tool for Unix/Linux workstations.  <b>xpms2d</b> allows the user to view PMS-2D, 64 bit Fast2DC, 2DS, HVPS1, and CIP/PIP images and computed quantitative information on a per record basis.
 <p>
+The primary file format supported is here <a href="http://www.eol.ucar.edu/raf/software/OAPfiles.html">http://www.eol.ucar.edu/raf/software/OAPfiles.html</a>.  We use translators (pads2oap and translate2ds) to convert SPEC and DMT probe data to this format.  These translators are available as part of the github repository listed below.
 <p>
 <b>xpms2d</b> was written at the <a href="http://www.eol.ucar.edu">Research
-Aviation Facility</a> of <a href="http://www.ncar.ucar.edu/">The National Center for Atmospheric Research</a> to view and analyze our PMS-2D data.  
+Aviation Facility</a> of <a href="http://www.ncar.ucar.edu/">The National Center for Atmospheric Research</a> to view and perform quality control of our PMS-2D data.  
 Every effort has been made to make it "what you see is what you get" between
 the screen and printouts.
 
@@ -321,7 +322,7 @@ saved by first sizing the plot canvas.
  <dd>Pops up a seperate window with particle by particle blow of the records being displayed.  Information includes particle height, width, area, time word, and whether the particle was rejected or accepted.  Printing, Saving, and Searching are available options.
 <p>
  <dt><h4>Normal</h4>
- <dd>This is the default ASCII output displayed below each record.  I histogram of bin sizing will be displayed on the right.
+ <dd>This is the default ASCII output displayed below each record.  A histogram of bin sizing will be displayed on the right.
 <p>
  <dt><h4>Diagnostic</h4>
  <dd>Changes the ASCII output below each record to display information about timing words and probe frequency.  Diode count histogram will be displayed on the right.  this is the number of times each diode was shadowed, not inluding sync and timing words.
