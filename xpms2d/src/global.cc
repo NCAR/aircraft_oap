@@ -13,8 +13,7 @@ DESCRIPTION:	extern.h should look just like this.
 bool	DataChanged;	/* New data was read from file.			*/
 bool	UTCseconds;	/* Seconds since midnight vs. HH:MM:SS		*/
 
-char	buffer[BUFFSIZE], DataPath[PATH_LEN], pngPath[PATH_LEN],
-	psPath[PATH_LEN];
+char	DataPath[PATH_LEN], pngPath[PATH_LEN], psPath[PATH_LEN];
 
 
 /* Time stuff */

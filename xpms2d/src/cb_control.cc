@@ -47,7 +47,6 @@ extern XCursor		cursor;
 extern Colors		*color;
 extern XPen		*pen;
 
-struct recStats &ProcessRecord(P2d_rec *, float);
 
 /* Contains current N 2d records (for re-use by things like ViewHex */
 size_t	nBuffs = 0;
@@ -104,8 +103,9 @@ void PageForward(Widget w, XtPointer client, XtPointer call)
     return;
 
   const ProbeList& probes = fileMgr.CurrentFile()->Probes();
-  for (size_t j = 0; j < probes.size(); ++j)
-    if (probes[j]->Display())
+  ProbeList::const_iterator iter;
+  for (iter = probes.begin(); iter != probes.end(); ++iter)
+    if (iter->second->Display())
       displayProbes = true;
 
   if (!displayProbes)
@@ -135,13 +135,14 @@ void PageForward(Widget w, XtPointer client, XtPointer call)
     if (nBuffs == 0)
       controlWindow->UpdateStartTime(&pgFbuff[nBuffs]);
 
-    for (size_t j = 0; j < probes.size(); ++j)
+    iter = probes.begin();
+    for (int j = 0; iter != probes.end(); ++j, ++iter)
       {
-      if (!strncmp(probes[j]->Code(), buff_p, 2) && probes[j]->Display())
+      if (!strncmp(iter->second->Code(), buff_p, 2) && iter->second->Display())
         {
         pen->SetColor(color->GetColor(j+1));
         mainPlot->draw(&pgFbuff[nBuffs],
-		ProcessRecord(&pgFbuff[nBuffs], version), version, j+1, NULL);
+		iter->second->ProcessRecord(&pgFbuff[nBuffs], version), version, j+1, NULL);
         pen->SetColor(color->GetColor(0));
         if (++nBuffs >= 20)
           {
@@ -173,9 +174,10 @@ void PageCurrent()
               fileMgr.CurrentFile()->PrevPMS2dRecord(&pgBbuff); )
     {
     const ProbeList& probes = fileMgr.CurrentFile()->Probes();
-    for (size_t j = 0; j < probes.size(); ++j)
-      if (!strncmp(probes[j]->Code(), (char *)&pgBbuff, 2)
-          && probes[j]->Display())
+    ProbeList::const_iterator iter;
+    for (iter = probes.begin(); iter != probes.end(); ++iter)
+      if (!strncmp(iter->second->Code(), (char *)&pgBbuff, 2)
+          && iter->second->Display())
         {
         ++i;
         }
@@ -201,9 +203,10 @@ void PageBackward(Widget w, XtPointer client, XtPointer call)
               fileMgr.CurrentFile()->PrevPMS2dRecord(&pgBbuff); )
     {
     const ProbeList& probes = fileMgr.CurrentFile()->Probes();
-    for (size_t j = 0; j < probes.size(); ++j)
-      if (!strncmp(probes[j]->Code(), (char *)&pgBbuff, 2)
-          && probes[j]->Display())
+    ProbeList::const_iterator iter;
+    for (iter = probes.begin(); iter != probes.end(); ++iter)
+      if (!strncmp(iter->second->Code(), (char *)&pgBbuff, 2)
+          && iter->second->Display())
         {
         ++i;
         }

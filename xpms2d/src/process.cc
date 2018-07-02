@@ -992,7 +992,7 @@ if (debug)
       // Close out particle.  Timeword belongs to previous particle.
       if (cp)
       {
-        cp->timeWord = thisTimeWord;
+        cp->timeWord = thisTimeWord;	// !!!! Is timeWord big enough ????
         unsigned long msec = startMilliSec + ((thisTimeWord - firstTimeWord) / 1000);
         cp->time = startTime + (msec / 1000);
         cp->msec = msec % 1000;

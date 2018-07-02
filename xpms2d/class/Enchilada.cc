@@ -20,6 +20,7 @@ Enchilada::Enchilada(const Widget parent) : TextWindow(parent, "enchilada")
 void Enchilada::AddLineItem(int cnt, Particle *cp)
 {
   int   h, m, s;
+  char	buffer[512];
 
   if (cp == 0)
     return;

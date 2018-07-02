@@ -18,6 +18,8 @@ Histogram::Histogram(const Widget parent) : TextWindow(parent, "histogram")
 /* -------------------------------------------------------------------- */
 void Histogram::AddLineItem(P2d_rec * record, recStats & output)
 {
+  char buffer[2000];
+
   sprintf(buffer, "%c%c %02d:%02d:%02d.%03d  ",
         ((char *)&record->id)[0], ((char *)&record->id)[1],
         record->hour, record->minute, record->second, record->msec

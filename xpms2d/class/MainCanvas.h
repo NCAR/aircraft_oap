@@ -29,11 +29,11 @@ public:
 	MainCanvas(Widget w);
 
   void	SetDisplayMode(int mode);
-  void	SetWrapDisplay()	{ wrap = 1 - wrap; }
-  void	SetTimingWords()	{ timingWord = 1 - timingWord; }
+  void	SetWrapDisplay()	{ _wrap = 1 - _wrap; }
+  void	SetTimingWords()	{ _timingWord = 1 - _timingWord; }
 
   void	reset(ADS_DataFile *file);
-  void	draw(P2d_rec *record, struct recStats &stats, float hdrVer, int probeNum, PostScript *ps);
+  void	draw(P2d_rec *record, struct recStats stats, float hdrVer, int probeNum, PostScript *ps);
   size_t maxRecords() const	{ return(maxRecs); }
   int	SpaceAvailable() const	{ return(Height() - y); }
 
@@ -54,7 +54,6 @@ protected:
 
   void	drawSlice(PostScript *ps, int i, const unsigned char *slice, size_t nDiodes);
   void	drawSlice(PostScript *ps, int i, uint32_t slice);
-  void	enchiladaLineItem(PostScript *ps, int i, int cnt, Particle *cp);
 
   /**
    * Degrade a 25um Fast2DC probe to a 200um 2DP looking data.  Done byr
@@ -75,11 +74,11 @@ protected:
   size_t uncompressCIP(unsigned char *dest, const unsigned char src[], int nbytes);
 
   int	y, maxRecs;
-  int	displayMode;
+  int	_displayMode;
   int	PIX_PER_Y;
 
-  bool	wrap,		// Wrap display around (HVPS mostly)
-	timingWord;	// Toggle timing words on/off.
+  bool	_wrap,		// Wrap display around (HVPS mostly)
+	_timingWord;	// Toggle timing words on/off.
 
 };	/* END MAINCANVAS.H */
 

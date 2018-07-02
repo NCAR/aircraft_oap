@@ -85,11 +85,12 @@ static unsigned short HtestParticle[] = {
 
 static const size_t P2dLRpPR = 1;
 
-ProbeType ProbeType(P2d_rec *record);
 
 /* -------------------------------------------------------------------- */
 ADS_DataFile::ADS_DataFile(const char fName[])
 {
+  unsigned char buffer[4096];
+
   _hdr = 0;
   _fileName = fName;
   _version[0] = '\0';
@@ -111,8 +112,8 @@ ADS_DataFile::ADS_DataFile(const char fName[])
 
   if ((_gzipped && gz_fd) || (!_gzipped && fp == NULL))
     {
-    sprintf(buffer, "Can't open file %s", _fileName.c_str());
-    ErrorMsg(buffer);
+    sprintf((char *)buffer, "Can't open file %s", _fileName.c_str());
+    ErrorMsg((char *)buffer);
     return;
     }
 
@@ -133,9 +134,9 @@ ADS_DataFile::ADS_DataFile(const char fName[])
 
   // Briefly I had the start tag for the 2D universal file as "PMS2D",
   // switched to "OAP" (Optical Array Probe).
-  if (strstr(buffer, "<OAP") || strstr(buffer, "<PMS2D>"))
+  if (strstr((char *)buffer, "<OAP") || strstr((char *)buffer, "<PMS2D>"))
     {
-    initADS3(buffer);	// the XML header file.
+    initADS3((const char *)buffer);	// the XML header file.
     }
   else
   if (isValidProbe(buffer))
@@ -182,18 +183,27 @@ void ADS_DataFile::initADS2()
     const char *name = _hdr->VariableName((Pms2 *)p);
 
     if (name[3] == 'P')
-      _probeList.push_back(new Probe(_hdr, (Pms2 *)p, ++Pcnt));
+      {
+      PMS2D *p = new PMS2D(_hdr, (Pms2 *)p, ++Pcnt);
+      _probeList[*(uint32_t *)p->Code()] = p;
+      }
     else
     if (name[3] == 'C')
-      _probeList.push_back(new Probe(_hdr, (Pms2 *)p, ++Ccnt));
+      {
+      PMS2D *p = new PMS2D(_hdr, (Pms2 *)p, ++Ccnt);
+      _probeList[*(uint32_t *)p->Code()] = p;
+      }
     else
     if (name[3] == 'H')
-      _probeList.push_back(new Probe(_hdr, (Pms2 *)p, ++Hcnt));
+      {
+      HVPS *p = new HVPS(_hdr, (Pms2 *)p, ++Hcnt);
+      _probeList[*(uint32_t *)p->Code()] = p;
+      }
     }
 }
 
 /* -------------------------------------------------------------------- */
-void ADS_DataFile::initADS3(char *hdrString)
+void ADS_DataFile::initADS3(const char *hdrString)
 {
   std::string XMLgetElementValue(const char s[]);
 
@@ -201,15 +211,15 @@ void ADS_DataFile::initADS3(char *hdrString)
 
   // Extract version number.  ADS2 versions are less than 5.0.
   strcpy(_version, "5");
-  char *endHdr = strstr(hdrString, "</OAP>") + strlen("</OAP>\n");
+  char *endHdr = strstr((char *)hdrString, "</OAP>") + strlen("</OAP>\n");
   if (endHdr == 0)
-    endHdr = strstr(hdrString, "</PMS2D>") + strlen("</PMS2D>\n");
+    endHdr = strstr((char *)hdrString, "</PMS2D>") + strlen("</PMS2D>\n");
   else
     {
-    char *p = strstr(hdrString, "<OAP version");
+    char *p = strstr((char *)hdrString, "<OAP version");
     int version = 1;
     if (p)
-      version = atoi(strstr(hdrString, "<OAP version")+14);
+      version = atoi(strstr((char *)hdrString, "<OAP version")+14);
     sprintf(_version, "5.%d", version);
     }
 
@@ -225,7 +235,7 @@ void ADS_DataFile::initADS3(char *hdrString)
 
   // Read pertinent meta-data from header.
   char *p;
-  for (p = strtok(hdrString, "\n"); p; p = strtok(NULL, "\n"))
+  for (p = strtok((char *)hdrString, "\n"); p; p = strtok(NULL, "\n"))
     {
     if ( strstr(p, "</OAP>\n") || strstr(p, "</PMS2D>\n") )
       break;
@@ -239,8 +249,91 @@ void ADS_DataFile::initADS3(char *hdrString)
       _flightDate = XMLgetElementValue(p);
     else
     if ( strstr(p, "<probe") )
-      _probeList.push_back(new Probe(p, PMS2_SIZE));
+      {
+      AddToProbeList(p);
+      }
     }
+}
+
+/* -------------------------------------------------------------------- */
+void ADS_DataFile::AddToProbeListFromXML(const char xml_entry[])
+{
+  char *id = strstr((char *)xml_entry, "id=") + 4;
+  if (id == 0)
+    return;
+
+  switch (ProbeType((const unsigned char *)id))
+  {
+    case Probe::PMS2D:
+      _probeList[*(uint32_t *)id] = new PMS2D(xml_entry, PMS2_SIZE);
+      break;
+    case Probe::FAST2D:
+      _probeList[*(uint32_t *)id] = new Fast2D(xml_entry, PMS2_SIZE);
+//      _probeList.push_back(new Fast2D(xml_entry, PMS2_SIZE));
+      break;
+    case Probe::TWODS:
+      _probeList[*(uint32_t *)id] = new TwoDS(xml_entry, PMS2_SIZE);
+//      _probeList.push_back(new TwoDS(xml_entry, PMS2_SIZE));
+      break;
+    case Probe::HVPS:
+      _probeList[*(uint32_t *)id] = new HVPS(xml_entry, PMS2_SIZE);
+//      _probeList.push_back(new HVPS(xml_entry, PMS2_SIZE));
+      break;
+    case Probe::CIP:
+      _probeList[*(uint32_t *)id] = new CIP(xml_entry, PMS2_SIZE);
+//      _probeList.push_back(new CIP(xml_entry, PMS2_SIZE));
+      break;
+    default:
+      fprintf(stderr, "DataFile::initOAP, Unknown probe type, [%c %c]\n", id[0], id[1]);
+  }
+}
+
+/* -------------------------------------------------------------------- */
+void ADS_DataFile::AddToProbeList(const char *id)
+{
+  if (id == 0)
+    return;
+
+  switch (ProbeType((const unsigned char *)id))
+  {
+    case Probe::PMS2D:
+      _probeList[*(uint32_t *)id] = new PMS2D(id);
+      break;
+    case Probe::HVPS:
+      _probeList[*(uint32_t *)id] = new HVPS(id);
+      break;
+    case Probe::CIP:
+      _probeList[*(uint32_t *)id] = new CIP(id);
+      break;
+    default:
+      fprintf(stderr, "DataFile::initOAP, Unknown probe type, [%c %c]\n", id[0], id[1]);
+  }
+}
+
+/* -------------------------------------------------------------------- */
+Probe::ProbeType ADS_DataFile::ProbeType(const unsigned char *id)
+{
+  if (id[0] == 'C' || id[0] == 'P')
+  {
+    if (id[1] >= '4' && id[1] <= '7')
+      return Probe::FAST2D;
+
+    if (id[1] == '8')
+      return Probe::CIP;
+
+    return Probe::PMS2D;
+  }
+
+  if (id[0] == '2' || id[0] == '3' || id[0] == 'S')
+    return Probe::TWODS;
+
+  if (id[0] == 'H')
+    return Probe::HVPS;
+
+  if (id[0] == 'G')
+    return Probe::GREYSCALE;
+
+  return Probe::UNKNOWN;
 }
 
 /* -------------------------------------------------------------------- */
@@ -511,7 +604,7 @@ bool ADS_DataFile::PrevPMS2dRecord(P2d_rec *buff)
 }	/* END PREVPMS2DRECORD */
 
 /* -------------------------------------------------------------------- */
-int ADS_DataFile::NextPhysicalRecord(char buff[])
+int ADS_DataFile::NextPhysicalRecord(unsigned char buff[])
 {
   int	rc, idWord;
   int	size = sizeof(short);
@@ -597,7 +690,8 @@ void ADS_DataFile::buildIndices()
   size_t cnt = 0;
   int	rc;
   FILE	*fpI;
-  char	buffer[0x8000], *p, tmpFile[256];
+  unsigned char	buffer[0x8000];
+  char	tmpFile[256], *p;
 
 
   strcpy(tmpFile, _fileName.c_str());
@@ -677,7 +771,7 @@ void ADS_DataFile::buildIndices()
         continue;
 
       if (i == _probeList.size())
-        _probeList.push_back(new Probe(buffer));
+        AddToProbeList((const char *)buffer);
       }
 
     for (i = 0; i < 1; ++i)
@@ -749,7 +843,7 @@ void ADS_DataFile::SwapPMS2D(P2d_rec *buff)
     for (int i = 1; i < 10; ++i)	// Swap header
       sp[i] = ntohs(sp[i]);
 
-    if (ProbeType(buff) == TWODS)
+    if (ProbeType((unsigned char *)buff) == Probe::TWODS)
     {
       unsigned char tmp[16], *cp = (unsigned char *)buff->data;
       for (size_t i = 0; i < nSlices_128bit; ++i, cp += 16)
@@ -760,10 +854,10 @@ void ADS_DataFile::SwapPMS2D(P2d_rec *buff)
       }
     }
     else
-    if (ProbeType(buff) == FAST2D)	// Gonna keep this Big Endian
+    if (ProbeType((unsigned char *)buff) == Probe::FAST2D)	// Gonna keep this Big Endian
       ;
     else
-    if (ProbeType(buff) == HVPS)
+    if (ProbeType((unsigned char *)buff) == Probe::HVPS)
     {
       sp = (unsigned short *)buff->data;
       for (size_t i = 0; i < 2048; ++i, ++sp)
@@ -791,7 +885,7 @@ void ADS_DataFile::SwapPMS2D(P2d_rec *buff)
       // It only matters to fix the sync & timing words.
       if (*p == 0xff800000)
       {
-        *p = SyncWordMask;
+        *p = PMS2D::SyncWordMask;
         *(p-1) <<= *(p-1);
       }
     }
@@ -807,7 +901,7 @@ void ADS_DataFile::SwapPMS2D(P2d_rec *buff)
 }
 
 /* -------------------------------------------------------------------- */
-bool ADS_DataFile::isValidProbe(const char *pr) const
+bool ADS_DataFile::isValidProbe(const unsigned char *pr) const
 {
   // Sanity check.
   if ((pr[0] == 'C' || pr[0] == 'P' || pr[0] == 'H') && isdigit(pr[1]))
@@ -881,13 +975,13 @@ void ADS_DataFile::check_rico_half_buff(P2d_rec *buff, size_t beg, size_t end)
     // skip until first sync word appears.
     if (!firstSyncWord)
     {
-      if ((slice & SyncWordMask) == 0x55000000)
+      if ((slice & PMS2D::SyncWordMask) == 0x55000000)
         firstSyncWord = true;
       else
         continue;
     }
 
-    if ((slice & SyncWordMask) == 0x55000000 || slice == 0xffffffff)
+    if ((slice & PMS2D::SyncWordMask) == 0x55000000 || slice == 0xffffffff)
       continue;
 
     slice = ~slice;
@@ -929,7 +1023,7 @@ void ADS_DataFile::check_rico_half_buff(P2d_rec *buff, size_t beg, size_t end)
     for (size_t i = beg; i < end; ++i, ++p)
     {
       uint32_t slice = *p;
-      if ((slice & SyncWordMask) == 0x55000000 || *p == 0xffffffff)
+      if ((slice & PMS2D::SyncWordMask) == 0x55000000 || *p == 0xffffffff)
         continue;
 
       slice = ~slice;

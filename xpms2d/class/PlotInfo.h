@@ -13,6 +13,8 @@ COPYRIGHT:	University Corporation for Atmospheric Research, 1997
 
 #include <define.h>
 
+#define TITLESIZE	80
+
 
 /* -------------------------------------------------------------------- */
 class PlotInfo {

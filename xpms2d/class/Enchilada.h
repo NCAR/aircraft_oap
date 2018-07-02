@@ -11,7 +11,7 @@ COPYRIGHT:	University Corporation for Atmospheric Research, 2000
 #ifndef ENCHILADA_H
 #define ENCHILADA_H
 
-#include <define.h>
+#include "Particle.h"
 #include <raf/TextWindow.h>
 
 

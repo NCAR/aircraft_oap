@@ -29,7 +29,13 @@ class/Magnify.cc
 class/MagnifyCanvas.cc
 class/MagnifyWindow.cc
 class/MainCanvas.cc
+class/Particle.cc
 class/Probe.cc
+class/CIP.cc
+class/HVPS.cc
+class/Fast2D.cc
+class/PMS2D.cc
+class/TwoDS.cc
 src/cb_canvas.cc
 src/cb_control.cc
 src/cb_mag.cc
@@ -38,11 +44,11 @@ src/cb_printer.cc
 src/cb_text.cc
 src/ccb.cc
 src/global.cc
-src/process.cc
 src/xml.cc
 src/xpms2d.cc
 """)
 
+## src/process.cc
 
 xpms2d = env.Program(target = 'src/xpms2d', source = sources)
 env.Default(xpms2d)

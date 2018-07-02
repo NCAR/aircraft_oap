@@ -17,57 +17,24 @@ COPYRIGHT:	University Corporation for Atmospheric Research, 1997
 
 #include <define.h>
 
-#include "Probe.h"
-#include <raf/hdrAPI.h>
+#include "PMS2D.h"
+#include "Fast2D.h"
+#include "TwoDS.h"
+#include "CIP.h"
+#include "HVPS.h"
 
-#include <vector>
+#include <map>
 
-/* ADS image record types */
+// ADS image record types
 #define ADS_WORD	0x4144
 #define HDR_WORD	0x5448
 #define SDI_WORD	0x8681
 #define AVAPS_WORD	0x4156
 
-/* ID values for the id field in each record header.
- */
-// Traditional 32 diode PMS2D probes.
-#define PMS2DC1		0x4331
-#define PMS2DC2		0x4332
-#define PMS2DP1		0x5031
-#define PMS2DP2		0x5032
-
-// 64 diode Fast 2DC, 25um.
-#define PMS2DC4		0x4334
-#define PMS2DC5		0x4335
-// 64 diode Fast 2DC, 10um.
-#define PMS2DC6		0x4336
-// 64 diode Fast 2DP, 200um.
-#define PMS2DP4		0x5034
-
-// 64 diode DMT CIP, 25um.
-#define PMS2DC8		0x4338
-// 64 diode DMT PIP, 100um.
-#define PMS2DP8		0x5038
-
-// Greyscale which we never flew.
-#define PMS2DG1		0x4731
-#define PMS2DG2		0x4732
-
-// SPEC HVPS
-#define HVPS1		0x4831
-#define HVPS2		0x4832
-// SPEC 3V-CPI
-#define SPEC2D3H	0x3348
-#define SPEC2D3V	0x3356
-// SPEC 2DS
-#define SPEC2DSH	0x5348
-#define SPEC2DSV	0x5356
- 
-
 #define PMS2_SIZE	4116
 #define PMS2_RECSIZE	(0x8000 / PMS2_SIZE) * PMS2_SIZE
 
-typedef std::vector<Probe *> ProbeList;
+typedef std::map<uint32_t, Probe *> ProbeList;
 
 
 /* -------------------------------------------------------------------- */
@@ -108,11 +75,13 @@ public:
   bool	NextPMS2dRecord(P2d_rec *buff);
   bool	PrevPMS2dRecord(P2d_rec *buff);
 
-  int	NextPhysicalRecord(char buff[]);
+  int	NextPhysicalRecord(unsigned char buff[]);
 
   void	ToggleSyntheticData();
 
-  bool	isValidProbe(const char *pr) const;
+  static Probe::ProbeType ProbeType(const unsigned char *id);
+
+  bool	isValidProbe(const unsigned char *pr) const;
 
   const ProbeList&
   Probes() const { return _probeList; }
@@ -122,17 +91,25 @@ protected:
 
   typedef struct { long long index; int16_t time[4]; } Index;
 
-  void		initADS2();
-  void		initADS3(char *hdrString);
+  void	initADS2();
+  void	initADS3(const char *hdrString);
+
+  /* Add probe based on id word in old ADS2 header.  These are really
+   * old files, or from University of Wyoming
+   */
+  void	AddToProbeList(const char *id);
+  /* Add probe based on the XML entry in an OAP file.
+   */
+  void	AddToProbeListFromXML(const char *id);
 
   long long	posOfPhysicalRecord(size_t i) {
 	if (i > nIndices) fprintf(stderr, "currPhys exceeds nInices\n");
 	return indices[i].index;
 	}
 
-  void		buildIndices(), sort_the_table(int, int), SortIndices(int);
-  void		SwapPMS2D(P2d_rec *);
-  void		check_rico_half_buff(P2d_rec *buff, size_t start, size_t end);
+  void	buildIndices(), sort_the_table(int, int), SortIndices(int);
+  void	SwapPMS2D(P2d_rec *);
+  void	check_rico_half_buff(P2d_rec *buff, size_t start, size_t end);
 
   std::string	_fileName;
 
