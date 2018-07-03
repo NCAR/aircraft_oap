@@ -176,8 +176,6 @@ trc = XmCreateRowColumn(Window(), (char *)"trc", args, 0);
     {
     n = 0;
     probeB[i] = XmCreateToggleButton(RC[1], (char *)"none       ", NULL, 0);
-    XtAddCallback(probeB[i], XmNvalueChangedCallback,
-                  (XtCallbackProc)SetProbe, (XtPointer)i);
     }
 
   XtManageChildren(probeB, MAX_PROBES);
@@ -285,6 +283,8 @@ void ControlWindow::SetProbes()
     ProbeList::const_iterator iter;
     for (iter = probes.begin(); iter != probes.end(); ++iter, ++i)
       {
+      uint16_t prb_id = *(uint16_t *)iter->second->Code();
+
       XtSetSensitive(probeB[i], True);
 
       label = XmStringCreate((char *)iter->second->Name().c_str(),
@@ -293,6 +293,9 @@ void ControlWindow::SetProbes()
       XtSetValues(probeB[i], args, 1);
       XmStringFree(label);
 
+      XtRemoveAllCallbacks(probeB[i], XmNvalueChangedCallback);
+      XtAddCallback(probeB[i], XmNvalueChangedCallback,
+                  (XtCallbackProc)SetProbe, (XtPointer)prb_id);
       XmToggleButtonSetState(probeB[i], False, False);
       }
     }
