@@ -163,7 +163,8 @@ void PageForward(Widget w, XtPointer client, XtPointer call)
 /* -------------------------------------------------------------------- */
 void PageCurrent()
 {
-  P2d_rec	pgBbuff;
+  size_t	i;
+  P2d_rec	pgBuff;
 
   if (fileMgr.NumberOfFiles() == 0)
     return;
@@ -172,15 +173,15 @@ void PageCurrent()
   cursor.WaitCursor(mainPlot->Wdgt());
 
   // Loop back and find the record prior to first record to display
-  for (size_t i = 0; i < mainPlot->maxRecords() &&
-              fileMgr.CurrentFile()->PrevPMS2dRecord(&pgBbuff); )
+  for (i = 0; i < mainPlot->maxRecords() &&
+              fileMgr.CurrentFile()->PrevPMS2dRecord(&pgBuff); )
     {
-    if (probes.find(*(uint16_t *)&pgBbuff)->second->Display())
+    if (probes.find(*(uint16_t *)&pgBuff)->second->Display())
       ++i;
     }
 
   // and process it so stats on the first displayed records work.
-  probes.find(*(uint16_t *)&pgBbuff)->second->ProcessRecord(&pgBbuff, -1);
+  if (i > 0) probes.find(*(uint16_t *)&pgBuff)->second->ProcessRecord(&pgBuff, -1);
   cursor.PointerCursor(mainPlot->Wdgt());
   PageForward(NULL, NULL, NULL);
 
@@ -189,6 +190,7 @@ void PageCurrent()
 /* -------------------------------------------------------------------- */
 void PageBackward(Widget w, XtPointer client, XtPointer call)
 {
+  size_t	i;
   P2d_rec	pgBbuff;
 
   if (fileMgr.NumberOfFiles() == 0)
@@ -197,14 +199,14 @@ void PageBackward(Widget w, XtPointer client, XtPointer call)
   const ProbeList& probes = fileMgr.CurrentFile()->Probes();
   cursor.WaitCursor(mainPlot->Wdgt());
 
-  for (size_t i = 0; i < (mainPlot->maxRecords() << 1) &&
+  for (i = 0; i < (mainPlot->maxRecords() << 1) &&
               fileMgr.CurrentFile()->PrevPMS2dRecord(&pgBbuff); )
     {
     if (probes.find(*(uint16_t *)&pgBbuff)->second->Display())
       ++i;
     }
 
-  probes.find(*(uint16_t *)&pgBbuff)->second->ProcessRecord(&pgBbuff, -1);
+  if (i > 0) probes.find(*(uint16_t *)&pgBbuff)->second->ProcessRecord(&pgBbuff, -1);
   cursor.PointerCursor(mainPlot->Wdgt());
   PageForward(NULL, NULL, NULL);
   controlWindow->UpdateTimeScale();
