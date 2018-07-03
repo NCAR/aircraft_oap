@@ -180,6 +180,8 @@ void Probe::computeDerived(double sampleVolume[], size_t nBins, double totalLive
   else
     output.dbz = -100.0;
 }
+
+
 /* -------------------------------------------------------------------- */
 static float DOF2dP[] = { 0.0, 145.203, 261.0, 261.0, 261.0,
   261.0, 261.0, 261.0, 261.0, 261.0, 261.0, 261.0, 261.0, 261.0, 261.0,

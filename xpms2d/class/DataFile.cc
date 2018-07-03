@@ -136,6 +136,7 @@ ADS_DataFile::ADS_DataFile(const char fName[])
   // switched to "OAP" (Optical Array Probe).
   if (strstr((char *)buffer, "<OAP") || strstr((char *)buffer, "<PMS2D>"))
     {
+    printf("initADS3(%s)\n", _fileName.c_str());
     initADS3((const char *)buffer);	// the XML header file.
     }
   else
@@ -146,6 +147,7 @@ ADS_DataFile::ADS_DataFile(const char fName[])
     }
   else
     {
+    printf("initADS2(%s)\n", _fileName.c_str());
     initADS2();
     if (_hdr) strcpy(_version, _hdr->Version());
     }
@@ -250,7 +252,7 @@ void ADS_DataFile::initADS3(const char *hdrString)
     else
     if ( strstr(p, "<probe") )
       {
-      AddToProbeList(p);
+      AddToProbeListFromXML(p);
       }
     }
 }
@@ -269,22 +271,19 @@ void ADS_DataFile::AddToProbeListFromXML(const char xml_entry[])
       break;
     case Probe::FAST2D:
       _probeList[*(uint32_t *)id] = new Fast2D(xml_entry, PMS2_SIZE);
-//      _probeList.push_back(new Fast2D(xml_entry, PMS2_SIZE));
       break;
     case Probe::TWODS:
       _probeList[*(uint32_t *)id] = new TwoDS(xml_entry, PMS2_SIZE);
-//      _probeList.push_back(new TwoDS(xml_entry, PMS2_SIZE));
       break;
     case Probe::HVPS:
       _probeList[*(uint32_t *)id] = new HVPS(xml_entry, PMS2_SIZE);
-//      _probeList.push_back(new HVPS(xml_entry, PMS2_SIZE));
       break;
     case Probe::CIP:
       _probeList[*(uint32_t *)id] = new CIP(xml_entry, PMS2_SIZE);
-//      _probeList.push_back(new CIP(xml_entry, PMS2_SIZE));
       break;
     default:
-      fprintf(stderr, "DataFile::initOAP, Unknown probe type, [%c %c]\n", id[0], id[1]);
+      fprintf(stderr, "DataFile::initOAP, Unknown probe type, [%c%c]\n", id[0], id[1]);
+      fprintf(stderr, "DataFile:: [%s]\n", xml_entry);
   }
 }
 
@@ -306,7 +305,7 @@ void ADS_DataFile::AddToProbeList(const char *id)
       _probeList[*(uint32_t *)id] = new CIP(id);
       break;
     default:
-      fprintf(stderr, "DataFile::initOAP, Unknown probe type, [%c %c]\n", id[0], id[1]);
+      fprintf(stderr, "DataFile::initOAP, Unknown probe type, [%c%c]\n", id[0], id[1]);
   }
 }
 
@@ -750,27 +749,28 @@ void ADS_DataFile::buildIndices()
   for (cnt = 0; (rc = NextPhysicalRecord(buffer)); )
     {
     size_t i;
+    ProbeList::const_iterator iter;
 
     if (_fileHeaderType != NoHeader)
       {
-      for (i = 0; i < _probeList.size(); ++i)
-        if (memcmp(_probeList[i]->Code(), buffer, 2) == 0)
+      for (iter = _probeList.begin(); iter != _probeList.end(); ++iter)
+        if (memcmp(iter->second->Code(), buffer, 2) == 0)
           break;
 
-      if (i == _probeList.size())	// shouldn't get here?
+      if (iter == _probeList.end())	// shouldn't get here?
         continue;
       }
     else
       {
-      for (i = 0; i < _probeList.size(); ++i)
-        if (memcmp(_probeList[i]->Code(), buffer, 2) == 0)
+      for (iter = _probeList.begin(); iter != _probeList.end(); ++iter)
+        if (memcmp(iter->second->Code(), buffer, 2) == 0)
           break;
 
       // Sanity check.
       if (!isValidProbe(buffer))
         continue;
 
-      if (i == _probeList.size())
+      if (iter == _probeList.end())
         AddToProbeList((const char *)buffer);
       }
 

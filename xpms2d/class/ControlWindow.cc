@@ -283,7 +283,7 @@ void ControlWindow::SetProbes()
     {
     const ProbeList & probes = fileMgr.CurrentFile()->Probes();
     ProbeList::const_iterator iter;
-    for (iter = probes.begin(); iter != probes.end(); ++iter)
+    for (iter = probes.begin(); iter != probes.end(); ++iter, ++i)
       {
       XtSetSensitive(probeB[i], True);
 

@@ -35,6 +35,8 @@ Fast2D::Fast2D(const char xml_entry[], int recSize) : Probe(xml_entry, recSize)
 
   _resolution = atoi(XMLgetAttributeValue(xml_entry, "resolution").c_str());
 
+  init();
+
 printf("Fast2D:: id=%s, name=%s, resolution=%zu\n", _code, _name.c_str(), _resolution);
 }
 
@@ -43,6 +45,8 @@ void Fast2D::init()
   _type = Probe::FAST2D;
   _nDiodes = 64;
   _lrPpr = 1;
+
+  SetSampleArea();
 }
 
 

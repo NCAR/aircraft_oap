@@ -89,8 +89,6 @@ int main(int argc, char *argv[])
   color	= new Colors(canvasWindow->DrawingArea());
   mainPlot	= new MainCanvas(canvasWindow->DrawingArea());
 
-  SetSampleArea();
-
   XtAppMainLoop(application->Context());
 
   return(0);

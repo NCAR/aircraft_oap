@@ -32,6 +32,8 @@ PMS2D::PMS2D(const char xml_entry[], int recSize) : Probe(xml_entry, recSize)
 
   _resolution = atoi(XMLgetAttributeValue(xml_entry, "resolution").c_str());
 
+  init();
+
 printf("PMS2D:: id=%s, name=%s, resolution=%zu\n", _code, _name.c_str(), _resolution);
 }
 
@@ -51,6 +53,8 @@ PMS2D::PMS2D(const char name[]) : Probe(name)
   if (_name[0] == 'P')	// 2DP
     _resolution = 200;
 
+  init();
+
 printf("PMS2D:: %s, resolution = %zu\n", _name.c_str(), _resolution);
 }
 
@@ -69,6 +73,8 @@ PMS2D::PMS2D(Header * hdr, const Pms2 * p, int cnt) : Probe(hdr, p, cnt)
   _lrPpr = hdr->lrPpr(p);
   _resolution = hdr->Resolution(p);
 
+  init();
+
 printf("PMS2D:: %s - %s\n", _name.c_str(), _code);
 }
 
@@ -77,6 +83,8 @@ void PMS2D::init()
   _type = Probe::PMS2D;
   _nDiodes = 32;
   _lrPpr = 1;
+
+  SetSampleArea();
 }
 
 extern ControlWindow	*controlWindow;

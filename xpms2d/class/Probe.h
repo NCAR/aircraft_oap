@@ -95,6 +95,11 @@ public:
 
   ProbeType Type() const	{ return _type; }
 
+  /**
+   * Set sample area based on user selected calculation type Entire-in
+   * vs center-in, etc.
+   */
+  void SetSampleArea();
 
 
   /// @returns Logical-record length.  Exabyte hangover.
@@ -108,7 +113,6 @@ protected:
 
   void computeDerived(double sv[], size_t nBins, double liveTime);
   size_t checkRejectionCriteria(Particle * cp, recStats & output);
-  void SetSampleArea();
 
   std::string	_name;
   std::string	_serialNumber;

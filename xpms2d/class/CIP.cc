@@ -20,7 +20,6 @@ CIP::CIP(const char xml_entry[], int recSize) : Probe(xml_entry, recSize)
 {
   std::string XMLgetAttributeValue(const char s[], const char target[]);
 
-  init();
   _lrLen = recSize;
 
   std::string id = XMLgetAttributeValue(xml_entry, "id");
@@ -30,6 +29,8 @@ CIP::CIP(const char xml_entry[], int recSize) : Probe(xml_entry, recSize)
   _name += XMLgetAttributeValue(xml_entry, "suffix");
 
   _resolution = atoi(XMLgetAttributeValue(xml_entry, "resolution").c_str());
+
+  init();
 
 printf("CIP:: id=%s, name=%s, resolution=%zu\n", _code, _name.c_str(), _resolution);
 }
@@ -47,6 +48,8 @@ CIP::CIP(const char name[]) : Probe(name)
 
   _resolution = 25;
 
+  init();
+
 printf("CIP:: %s, resolution = %zu\n", _name.c_str(), _resolution);
 }
 
@@ -55,6 +58,8 @@ void CIP::init()
   _type = Probe::CIP;
   _nDiodes = 64;
   _lrPpr = 1;
+
+  SetSampleArea();
 }
 
 

@@ -103,7 +103,7 @@ protected:
   void	AddToProbeListFromXML(const char *id);
 
   long long	posOfPhysicalRecord(size_t i) {
-	if (i > nIndices) fprintf(stderr, "currPhys exceeds nInices\n");
+	if (i > nIndices) fprintf(stderr, "currPhys exceeds nIndices\n");
 	return indices[i].index;
 	}
 

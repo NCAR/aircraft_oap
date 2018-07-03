@@ -49,8 +49,6 @@ extern MainCanvas	*mainPlot;
 extern Printer		*printerSetup;
 extern XmFile		*fileSel;
 
-struct recStats &ProcessRecord(P2d_rec *, float);
-
 /* Contains current N 2d records (for re-use by things like ViewHex */
 extern size_t nBuffs;
 extern P2d_rec pgFbuff[];
@@ -134,11 +132,17 @@ static void PrintPS(Widget w, XtPointer client, XtPointer call)
   pen.SetFont(16);
 
   for (size_t i = 0; i < nBuffs; ++i)
-    for (iter = probes.begin(); iter != probes.end(); ++iter)
+    {
+    iter = probes.begin();
+    for (size_t j = 0; iter != probes.end(); ++iter, ++j)
       {
       if (!strncmp(iter->second->Code(), (char*)&pgFbuff[i], 2) && iter->second->Display())
-        mainPlot->draw(&pgFbuff[i], ProcessRecord(&pgFbuff[i], version), version, j+1, &pen);
+        {
+        struct recStats stats = iter->second->ProcessRecord(&pgFbuff[i], version);
+        mainPlot->draw(&pgFbuff[i], stats, version, j+1, &pen);
+        }
       }
+    }
 
   cursor.PointerCursor(mainPlot->Wdgt());
 

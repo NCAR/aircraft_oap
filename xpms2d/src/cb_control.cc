@@ -168,22 +168,19 @@ void PageCurrent()
   if (fileMgr.NumberOfFiles() == 0)
     return;
 
+  const ProbeList& probes = fileMgr.CurrentFile()->Probes();
   cursor.WaitCursor(mainPlot->Wdgt());
 
+  // Loop back and find the record prior to first record to display
   for (size_t i = 0; i < mainPlot->maxRecords() &&
               fileMgr.CurrentFile()->PrevPMS2dRecord(&pgBbuff); )
     {
-    const ProbeList& probes = fileMgr.CurrentFile()->Probes();
-    ProbeList::const_iterator iter;
-    for (iter = probes.begin(); iter != probes.end(); ++iter)
-      if (!strncmp(iter->second->Code(), (char *)&pgBbuff, 2)
-          && iter->second->Display())
-        {
-        ++i;
-        }
+    if (probes.find(*(uint32_t *)&pgBbuff)->second->Display())
+      ++i;
     }
 
-  ProcessRecord(&pgBbuff, -1);
+  // and process it so stats on the first displayed records work.
+  probes.find(*(uint32_t *)&pgBbuff)->second->ProcessRecord(&pgBbuff, -1);
   cursor.PointerCursor(mainPlot->Wdgt());
   PageForward(NULL, NULL, NULL);
 
@@ -197,22 +194,17 @@ void PageBackward(Widget w, XtPointer client, XtPointer call)
   if (fileMgr.NumberOfFiles() == 0)
     return;
 
+  const ProbeList& probes = fileMgr.CurrentFile()->Probes();
   cursor.WaitCursor(mainPlot->Wdgt());
 
   for (size_t i = 0; i < (mainPlot->maxRecords() << 1) &&
               fileMgr.CurrentFile()->PrevPMS2dRecord(&pgBbuff); )
     {
-    const ProbeList& probes = fileMgr.CurrentFile()->Probes();
-    ProbeList::const_iterator iter;
-    for (iter = probes.begin(); iter != probes.end(); ++iter)
-      if (!strncmp(iter->second->Code(), (char *)&pgBbuff, 2)
-          && iter->second->Display())
-        {
-        ++i;
-        }
+    if (probes.find(*(uint32_t *)&pgBbuff)->second->Display())
+      ++i;
     }
 
-  ProcessRecord(&pgBbuff, -1);
+  probes.find(*(uint32_t *)&pgBbuff)->second->ProcessRecord(&pgBbuff, -1);
   cursor.PointerCursor(mainPlot->Wdgt());
   PageForward(NULL, NULL, NULL);
   controlWindow->UpdateTimeScale();
@@ -228,7 +220,8 @@ void SetCurrentFile(Widget w, XtPointer client, XtPointer call)
 /* -------------------------------------------------------------------- */
 void SetProbe(Widget w, XtPointer client, XtPointer call)
 {
-  fileMgr.CurrentFile()->Probes()[(long)client]->setDisplay(((XmToggleButtonCallbackStruct *)call)->set);
+  long probeNum = (long)client;
+  fileMgr.CurrentFile()->Probes().find((uint32_t)probeNum)->second->setDisplay(((XmToggleButtonCallbackStruct *)call)->set);
   PageCurrent();
 }
 
@@ -250,7 +243,12 @@ void SetAreaRatioRej(Widget w, XtPointer client, XtPointer call)
 void SetConcentration(Widget w, XtPointer client, XtPointer call)
 {
   controlWindow->SetConcentrationCalc((long)client);
-  SetSampleArea();
+
+  const ProbeList & probes = fileMgr.CurrentFile()->Probes();
+  ProbeList::const_iterator iter;
+  for (iter = probes.begin(); iter != probes.end(); ++iter)
+    iter->second->SetSampleArea();
+
   PageCurrent();
 }
 
