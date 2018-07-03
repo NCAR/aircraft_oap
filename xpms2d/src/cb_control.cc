@@ -175,12 +175,12 @@ void PageCurrent()
   for (size_t i = 0; i < mainPlot->maxRecords() &&
               fileMgr.CurrentFile()->PrevPMS2dRecord(&pgBbuff); )
     {
-    if (probes.find(*(uint32_t *)&pgBbuff)->second->Display())
+    if (probes.find(*(uint16_t *)&pgBbuff)->second->Display())
       ++i;
     }
 
   // and process it so stats on the first displayed records work.
-  probes.find(*(uint32_t *)&pgBbuff)->second->ProcessRecord(&pgBbuff, -1);
+  probes.find(*(uint16_t *)&pgBbuff)->second->ProcessRecord(&pgBbuff, -1);
   cursor.PointerCursor(mainPlot->Wdgt());
   PageForward(NULL, NULL, NULL);
 
@@ -200,11 +200,11 @@ void PageBackward(Widget w, XtPointer client, XtPointer call)
   for (size_t i = 0; i < (mainPlot->maxRecords() << 1) &&
               fileMgr.CurrentFile()->PrevPMS2dRecord(&pgBbuff); )
     {
-    if (probes.find(*(uint32_t *)&pgBbuff)->second->Display())
+    if (probes.find(*(uint16_t *)&pgBbuff)->second->Display())
       ++i;
     }
 
-  probes.find(*(uint32_t *)&pgBbuff)->second->ProcessRecord(&pgBbuff, -1);
+  probes.find(*(uint16_t *)&pgBbuff)->second->ProcessRecord(&pgBbuff, -1);
   cursor.PointerCursor(mainPlot->Wdgt());
   PageForward(NULL, NULL, NULL);
   controlWindow->UpdateTimeScale();
@@ -221,7 +221,7 @@ void SetCurrentFile(Widget w, XtPointer client, XtPointer call)
 void SetProbe(Widget w, XtPointer client, XtPointer call)
 {
   long probeNum = (long)client;
-  fileMgr.CurrentFile()->Probes().find((uint32_t)probeNum)->second->setDisplay(((XmToggleButtonCallbackStruct *)call)->set);
+  fileMgr.CurrentFile()->Probes().find((uint16_t)probeNum)->second->setDisplay(((XmToggleButtonCallbackStruct *)call)->set);
   PageCurrent();
 }
 

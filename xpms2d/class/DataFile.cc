@@ -187,19 +187,19 @@ void ADS_DataFile::initADS2()
     if (name[3] == 'P')
       {
       PMS2D *p = new PMS2D(_hdr, (Pms2 *)p, ++Pcnt);
-      _probeList[*(uint32_t *)p->Code()] = p;
+      _probeList[*(uint16_t *)p->Code()] = p;
       }
     else
     if (name[3] == 'C')
       {
       PMS2D *p = new PMS2D(_hdr, (Pms2 *)p, ++Ccnt);
-      _probeList[*(uint32_t *)p->Code()] = p;
+      _probeList[*(uint16_t *)p->Code()] = p;
       }
     else
     if (name[3] == 'H')
       {
       HVPS *p = new HVPS(_hdr, (Pms2 *)p, ++Hcnt);
-      _probeList[*(uint32_t *)p->Code()] = p;
+      _probeList[*(uint16_t *)p->Code()] = p;
       }
     }
 }
@@ -267,19 +267,21 @@ void ADS_DataFile::AddToProbeListFromXML(const char xml_entry[])
   switch (ProbeType((const unsigned char *)id))
   {
     case Probe::PMS2D:
-      _probeList[*(uint32_t *)id] = new PMS2D(xml_entry, PMS2_SIZE);
+      _probeList[*(uint16_t *)id] = new PMS2D(xml_entry, PMS2_SIZE);
       break;
     case Probe::FAST2D:
-      _probeList[*(uint32_t *)id] = new Fast2D(xml_entry, PMS2_SIZE);
+printf("  id=%x [%s]\n", *(uint16_t *)id, id);
+      _probeList[*(uint16_t *)id] = new Fast2D(xml_entry, PMS2_SIZE);
+printf("  id=%x [%s]\n", *(uint16_t *)id, id);
       break;
     case Probe::TWODS:
-      _probeList[*(uint32_t *)id] = new TwoDS(xml_entry, PMS2_SIZE);
+      _probeList[*(uint16_t *)id] = new TwoDS(xml_entry, PMS2_SIZE);
       break;
     case Probe::HVPS:
-      _probeList[*(uint32_t *)id] = new HVPS(xml_entry, PMS2_SIZE);
+      _probeList[*(uint16_t *)id] = new HVPS(xml_entry, PMS2_SIZE);
       break;
     case Probe::CIP:
-      _probeList[*(uint32_t *)id] = new CIP(xml_entry, PMS2_SIZE);
+      _probeList[*(uint16_t *)id] = new CIP(xml_entry, PMS2_SIZE);
       break;
     default:
       fprintf(stderr, "DataFile::initOAP, Unknown probe type, [%c%c]\n", id[0], id[1]);
@@ -296,13 +298,13 @@ void ADS_DataFile::AddToProbeList(const char *id)
   switch (ProbeType((const unsigned char *)id))
   {
     case Probe::PMS2D:
-      _probeList[*(uint32_t *)id] = new PMS2D(id);
+      _probeList[*(uint16_t *)id] = new PMS2D(id);
       break;
     case Probe::HVPS:
-      _probeList[*(uint32_t *)id] = new HVPS(id);
+      _probeList[*(uint16_t *)id] = new HVPS(id);
       break;
     case Probe::CIP:
-      _probeList[*(uint32_t *)id] = new CIP(id);
+      _probeList[*(uint16_t *)id] = new CIP(id);
       break;
     default:
       fprintf(stderr, "DataFile::initOAP, Unknown probe type, [%c%c]\n", id[0], id[1]);

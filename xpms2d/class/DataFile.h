@@ -34,7 +34,7 @@ COPYRIGHT:	University Corporation for Atmospheric Research, 1997
 #define PMS2_SIZE	4116
 #define PMS2_RECSIZE	(0x8000 / PMS2_SIZE) * PMS2_SIZE
 
-typedef std::map<uint32_t, Probe *> ProbeList;
+typedef std::map<uint16_t, Probe *> ProbeList;
 
 
 /* -------------------------------------------------------------------- */
