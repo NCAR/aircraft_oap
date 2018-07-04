@@ -137,10 +137,7 @@ static void PrintPS(Widget w, XtPointer client, XtPointer call)
     for (size_t j = 0; iter != probes.end(); ++iter, ++j)
       {
       if (!strncmp(iter->second->Code(), (char*)&pgFbuff[i], 2) && iter->second->Display())
-        {
-        struct recStats stats = iter->second->ProcessRecord(&pgFbuff[i], version);
-        mainPlot->draw(&pgFbuff[i], stats, version, j+1, &pen);
-        }
+        mainPlot->draw(&pgFbuff[i], iter->second, version, j+1, &pen);
       }
     }
 

@@ -18,9 +18,6 @@ COPYRIGHT:	University Corporation for Atmospheric Research, 1997-2014
 #include <DataFile.h>
 #include <raf/PostScript.h>
 
-#include <sys/types.h>
-#include <netinet/in.h>
-
 
 /* -------------------------------------------------------------------- */
 class MainCanvas : public Canvas {
@@ -33,7 +30,7 @@ public:
   void	SetTimingWords()	{ _timingWord = 1 - _timingWord; }
 
   void	reset(ADS_DataFile *file);
-  void	draw(P2d_rec *record, struct recStats stats, float hdrVer, int probeNum, PostScript *ps);
+  void	draw(P2d_rec *record, Probe *probe, float hdrVer, int probeNum, PostScript *ps);
   size_t maxRecords() const	{ return(maxRecs); }
   int	SpaceAvailable() const	{ return(Height() - y); }
 
@@ -46,11 +43,11 @@ public:
 
 
 protected:
-  void	drawPMS2D(P2d_rec *record, struct recStats &stats, float hdrVer, int probeNum, PostScript *ps);
-  void	drawFast2D(P2d_rec *record, struct recStats &stats, float hdrVer, int probeNum, PostScript *ps);
-  void	draw2DS(P2d_rec *record, struct recStats &stats, float hdrVer, int probeNum, PostScript *ps);
-  void	drawHVPS(P2d_rec *record, struct recStats &stats, float hdrVer, int probeNum, PostScript *ps);
-  void	drawCIP(P2d_rec *record, struct recStats &stats, float hdrVer, int probeNum, PostScript *ps);
+  void	drawPMS2D(P2d_rec *record, Probe *probe, float hdrVer, int probeNum, PostScript *ps);
+  void	drawFast2D(P2d_rec *record, Probe *probe, float hdrVer, int probeNum, PostScript *ps);
+  void	draw2DS(P2d_rec *record, Probe *probe, float hdrVer, int probeNum, PostScript *ps);
+  void	drawHVPS(P2d_rec *record, Probe *probe, float hdrVer, int probeNum, PostScript *ps);
+  void	drawCIP(P2d_rec *record, Probe *probe, float hdrVer, int probeNum, PostScript *ps);
 
   void	drawSlice(PostScript *ps, int i, const unsigned char *slice, size_t nDiodes);
   void	drawSlice(PostScript *ps, int i, uint32_t slice);

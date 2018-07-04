@@ -16,7 +16,7 @@ Histogram::Histogram(const Widget parent) : TextWindow(parent, "histogram")
 }
 
 /* -------------------------------------------------------------------- */
-void Histogram::AddLineItem(P2d_rec * record, recStats & output)
+void Histogram::AddLineItem(P2d_rec * record, recStats & stats)
 {
   char buffer[2000];
 
@@ -30,9 +30,9 @@ void Histogram::AddLineItem(P2d_rec * record, recStats & output)
 
   for (size_t i = 1; i <= n; ++i)
   {
-    sprintf(buffer, "%4d", output.accum[i]);
+    sprintf(buffer, "%4d", stats.accum[i]);
     Append(buffer);
   }
-  sprintf(buffer, ", total=%6d, accepted=%6d\n", output.nTimeBars, output.nonRejectParticles);
+  sprintf(buffer, ", total=%6d, accepted=%6d\n", stats.nTimeBars, stats.nonRejectParticles);
   Append(buffer);
 }

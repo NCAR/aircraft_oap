@@ -91,27 +91,27 @@ bool HVPS::isSyncWord(const unsigned char *p)
 /* -------------------------------------------------------------------- */
 struct recStats HVPS::ProcessRecord(const P2d_rec *record, float version)
 {
-  output.tBarElapsedtime = 0;
-  output.nTimeBars = 0;
-  output.nonRejectParticles = 0;
-  output.minBar = 10000000;
-  output.maxBar = 0;
-  output.area = 0;
-  output.DOFsampleVolume = 0.0;
-  output.duplicate = false;
-  output.particles.clear();
-  output.tas = (float)record->tas;
+  stats.tBarElapsedtime = 0;
+  stats.nTimeBars = 0;
+  stats.nonRejectParticles = 0;
+  stats.minBar = 10000000;
+  stats.maxBar = 0;
+  stats.area = 0;
+  stats.DOFsampleVolume = 0.0;
+  stats.duplicate = false;
+  stats.particles.clear();
+  stats.tas = (float)record->tas;
   if (version < 5.09)
-    output.tas = output.tas * 125 / 255;
+    stats.tas = stats.tas * 125 / 255;
 
-  output.thisTime = (record->hour * 3600 + record->minute * 60 + record->second) * 1000 + record->msec; // in milliseconds
+  stats.thisTime = (record->hour * 3600 + record->minute * 60 + record->second) * 1000 + record->msec; // in milliseconds
 
-  output.resolution = Resolution();
+  stats.resolution = Resolution();
 
-  output.frequency = output.resolution / output.tas;
-  output.SampleVolume = 203.0 * output.resolution * (256-80) * 1.0e-6;
-  output.SampleVolume *= (output.tas * TAS_COMPENSATE) *
-                        (output.DASelapsedTime - record->overld);
+  stats.frequency = stats.resolution / stats.tas;
+  stats.SampleVolume = 203.0 * stats.resolution * (256-80) * 1.0e-6;
+  stats.SampleVolume *= (stats.tas * TAS_COMPENSATE) *
+                        (stats.DASelapsedTime - record->overld);
 
   int		startTime;
   size_t	nBins, probeIdx = 0, shaded, unshaded;
@@ -138,7 +138,7 @@ struct recStats HVPS::ProcessRecord(const P2d_rec *record, float version)
       if (p[17] == 0x2043)
         offset = -1;
     else
-      return(output);
+      return(stats);
 
 /*
     for (i = 2 + offset; i < 18+offset; ++i)
@@ -161,25 +161,25 @@ printf("\n");
   
     printf("fives cntr = %d 2043 @ %d\n", cntr, toft);
 */
-    output.tas = -1.0;
-    return(output);
+    stats.tas = -1.0;
+    return(stats);
     }
 
 
   if (version == -1)	// This means set time stamp only
   {
-    prevTime[probeIdx] = output.thisTime;
+    prevTime[probeIdx] = stats.thisTime;
     memcpy((char *)&prevHdr[probeIdx], (char *)record, sizeof(P2d_hdr));
-    return(output);
+    return(stats);
   }
 
 #ifdef DEBUG
   printf("H1 %02d:%02d:%02d.%d - ", record->hour, record->minute, record->second, record->msec);
 #endif
-  output.DASelapsedTime = output.thisTime - prevTime[probeIdx];
+  stats.DASelapsedTime = stats.thisTime - prevTime[probeIdx];
 
   totalLiveTime = 0.0;
-  memset(output.accum, 0, sizeof(output.accum));
+  memset(stats.accum, 0, sizeof(stats.accum));
 
   switch (controlWindow->GetConcentration()) {
     case CENTER_IN:		nBins = 512; break;
@@ -187,9 +187,9 @@ printf("\n");
     }
 
 
-  output.SampleVolume = 203.0 * output.resolution * (256-80) * 1.0e-6;
-  output.SampleVolume *= (output.tas * TAS_COMPENSATE) *
-			(output.DASelapsedTime - record->overld);
+  stats.SampleVolume = 203.0 * stats.resolution * (256-80) * 1.0e-6;
+  stats.SampleVolume *= (stats.tas * TAS_COMPENSATE) *
+			(stats.DASelapsedTime - record->overld);
 
   // Scan record, compute tBarElapsedtime and stats.
   p = (unsigned short *)record->data;
@@ -232,14 +232,14 @@ printf("\n");
       cp->timeWord = (((uint32_t)p[0] << 14) & 0x0fffc000);
       cp->timeWord += (uint32_t)(p[1] & 0x3fff);
 //printf("  time out = %x\n", cp->timeWord);
-      cp->deltaTime = (uint32_t)((float)cp->timeWord * output.frequency);
-      output.minBar = std::min(output.minBar, cp->deltaTime);
-      output.maxBar = std::max(output.maxBar, cp->deltaTime);
+      cp->deltaTime = (uint32_t)((float)cp->timeWord * stats.frequency);
+      stats.minBar = std::min(stats.minBar, cp->deltaTime);
+      stats.maxBar = std::max(stats.maxBar, cp->deltaTime);
 
       if (!cp->timeReject)
-        output.tBarElapsedtime += cp->deltaTime;
+        stats.tBarElapsedtime += cp->deltaTime;
 
-      ++output.nTimeBars;
+      ++stats.nTimeBars;
 //printf("p[2] = %x\n", p[2]);
 
       /* Determine height of particle.
@@ -307,7 +307,7 @@ printf("\n");
        * particle consumed, so we can add it to the deadTime, so sampleVolume
        * can be reduced accordingly.
        */
-      cp->liveTime = (uint32_t)((float)(cp->w) * output.frequency);
+      cp->liveTime = (uint32_t)((float)(cp->w) * stats.frequency);
       cp->w = (size_t)((float)cp->w * TAS_COMPENSATE);
 
       cp->msec /= 1000;
@@ -316,9 +316,9 @@ printf("\n");
   printf("%06x %zu %zu\n", cp->timeWord, cp->w, cp->h);
 #endif
 
-      totalLiveTime += checkRejectionCriteria(cp, output);
+      totalLiveTime += checkRejectionCriteria(cp, stats);
 
-      output.particles.push_back(cp);
+      stats.particles.push_back(cp);
 
       startMilliSec += (cp->deltaTime + cp->liveTime);
 
@@ -333,58 +333,58 @@ printf("\n");
     pSlice = slice;
     }
 
-  output.tBarElapsedtime /= 1000;	// convert to milliseconds
+  stats.tBarElapsedtime /= 1000;	// convert to milliseconds
 
-  if (output.nTimeBars > 0)
-    output.meanBar = output.tBarElapsedtime / output.nTimeBars;
+  if (stats.nTimeBars > 0)
+    stats.meanBar = stats.tBarElapsedtime / stats.nTimeBars;
 
-//output.tBarElapsedtime += (uint32_t)(2048 * output.frequency);
+//stats.tBarElapsedtime += (uint32_t)(2048 * stats.frequency);
 
-  output.frequency /= 1000;
+  stats.frequency /= 1000;
 
 
   // Compute "science" data.
   totalLiveTime /= 1000000;	// convert to seconds
-  output.concentration = output.lwc = output.dbz = z = 0.0;
+  stats.concentration = stats.lwc = stats.dbz = z = 0.0;
 
   for (size_t i = 1; i < nBins; ++i)
     {
-    if (output.SampleVolume > 0.0)
+    if (stats.SampleVolume > 0.0)
       {
-      conc = output.accum[i] / (output.SampleVolume / 1000.0);
-//      output.DOFsampleVolume += (output.SampleVolume * totalLiveTime);
+      conc = stats.accum[i] / (stats.SampleVolume / 1000.0);
+//      stats.DOFsampleVolume += (stats.SampleVolume * totalLiveTime);
       }
     else
       conc = 0.0;
 
-//if (i < 30)printf("%d %d %f %f\n", i, output.accum[i], output.SampleVolume, totalLiveTime);
+//if (i < 30)printf("%d %d %f %f\n", i, stats.accum[i], stats.SampleVolume, totalLiveTime);
 
-    diameter = i * output.resolution;
-    output.lwc += conc * pow(diameter / 10, 3.0);
+    diameter = i * stats.resolution;
+    stats.lwc += conc * pow(diameter / 10, 3.0);
     z += conc * pow(diameter / 1000, 6.0);
 
-    output.concentration += conc;
+    stats.concentration += conc;
     }
 
-//  output.concentration = output.nTimeBars / (output.SampleVolume / 1000.0);
+//  stats.concentration = stats.nTimeBars / (stats.SampleVolume / 1000.0);
 
   z /= 1000;
-  output.lwc *= M_PI / 6.0 * 1.0e-6 * controlWindow->GetDensity();
+  stats.lwc *= M_PI / 6.0 * 1.0e-6 * controlWindow->GetDensity();
 
   if (z > 0.0)
-    output.dbz = 10.0 * log10(z * 1.0e6);
+    stats.dbz = 10.0 * log10(z * 1.0e6);
   else
-    output.dbz = -100.0;
+    stats.dbz = -100.0;
 
   // Save time for next round.
-  prevTime[probeIdx] = output.thisTime;
+  prevTime[probeIdx] = stats.thisTime;
   memcpy((char *)&prevHdr[probeIdx], (char *)record, sizeof(P2d_hdr));
 
   p = (unsigned short *)record->data;
   prevSlice[probeIdx][0] = p[2046];
   prevSlice[probeIdx][1] = p[2047];
 
-  return(output);
+  return(stats);
 
 }	// END PROCESSHVPS
 

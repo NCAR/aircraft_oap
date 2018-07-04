@@ -109,10 +109,15 @@ public:
 
   static const unsigned char BlankSlice[16];
 
+  /// Statistics and derived data from current ProcessRecord()
+  /// @TODO this should be refactored out of public.
+  struct recStats stats;
+
+
 protected:
 
   void computeDerived(double sv[], size_t nBins, double liveTime);
-  size_t checkRejectionCriteria(Particle * cp, recStats & output);
+  size_t checkRejectionCriteria(Particle * cp, recStats & stats);
 
   std::string	_name;
   std::string	_serialNumber;
@@ -126,9 +131,6 @@ protected:
 
   long	_lrLen;
   int	_lrPpr;
-
-  /// Statistics and deried data from current ProcessRecord()
-  struct recStats output;
 
   bool	_displayed;
 

@@ -141,8 +141,7 @@ void PageForward(Widget w, XtPointer client, XtPointer call)
       if (!strncmp(iter->second->Code(), buff_p, 2) && iter->second->Display())
         {
         pen->SetColor(color->GetColor(j+1));
-        mainPlot->draw(&pgFbuff[nBuffs],
-		iter->second->ProcessRecord(&pgFbuff[nBuffs], version), version, j+1, NULL);
+        mainPlot->draw(&pgFbuff[nBuffs], iter->second, version, j+1, NULL);
         pen->SetColor(color->GetColor(0));
         if (++nBuffs >= 20)
           {

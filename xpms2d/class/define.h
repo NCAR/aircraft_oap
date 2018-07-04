@@ -34,10 +34,6 @@ FULL NAME:	Include File to Include the Include Files
 const size_t MAX_DATAFILES = 2;
 const size_t MAX_PROBES = 4;
 
-const size_t nSlices_32bit = 1024;
-const size_t nSlices_64bit = 512;
-const size_t nSlices_128bit = 256;
-
 
 #include "Particle.h"
 

@@ -80,7 +80,7 @@ printf("Probe:: %s - %s, resolution = %zu\n", _name.c_str(), _code, _resolution)
 extern ControlWindow *controlWindow;
 
 /* -------------------------------------------------------------------- */
-size_t Probe::checkRejectionCriteria(Particle * cp, recStats & output)
+size_t Probe::checkRejectionCriteria(Particle * cp, recStats & stats)
 {
   if (controlWindow->RejectZeroAreaImage() && cp->w == 0 && cp->h == 0)
     cp->reject = true;
@@ -110,7 +110,7 @@ size_t Probe::checkRejectionCriteria(Particle * cp, recStats & output)
       if (cp->edge && cp->w >= cp->h * 2)
       {
 #ifdef DEBUG
-        printf("reject no-center rule #%d\n", output.nTimeBars);
+        printf("reject no-center rule #%d\n", stats.nTimeBars);
 #endif
         cp->reject = true;
       }
@@ -122,7 +122,7 @@ size_t Probe::checkRejectionCriteria(Particle * cp, recStats & output)
       if (cp->edge && (float)cp->h / cp->w < 0.2)
       {
 #ifdef DEBUG
-        printf("reject 20%% rule #%d\n", output.nTimeBars);
+        printf("reject 20%% rule #%d\n", stats.nTimeBars);
 #endif
         cp->reject = true;
       }
@@ -141,9 +141,9 @@ size_t Probe::checkRejectionCriteria(Particle * cp, recStats & output)
 
   if (!cp->reject && bin < maxDiodes)
   {
-    output.accum[bin]++;
-    output.area += cp->area;
-    output.nonRejectParticles++;
+    stats.accum[bin]++;
+    stats.area += cp->area;
+    stats.nonRejectParticles++;
     return cp->liveTime + cp->deltaTime;
   }
   return 0;
@@ -153,32 +153,32 @@ size_t Probe::checkRejectionCriteria(Particle * cp, recStats & output)
 void Probe::computeDerived(double sampleVolume[], size_t nBins, double totalLiveTime)
 {
   double	diameter, z, conc;
-  output.concentration = output.lwc = output.dbz = z = 0.0;
+  stats.concentration = stats.lwc = stats.dbz = z = 0.0;
 
   for (size_t i = 1; i < nBins; ++i)
     {
     if (sampleVolume[i] > 0.0)
       {
-      conc = output.accum[i] / (sampleVolume[i] * totalLiveTime);
-      output.DOFsampleVolume += (sampleVolume[i] * totalLiveTime);
+      conc = stats.accum[i] / (sampleVolume[i] * totalLiveTime);
+      stats.DOFsampleVolume += (sampleVolume[i] * totalLiveTime);
       }
     else
       conc = 0.0;
 
-    diameter = i * output.resolution;
-    output.lwc += conc * pow(diameter / 10, 3.0);
+    diameter = i * stats.resolution;
+    stats.lwc += conc * pow(diameter / 10, 3.0);
     z += conc * pow(diameter / 1000, 6.0);
 
-    output.concentration += conc;
+    stats.concentration += conc;
     }
 
   z /= 1000;
-  output.lwc *= M_PI / 6.0 * 1.0e-6 * controlWindow->GetDensity();
+  stats.lwc *= M_PI / 6.0 * 1.0e-6 * controlWindow->GetDensity();
 
   if (z > 0.0)
-    output.dbz = 10.0 * log10(z * 1.0e6);
+    stats.dbz = 10.0 * log10(z * 1.0e6);
   else
-    output.dbz = -100.0;
+    stats.dbz = -100.0;
 }
 
 

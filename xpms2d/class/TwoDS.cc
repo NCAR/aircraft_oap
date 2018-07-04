@@ -60,35 +60,35 @@ struct recStats TwoDS::ProcessRecord(const P2d_rec *record, float version)
 {
   char	*probeID = (char *)&record->id;
 
-  output.tBarElapsedtime = 0;
-  output.nTimeBars = 0;
-  output.nonRejectParticles = 0;
-  output.minBar = 10000000;
-  output.maxBar = 0;
-  output.area = 0;
-  output.DOFsampleVolume = 0.0;
-  output.duplicate = false;
-  output.particles.clear();
-  output.tas = (float)record->tas;
+  stats.tBarElapsedtime = 0;
+  stats.nTimeBars = 0;
+  stats.nonRejectParticles = 0;
+  stats.minBar = 10000000;
+  stats.maxBar = 0;
+  stats.area = 0;
+  stats.DOFsampleVolume = 0.0;
+  stats.duplicate = false;
+  stats.particles.clear();
+  stats.tas = (float)record->tas;
   if (version < 5.09)
-    output.tas = output.tas * 125 / 255;
+    stats.tas = stats.tas * 125 / 255;
 
-  output.thisTime = (record->hour * 3600 + record->minute * 60 + record->second) * 1000 + record->msec; // in milliseconds
+  stats.thisTime = (record->hour * 3600 + record->minute * 60 + record->second) * 1000 + record->msec; // in milliseconds
 
-  output.resolution = Resolution();
+  stats.resolution = Resolution();
 
   if (probeID[0] == 'P')
-    output.SampleVolume = 261.0 * (output.resolution * nDiodes() / 1000);
+    stats.SampleVolume = 261.0 * (stats.resolution * nDiodes() / 1000);
   else
   if (probeID[0] == 'C')
-    output.SampleVolume = 61.0 * (output.resolution * nDiodes() / 1000);
+    stats.SampleVolume = 61.0 * (stats.resolution * nDiodes() / 1000);
 
-  output.frequency = output.resolution / output.tas;
-  output.SampleVolume *= output.tas *
-                        (output.DASelapsedTime - record->overld) * 0.001;
+  stats.frequency = stats.resolution / stats.tas;
+  stats.SampleVolume *= stats.tas *
+                        (stats.DASelapsedTime - record->overld) * 0.001;
 
 
-  return output;
+  return stats;
 
 }	// END PROCESSTWODS
 

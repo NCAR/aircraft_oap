@@ -64,32 +64,32 @@ struct recStats Fast2D::ProcessRecord(const P2d_rec *record, float version)
 {
   char	*probeID = (char *)&record->id;
 
-  output.tBarElapsedtime = 0;
-  output.nTimeBars = 0;
-  output.nonRejectParticles = 0;
-  output.minBar = 10000000;
-  output.maxBar = 0;
-  output.area = 0;
-  output.DOFsampleVolume = 0.0;
-  output.duplicate = false;
-  output.particles.clear();
-  output.tas = (float)record->tas;
+  stats.tBarElapsedtime = 0;
+  stats.nTimeBars = 0;
+  stats.nonRejectParticles = 0;
+  stats.minBar = 10000000;
+  stats.maxBar = 0;
+  stats.area = 0;
+  stats.DOFsampleVolume = 0.0;
+  stats.duplicate = false;
+  stats.particles.clear();
+  stats.tas = (float)record->tas;
   if (version < 5.09)
-    output.tas = output.tas * 125 / 255;
+    stats.tas = stats.tas * 125 / 255;
 
-  output.thisTime = (record->hour * 3600 + record->minute * 60 + record->second) * 1000 + record->msec; // in milliseconds
+  stats.thisTime = (record->hour * 3600 + record->minute * 60 + record->second) * 1000 + record->msec; // in milliseconds
 
-  output.resolution = Resolution();
+  stats.resolution = Resolution();
 
   if (probeID[0] == 'P')
-    output.SampleVolume = 261.0 * (output.resolution * nDiodes() / 1000);
+    stats.SampleVolume = 261.0 * (stats.resolution * nDiodes() / 1000);
   else
   if (probeID[0] == 'C')
-    output.SampleVolume = 61.0 * (output.resolution * nDiodes() / 1000);
+    stats.SampleVolume = 61.0 * (stats.resolution * nDiodes() / 1000);
 
-  output.frequency = output.resolution / output.tas;
-  output.SampleVolume *= output.tas *
-                        (output.DASelapsedTime - record->overld) * 0.001;
+  stats.frequency = stats.resolution / stats.tas;
+  stats.SampleVolume *= stats.tas *
+                        (stats.DASelapsedTime - record->overld) * 0.001;
 
 
   int		startTime, overload = 0;
@@ -108,19 +108,19 @@ struct recStats Fast2D::ProcessRecord(const P2d_rec *record, float version)
 
   if (version == -1)    // This means set time stamp only
   {
-    prevTime[probeIdx] = output.thisTime;
+    prevTime[probeIdx] = stats.thisTime;
     memcpy((char *)&prevHdr[probeIdx], (char *)record, sizeof(P2d_hdr));
-    return(output);
+    return(stats);
   }
 
 #ifdef DEBUG
   printf("C4 %02d:%02d:%02d.%d - ", record->hour, record->minute, record->second, record->msec);
 #endif
 
-  output.DASelapsedTime = output.thisTime - prevTime[probeIdx];
+  stats.DASelapsedTime = stats.thisTime - prevTime[probeIdx];
 
   totalLiveTime = 0.0;
-  memset(output.accum, 0, sizeof(output.accum));
+  memset(stats.accum, 0, sizeof(stats.accum));
 
   switch (controlWindow->GetConcentration()) {
     case CENTER_IN:             nBins = 128; break;
@@ -129,7 +129,7 @@ struct recStats Fast2D::ProcessRecord(const P2d_rec *record, float version)
     }
 
   for (size_t i = 0; i < nBins; ++i)
-    sampleVolume[i] = output.tas * (sampleAreaC[i] * 2) * 0.001;
+    sampleVolume[i] = stats.tas * (sampleAreaC[i] * 2) * 0.001;
   
   // Scan record, compute tBarElapsedtime and stats.
   p = record->data;
@@ -138,7 +138,7 @@ struct recStats Fast2D::ProcessRecord(const P2d_rec *record, float version)
   startMilliSec = prevHdr[probeIdx].msec;
 
   // Loop through all slices in record.
-  for (size_t i = 0; i < nSlices_64bit; ++i, p += sizeof(long long))
+  for (size_t i = 0; i < nSlices(); ++i, p += sizeof(long long))
   {
     slice = ntohll((long long *)p);
   
@@ -173,8 +173,8 @@ struct recStats Fast2D::ProcessRecord(const P2d_rec *record, float version)
         cp->msec = msec % 1000;
         cp->deltaTime = cp->timeWord - prevTimeWord;
         cp->timeWord /= 1000;	// Store as millseconds for this probe, since this is not a 48 bit word
-        totalLiveTime += checkRejectionCriteria(cp, output);
-        output.particles.push_back(cp);
+        totalLiveTime += checkRejectionCriteria(cp, stats);
+        stats.particles.push_back(cp);
       }
 
       prevTimeWord = thisTimeWord;
@@ -182,9 +182,9 @@ struct recStats Fast2D::ProcessRecord(const P2d_rec *record, float version)
       // Start new particle.
       cp = new Particle();
 
-      ++output.nTimeBars;
-      output.minBar = std::min(output.minBar, cp->deltaTime);
-      output.maxBar = std::max(output.maxBar, cp->deltaTime);
+      ++stats.nTimeBars;
+      stats.minBar = std::min(stats.minBar, cp->deltaTime);
+      stats.maxBar = std::max(stats.maxBar, cp->deltaTime);
       continue;
     }
 
@@ -232,22 +232,22 @@ struct recStats Fast2D::ProcessRecord(const P2d_rec *record, float version)
      * particle consumed, so we can add it to the deadTime, so sampleVolume
      * can be reduced accordingly.
      */
-    cp->liveTime = (unsigned long)((float)(cp->w) * output.frequency);
+    cp->liveTime = (unsigned long)((float)(cp->w) * stats.frequency);
 
 #ifdef DEBUG
   printf("%06x %zu %zu\n", cp->timeWord, cp->w, cp->h);
 #endif
   }
 
-  output.SampleVolume *= output.tas *
-                        (output.DASelapsedTime - overload) * 0.001;
+  stats.SampleVolume *= stats.tas *
+                        (stats.DASelapsedTime - overload) * 0.001;
 
-  output.tBarElapsedtime = (prevTimeWord - firstTimeWord) / 1000;
+  stats.tBarElapsedtime = (prevTimeWord - firstTimeWord) / 1000;
 
-  if (output.nTimeBars > 0)
-    output.meanBar = output.tBarElapsedtime / output.nTimeBars;
+  if (stats.nTimeBars > 0)
+    stats.meanBar = stats.tBarElapsedtime / stats.nTimeBars;
 
-  output.frequency /= 1000;
+  stats.frequency /= 1000;
 
 
   // Compute "science" data.
@@ -256,10 +256,10 @@ struct recStats Fast2D::ProcessRecord(const P2d_rec *record, float version)
   computeDerived(sampleVolume, nBins, totalLiveTime);
 
   // Save time for next round.
-  prevTime[probeIdx] = output.thisTime;
+  prevTime[probeIdx] = stats.thisTime;
   memcpy((char *)&prevHdr[probeIdx], (char *)record, sizeof(P2d_hdr));
 
-  return(output);
+  return(stats);
 
 }	// END PROCESSFAST2D
 

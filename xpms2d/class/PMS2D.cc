@@ -101,32 +101,32 @@ struct recStats PMS2D::ProcessRecord(const P2d_rec *record, float version)
 {
   char	*probeID = (char *)&record->id;
 
-  output.tBarElapsedtime = 0;
-  output.nTimeBars = 0;
-  output.nonRejectParticles = 0;
-  output.minBar = 10000000;
-  output.maxBar = 0;
-  output.area = 0;
-  output.DOFsampleVolume = 0.0;
-  output.duplicate = false;
-  output.particles.clear();
-  output.tas = (float)record->tas;
+  stats.tBarElapsedtime = 0;
+  stats.nTimeBars = 0;
+  stats.nonRejectParticles = 0;
+  stats.minBar = 10000000;
+  stats.maxBar = 0;
+  stats.area = 0;
+  stats.DOFsampleVolume = 0.0;
+  stats.duplicate = false;
+  stats.particles.clear();
+  stats.tas = (float)record->tas;
   if (version < 5.09)
-    output.tas = output.tas * 125 / 255;
+    stats.tas = stats.tas * 125 / 255;
 
-  output.thisTime = (record->hour * 3600 + record->minute * 60 + record->second) * 1000 + record->msec; // in milliseconds
+  stats.thisTime = (record->hour * 3600 + record->minute * 60 + record->second) * 1000 + record->msec; // in milliseconds
 
-  output.resolution = Resolution();
+  stats.resolution = Resolution();
 
   if (probeID[0] == 'P')
-    output.SampleVolume = 261.0 * (output.resolution * nDiodes() / 1000);
+    stats.SampleVolume = 261.0 * (stats.resolution * nDiodes() / 1000);
   else
   if (probeID[0] == 'C')
-    output.SampleVolume = 61.0 * (output.resolution * nDiodes() / 1000);
+    stats.SampleVolume = 61.0 * (stats.resolution * nDiodes() / 1000);
 
-  output.frequency = output.resolution / output.tas;
-  output.SampleVolume *= output.tas *
-                        (output.DASelapsedTime - record->overld) * 0.001;
+  stats.frequency = stats.resolution / stats.tas;
+  stats.SampleVolume *= stats.tas *
+                        (stats.DASelapsedTime - record->overld) * 0.001;
 
 
   int		startTime, overload;
@@ -152,9 +152,9 @@ struct recStats PMS2D::ProcessRecord(const P2d_rec *record, float version)
 
   if (version == -1)	// This means set time stamp only
   {
-    prevTime[probeIdx] = output.thisTime;
+    prevTime[probeIdx] = stats.thisTime;
     memcpy((char *)&prevHdr[probeIdx], (char *)record, sizeof(P2d_hdr));
-    return(output);
+    return(stats);
   }
 
 #ifdef DEBUG
@@ -162,10 +162,10 @@ struct recStats PMS2D::ProcessRecord(const P2d_rec *record, float version)
 #endif
 
   overload = prevHdr[probeIdx].overld;
-  output.DASelapsedTime = output.thisTime - prevTime[probeIdx];
+  stats.DASelapsedTime = stats.thisTime - prevTime[probeIdx];
 
   totalLiveTime = 0.0;
-  memset(output.accum, 0, sizeof(output.accum));
+  memset(stats.accum, 0, sizeof(stats.accum));
 
   switch (controlWindow->GetConcentration()) {
     case CENTER_IN:		nBins = 64; break;
@@ -180,12 +180,12 @@ struct recStats PMS2D::ProcessRecord(const P2d_rec *record, float version)
   if (probeID[0] == 'P')
     {
     for (size_t i = 0; i < nBins; ++i)
-      sampleVolume[i] = output.tas * sampleAreaP[i] * 0.001;
+      sampleVolume[i] = stats.tas * sampleAreaP[i] * 0.001;
     }
   else
     {
     for (size_t i = 0; i < nBins; ++i)
-      sampleVolume[i] = output.tas * sampleAreaC[i] * 0.001;
+      sampleVolume[i] = stats.tas * sampleAreaC[i] * 0.001;
     }
 
   // Scan record, compute tBarElapsedtime and stats.
@@ -222,14 +222,14 @@ struct recStats PMS2D::ProcessRecord(const P2d_rec *record, float version)
 
       if ((ntohl(p[i]) & 0x00ffffff) != 0x00ffffff)
         cp->timeWord = ntohl(p[i]) & 0x00ffffff;
-      cp->deltaTime = (uint32_t)((float)cp->timeWord * output.frequency);
-      output.minBar = std::min(output.minBar, cp->deltaTime);
-      output.maxBar = std::max(output.maxBar, cp->deltaTime);
+      cp->deltaTime = (uint32_t)((float)cp->timeWord * stats.frequency);
+      stats.minBar = std::min(stats.minBar, cp->deltaTime);
+      stats.maxBar = std::max(stats.maxBar, cp->deltaTime);
 
       if (!cp->timeReject)
-        output.tBarElapsedtime += cp->deltaTime;
+        stats.tBarElapsedtime += cp->deltaTime;
 
-      ++output.nTimeBars;
+      ++stats.nTimeBars;
 
       /* Determine height of particle.
        */
@@ -278,7 +278,7 @@ struct recStats PMS2D::ProcessRecord(const P2d_rec *record, float version)
        * particle consumed, so we can add it to the deadTime, so sampleVolume
        * can be reduced accordingly.
        */
-      cp->liveTime = (uint32_t)((float)(cp->w + 3) * output.frequency);
+      cp->liveTime = (uint32_t)((float)(cp->w + 3) * stats.frequency);
 
       cp->msec /= 1000;
 
@@ -291,9 +291,9 @@ struct recStats PMS2D::ProcessRecord(const P2d_rec *record, float version)
       if (controlWindow->RejectZeroAreaImage() && cp->w == 1 && cp->h == 1)
         cp->reject = true;
 
-      totalLiveTime += checkRejectionCriteria(cp, output);
+      totalLiveTime += checkRejectionCriteria(cp, stats);
 
-      output.particles.push_back(cp);
+      stats.particles.push_back(cp);
 
       startMilliSec += (cp->deltaTime + cp->liveTime);
 
@@ -309,13 +309,13 @@ struct recStats PMS2D::ProcessRecord(const P2d_rec *record, float version)
     pSlice = p[i-1];
     }
 
-output.tBarElapsedtime += (uint32_t)(nSlices() * output.frequency);
+stats.tBarElapsedtime += (uint32_t)(nSlices() * stats.frequency);
 
-  if (output.nTimeBars > 0)
-    output.meanBar = output.tBarElapsedtime / output.nTimeBars;
+  if (stats.nTimeBars > 0)
+    stats.meanBar = stats.tBarElapsedtime / stats.nTimeBars;
 
-  output.tBarElapsedtime /= 1000;	// convert to milliseconds
-  output.frequency /= 1000;
+  stats.tBarElapsedtime /= 1000;	// convert to milliseconds
+  stats.frequency /= 1000;
 
 
   // Compute "science" data.
@@ -324,13 +324,13 @@ output.tBarElapsedtime += (uint32_t)(nSlices() * output.frequency);
   computeDerived(sampleVolume, nBins, totalLiveTime);
 
   // Save time for next round.
-  prevTime[probeIdx] = output.thisTime;
+  prevTime[probeIdx] = stats.thisTime;
   memcpy((char *)&prevHdr[probeIdx], (char *)record, sizeof(P2d_hdr));
 
   p = (uint32_t *)record->data;
   prevSlice[probeIdx] = p[1023];
 
-  return(output);
+  return(stats);
 
 }	// END PROCESSPMS2D
 

@@ -22,7 +22,7 @@ class Histogram : public TextWindow
 public:
 	Histogram(const Widget parent);
 
-  void	AddLineItem(P2d_rec * record, recStats & output);
+  void	AddLineItem(P2d_rec * record, recStats & stats);
 
 };
 

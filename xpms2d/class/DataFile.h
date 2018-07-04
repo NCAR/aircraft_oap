@@ -87,8 +87,11 @@ public:
 
   bool	isValidProbe(const unsigned char *pr) const;
 
+  Probe *ProbeP(uint32_t id)	{ return _probeList[id]; }
+
   const ProbeList&
   Probes() const { return _probeList; }
+
 
 protected:
   enum HeaderType { NoHeader, ADS2, OAP };

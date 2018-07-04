@@ -21,6 +21,10 @@ COPYRIGHT:	University Corporation for Atmospheric Research, 1997-2001
 #include <algorithm>
 #include <vector>
 
+const size_t nSlices_32bit = 1024;
+const size_t nSlices_64bit = 512;
+const size_t nSlices_128bit = 256;
+
 static P2d_rec PtestRecord, CtestRecord, HtestRecord;
 
 static uint32_t PtestParticle[] = {
@@ -848,6 +852,7 @@ void ADS_DataFile::SwapPMS2D(P2d_rec *buff)
     if (ProbeType((unsigned char *)buff) == Probe::TWODS)
     {
       unsigned char tmp[16], *cp = (unsigned char *)buff->data;
+      // 256 slices at 16 bytes each.
       for (size_t i = 0; i < nSlices_128bit; ++i, cp += 16)
       {
         for (size_t j = 0; j < 16; ++j)
@@ -856,20 +861,11 @@ void ADS_DataFile::SwapPMS2D(P2d_rec *buff)
       }
     }
     else
-    if (ProbeType((unsigned char *)buff) == Probe::FAST2D)	// Gonna keep this Big Endian
-      ;
-    else
     if (ProbeType((unsigned char *)buff) == Probe::HVPS)
     {
       sp = (unsigned short *)buff->data;
       for (size_t i = 0; i < 2048; ++i, ++sp)
         *sp = ntohs(*sp);
-    }
-    else
-    {
-//      p = (uint32_t *)buff->data;
-//      for (size_t i = 0; i < nSlices_32bit; ++i, ++p)
-//        *p = ntohl(*p);
     }
   }
 
