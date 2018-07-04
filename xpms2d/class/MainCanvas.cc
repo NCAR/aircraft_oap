@@ -409,7 +409,7 @@ void MainCanvas::drawPMS2D(P2d_rec *record, struct recStats &stats, float versio
 
     prevSlice = p[i-1];
     }
-printf(" drawP : %d\n", record->data);
+
   if (_displayMode == DIAGNOSTIC)
     drawDiodeHistogram(record, nDiodes, syncWord);
   else
@@ -446,7 +446,7 @@ void MainCanvas::drawFast2D(P2d_rec *record, struct recStats &stats, float versi
    * in the record, then come in here and do a raw display of the record.
    * Only color code timing (green) and overload (blue) words.
    */
-  if (_displayMode == RAW_RECORD || (cp = stats.particles[0]) == NULL)
+  if (_displayMode == RAW_RECORD || stats.particles.size() == 0)
   {
     p = record->data;
     for (size_t i = 0; i < nSlices_64bit; ++i, p += sizeof(long long))	// 2DC and/or 2DP
@@ -476,10 +476,10 @@ void MainCanvas::drawFast2D(P2d_rec *record, struct recStats &stats, float versi
     }
   }
 
-//  if ((cp = (Particle *)stats.particles.Front()) == NULL)
-//    return;
 
   p = record->data;
+  cp = stats.particles[0];
+
   for (size_t i = 0; i < nSlices_64bit; )
   {
     if (cp == 0 || cp->reject)
@@ -595,7 +595,7 @@ void MainCanvas::draw2DS(P2d_rec *record, struct recStats &stats, float version,
    * in the record, then come in here and do a raw display of the record.
    * Only color code timing (green) and overload (blue) words.
    */
-  if (_displayMode == RAW_RECORD || (cp = stats.particles[0]) == NULL)
+  if (_displayMode == RAW_RECORD || stats.particles.size() == 0)
   {
     p = (unsigned char *)record->data;
     for (size_t i = 0; i < nSlices_128bit; ++i, p += 16)
@@ -736,7 +736,7 @@ void MainCanvas::drawCIP(P2d_rec *record, struct recStats &stats, float version,
    * in the record, then come in here and do a raw display of the record.
    * Only color code timing (green) and overload (blue) words.
    */
-  if (_displayMode == RAW_RECORD || (cp = stats.particles[0]) == NULL)
+  if (_displayMode == RAW_RECORD || stats.particles.size() == 0)
   {
     p = (unsigned long long *)image;
     for (size_t i = 0; i < nSlices; ++i, ++p)
@@ -765,6 +765,7 @@ void MainCanvas::drawCIP(P2d_rec *record, struct recStats &stats, float version,
 //    return;
 
   p = (unsigned long long *)image;
+  cp = stats.particles[0];
   for (size_t i = 0; i < nSlices; )
   {
     if (cp == 0 || cp->reject)
