@@ -34,6 +34,10 @@ COPYRIGHT:	University Corporation for Atmospheric Research, 1997
 #define PMS2_SIZE	4116
 #define PMS2_RECSIZE	(0x8000 / PMS2_SIZE) * PMS2_SIZE
 
+/**
+ * Probe mapping uses the 2 byte key/id in every data record.  Once
+ * you have a record, you can get the Probe info from the ProbeList.
+ */
 typedef std::map<uint16_t, Probe *> ProbeList;
 
 
