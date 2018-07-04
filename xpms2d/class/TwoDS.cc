@@ -42,6 +42,7 @@ void TwoDS::init()
 {
   _type = Probe::TWODS;
   _nDiodes = 128;
+  _nSlices = P2D_DATA / _nDiodes * 8;
   _lrPpr = 1;
 }
 

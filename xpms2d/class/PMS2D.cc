@@ -82,6 +82,7 @@ void PMS2D::init()
 {
   _type = Probe::PMS2D;
   _nDiodes = 32;
+  _nSlices = P2D_DATA / _nDiodes * 8;
   _lrPpr = 1;
 
   SetSampleArea();

@@ -43,12 +43,10 @@ CIP::CIP(const char name[]) : Probe(name)
   _name.push_back('\0');
   strcpy(_code, _name.c_str());
 
-  init();
-  _lrLen = 4116;
-
   _resolution = 25;
 
   init();
+  _lrLen = 4116;
 
 printf("CIP:: %s, resolution = %zu\n", _name.c_str(), _resolution);
 }
@@ -57,6 +55,7 @@ void CIP::init()
 {
   _type = Probe::CIP;
   _nDiodes = 64;
+  _nSlices = P2D_DATA / _nDiodes * 8;
   _lrPpr = 1;
 
   SetSampleArea();
