@@ -101,59 +101,42 @@ struct recStats PMS2D::ProcessRecord(const P2d_rec *record, float version)
 {
   char	*probeID = (char *)&record->id;
 
-  stats.tBarElapsedtime = 0;
-  stats.nTimeBars = 0;
-  stats.nonRejectParticles = 0;
-  stats.minBar = 10000000;
-  stats.maxBar = 0;
-  stats.area = 0;
-  stats.DOFsampleVolume = 0.0;
-  stats.duplicate = false;
-  stats.particles.clear();
-  stats.tas = (float)record->tas;
+  ClearStats(record);
+  stats.DASelapsedTime = stats.thisTime - _prevTime;
+
   if (version < 5.09)
     stats.tas = stats.tas * 125 / 255;
 
-  stats.thisTime = (record->hour * 3600 + record->minute * 60 + record->second) * 1000 + record->msec; // in milliseconds
-
-  stats.resolution = Resolution();
-
   if (probeID[0] == 'P')
-    stats.SampleVolume = 261.0 * (stats.resolution * nDiodes() / 1000);
+    stats.SampleVolume = 261.0 * (Resolution() * nDiodes() / 1000);
   else
   if (probeID[0] == 'C')
-    stats.SampleVolume = 61.0 * (stats.resolution * nDiodes() / 1000);
+    stats.SampleVolume = 61.0 * (Resolution() * nDiodes() / 1000);
 
-  stats.frequency = stats.resolution / stats.tas;
+  stats.frequency = Resolution() / stats.tas;
   stats.SampleVolume *= stats.tas *
                         (stats.DASelapsedTime - record->overld) * 0.001;
 
 
   int		startTime, overload;
-  size_t	nBins, probeIdx;
+  size_t	nBins;
   uint32_t	*p, slice, pSlice, syncWord, startMilliSec;
   bool		overloadAdded = false;
   double	sampleVolume[maxDiodes], totalLiveTime;
 
-  static P2d_hdr	prevHdr[MAX_PROBES];
-  static uint32_t	prevTime[MAX_PROBES] = { 1,1,1,1 };
-  static uint32_t	prevSlice[MAX_PROBES];
+  static uint32_t	prevSlice;
 
   if (version < 3.35)
     syncWord = SyncWordMask;
   else
     syncWord = StandardSyncWord;
 
-  probeIdx = ((char *)&record->id)[1] - '1';
-  if (probeID[0] == 'C')
-    probeIdx += 2;
-
 //if (record->msec == 397) debug = true; else debug = false;
 
   if (version == -1)	// This means set time stamp only
   {
-    prevTime[probeIdx] = stats.thisTime;
-    memcpy((char *)&prevHdr[probeIdx], (char *)record, sizeof(P2d_hdr));
+    _prevTime = stats.thisTime;
+    memcpy((char *)&_prevHdr, (char *)record, sizeof(P2d_hdr));
     return(stats);
   }
 
@@ -161,8 +144,7 @@ struct recStats PMS2D::ProcessRecord(const P2d_rec *record, float version)
   printf("%02d:%02d:%02d.%d - ", record->hour, record->minute, record->second, record->msec);
 #endif
 
-  overload = prevHdr[probeIdx].overld;
-  stats.DASelapsedTime = stats.thisTime - prevTime[probeIdx];
+  overload = _prevHdr.overld;
 
   totalLiveTime = 0.0;
   memset(stats.accum, 0, sizeof(stats.accum));
@@ -190,10 +172,10 @@ struct recStats PMS2D::ProcessRecord(const P2d_rec *record, float version)
 
   // Scan record, compute tBarElapsedtime and stats.
   p = (uint32_t *)record->data;
-  pSlice = prevSlice[probeIdx];
+  pSlice = prevSlice;
 
-  startTime = prevTime[probeIdx] / 1000;
-  startMilliSec = prevHdr[probeIdx].msec * 1000;
+  startTime = _prevTime / 1000;
+  startMilliSec = _prevHdr.msec * 1000;
 
   // Loop through all slices in record.
   for (size_t i = 0; i < nSlices(); )
@@ -324,11 +306,11 @@ stats.tBarElapsedtime += (uint32_t)(nSlices() * stats.frequency);
   computeDerived(sampleVolume, nBins, totalLiveTime);
 
   // Save time for next round.
-  prevTime[probeIdx] = stats.thisTime;
-  memcpy((char *)&prevHdr[probeIdx], (char *)record, sizeof(P2d_hdr));
+  _prevTime = stats.thisTime;
+  memcpy((char *)&_prevHdr, (char *)record, sizeof(P2d_hdr));
 
   p = (uint32_t *)record->data;
-  prevSlice[probeIdx] = p[1023];
+  prevSlice = p[1023];
 
   return(stats);
 

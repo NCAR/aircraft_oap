@@ -56,7 +56,7 @@ extern ControlWindow	*controlWindow;
 /* -------------------------------------------------------------------- */
 bool Fast2D::isSyncWord(const unsigned char *p)
 {
-  return *p & 0x55;
+  return memcmp(p, (void *)&SyncString, 2) == 0;
 }
 
 /* -------------------------------------------------------------------- */
@@ -64,36 +64,25 @@ struct recStats Fast2D::ProcessRecord(const P2d_rec *record, float version)
 {
   char	*probeID = (char *)&record->id;
 
-  stats.tBarElapsedtime = 0;
-  stats.nTimeBars = 0;
-  stats.nonRejectParticles = 0;
-  stats.minBar = 10000000;
-  stats.maxBar = 0;
-  stats.area = 0;
-  stats.DOFsampleVolume = 0.0;
-  stats.duplicate = false;
-  stats.particles.clear();
-  stats.tas = (float)record->tas;
+  ClearStats(record);
   if (version < 5.09)
     stats.tas = stats.tas * 125 / 255;
 
-  stats.thisTime = (record->hour * 3600 + record->minute * 60 + record->second) * 1000 + record->msec; // in milliseconds
-
-  stats.resolution = Resolution();
+  stats.DASelapsedTime = stats.thisTime - _prevTime;
+  stats.frequency = Resolution() / stats.tas;
 
   if (probeID[0] == 'P')
-    stats.SampleVolume = 261.0 * (stats.resolution * nDiodes() / 1000);
+    stats.SampleVolume = 261.0 * (Resolution() * nDiodes() / 1000);
   else
   if (probeID[0] == 'C')
-    stats.SampleVolume = 61.0 * (stats.resolution * nDiodes() / 1000);
+    stats.SampleVolume = 61.0 * (Resolution() * nDiodes() / 1000);
 
-  stats.frequency = stats.resolution / stats.tas;
   stats.SampleVolume *= stats.tas *
                         (stats.DASelapsedTime - record->overld) * 0.001;
 
 
   int		startTime, overload = 0;
-  size_t	nBins, probeIdx = 0;
+  size_t	nBins;
   const unsigned char	*p;
   unsigned long long	slice;
   unsigned long	startMilliSec;
@@ -101,23 +90,19 @@ struct recStats Fast2D::ProcessRecord(const P2d_rec *record, float version)
 
   static Particle	*cp = new Particle();
 
-  static P2d_hdr	prevHdr[MAX_PROBES];
-  static unsigned long	prevTime[MAX_PROBES] = { 1,1,1,1 };
   unsigned long long	firstTimeWord = 0;
   static unsigned long long prevTimeWord = 0;
 
   if (version == -1)    // This means set time stamp only
   {
-    prevTime[probeIdx] = stats.thisTime;
-    memcpy((char *)&prevHdr[probeIdx], (char *)record, sizeof(P2d_hdr));
+    _prevTime = stats.thisTime;
+    memcpy((char *)&_prevHdr, (char *)record, sizeof(P2d_hdr));
     return(stats);
   }
 
 #ifdef DEBUG
   printf("C4 %02d:%02d:%02d.%d - ", record->hour, record->minute, record->second, record->msec);
 #endif
-
-  stats.DASelapsedTime = stats.thisTime - prevTime[probeIdx];
 
   totalLiveTime = 0.0;
   memset(stats.accum, 0, sizeof(stats.accum));
@@ -134,8 +119,8 @@ struct recStats Fast2D::ProcessRecord(const P2d_rec *record, float version)
   // Scan record, compute tBarElapsedtime and stats.
   p = record->data;
 
-  startTime = prevTime[probeIdx] / 1000;
-  startMilliSec = prevHdr[probeIdx].msec;
+  startTime = _prevTime / 1000;
+  startMilliSec = _prevHdr.msec;
 
   // Loop through all slices in record.
   for (size_t i = 0; i < nSlices(); ++i, p += sizeof(long long))
@@ -256,8 +241,8 @@ struct recStats Fast2D::ProcessRecord(const P2d_rec *record, float version)
   computeDerived(sampleVolume, nBins, totalLiveTime);
 
   // Save time for next round.
-  prevTime[probeIdx] = stats.thisTime;
-  memcpy((char *)&prevHdr[probeIdx], (char *)record, sizeof(P2d_hdr));
+  _prevTime = stats.thisTime;
+  memcpy((char *)&_prevHdr, (char *)record, sizeof(P2d_hdr));
 
   return(stats);
 

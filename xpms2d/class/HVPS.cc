@@ -91,30 +91,16 @@ bool HVPS::isSyncWord(const unsigned char *p)
 /* -------------------------------------------------------------------- */
 struct recStats HVPS::ProcessRecord(const P2d_rec *record, float version)
 {
-  stats.tBarElapsedtime = 0;
-  stats.nTimeBars = 0;
-  stats.nonRejectParticles = 0;
-  stats.minBar = 10000000;
-  stats.maxBar = 0;
-  stats.area = 0;
-  stats.DOFsampleVolume = 0.0;
-  stats.duplicate = false;
-  stats.particles.clear();
-  stats.tas = (float)record->tas;
-  if (version < 5.09)
-    stats.tas = stats.tas * 125 / 255;
+  ClearStats(record);
+  stats.DASelapsedTime = stats.thisTime - _prevTime;
 
-  stats.thisTime = (record->hour * 3600 + record->minute * 60 + record->second) * 1000 + record->msec; // in milliseconds
-
-  stats.resolution = Resolution();
-
-  stats.frequency = stats.resolution / stats.tas;
-  stats.SampleVolume = 203.0 * stats.resolution * (256-80) * 1.0e-6;
+  stats.frequency = Resolution() / stats.tas;
+  stats.SampleVolume = 203.0 * Resolution() * (256-80) * 1.0e-6;
   stats.SampleVolume *= (stats.tas * TAS_COMPENSATE) *
                         (stats.DASelapsedTime - record->overld);
 
   int		startTime;
-  size_t	nBins, probeIdx = 0, shaded, unshaded;
+  size_t	nBins, shaded, unshaded;
   unsigned short	*p, slice, ppSlice, pSlice;
   uint32_t	startMilliSec;
   bool		overloadAdded = false;
@@ -122,9 +108,7 @@ struct recStats HVPS::ProcessRecord(const P2d_rec *record, float version)
 
   Particle	*cp;
 
-  static P2d_hdr	prevHdr[MAX_PROBES];
-  static uint32_t	prevTime[MAX_PROBES] = { 1,1,1,1 };
-  static unsigned short	prevSlice[MAX_PROBES][2];
+  static unsigned short	prevSlice[2];
 
   p = (unsigned short *)record->data;
 
@@ -168,15 +152,14 @@ printf("\n");
 
   if (version == -1)	// This means set time stamp only
   {
-    prevTime[probeIdx] = stats.thisTime;
-    memcpy((char *)&prevHdr[probeIdx], (char *)record, sizeof(P2d_hdr));
+    _prevTime = stats.thisTime;
+    memcpy((char *)&_prevHdr, (char *)record, sizeof(P2d_hdr));
     return(stats);
   }
 
 #ifdef DEBUG
   printf("H1 %02d:%02d:%02d.%d - ", record->hour, record->minute, record->second, record->msec);
 #endif
-  stats.DASelapsedTime = stats.thisTime - prevTime[probeIdx];
 
   totalLiveTime = 0.0;
   memset(stats.accum, 0, sizeof(stats.accum));
@@ -187,17 +170,17 @@ printf("\n");
     }
 
 
-  stats.SampleVolume = 203.0 * stats.resolution * (256-80) * 1.0e-6;
+  stats.SampleVolume = 203.0 * Resolution() * (256-80) * 1.0e-6;
   stats.SampleVolume *= (stats.tas * TAS_COMPENSATE) *
 			(stats.DASelapsedTime - record->overld);
 
   // Scan record, compute tBarElapsedtime and stats.
   p = (unsigned short *)record->data;
-  ppSlice = prevSlice[probeIdx][0];
-  pSlice = prevSlice[probeIdx][1];
+  ppSlice = prevSlice[0];
+  pSlice = prevSlice[1];
 
-  startTime = prevTime[probeIdx] / 1000;
-  startMilliSec = prevHdr[probeIdx].msec * 1000;
+  startTime = _prevTime / 1000;
+  startMilliSec = _prevHdr.msec * 1000;
 
   // Loop through all slices in record.
   for (size_t i = 0; i < 2048; ++i, ++p)
@@ -359,7 +342,7 @@ printf("\n");
 
 //if (i < 30)printf("%d %d %f %f\n", i, stats.accum[i], stats.SampleVolume, totalLiveTime);
 
-    diameter = i * stats.resolution;
+    diameter = i * Resolution();
     stats.lwc += conc * pow(diameter / 10, 3.0);
     z += conc * pow(diameter / 1000, 6.0);
 
@@ -377,12 +360,12 @@ printf("\n");
     stats.dbz = -100.0;
 
   // Save time for next round.
-  prevTime[probeIdx] = stats.thisTime;
-  memcpy((char *)&prevHdr[probeIdx], (char *)record, sizeof(P2d_hdr));
+  _prevTime = stats.thisTime;
+  memcpy((char *)&_prevHdr, (char *)record, sizeof(P2d_hdr));
 
   p = (unsigned short *)record->data;
-  prevSlice[probeIdx][0] = p[2046];
-  prevSlice[probeIdx][1] = p[2047];
+  prevSlice[0] = p[2046];
+  prevSlice[1] = p[2047];
 
   return(stats);
 

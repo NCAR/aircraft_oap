@@ -116,6 +116,7 @@ public:
 
 protected:
 
+  void ClearStats(const P2d_rec *record);
   void computeDerived(double sv[], size_t nBins, double liveTime);
   size_t checkRejectionCriteria(Particle * cp, recStats & stats);
 
@@ -133,6 +134,10 @@ protected:
   int	_lrPpr;
 
   bool	_displayed;
+
+  // Store prevtime and hdr for ProcessRecord, so we can compute elapsed time.
+  P2d_hdr	_prevHdr;
+  int		_prevTime;
 
   static const float diodeDiameter;
 

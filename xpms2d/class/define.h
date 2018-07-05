@@ -39,9 +39,9 @@ const size_t MAX_PROBES = 4;
 
 struct recStats
 {
-  uint32_t thisTime;		// Time of this record in secs since midnight.
-  uint32_t DASelapsedTime;	// milliseconds.
-  uint32_t tBarElapsedtime;	// milliseconds.
+  int	thisTime;		// Time of this record in secs since midnight.
+  int	DASelapsedTime;		// milliseconds.
+  int	tBarElapsedtime;	// milliseconds.
 
   int	nTimeBars;		// n Particles.
   int	accum[1024];
@@ -51,7 +51,7 @@ struct recStats
   double	SampleVolume, DOFsampleVolume;
   double	tas, concentration, lwc, dbz;
   float		frequency;              // TAS clock.
-  int		resolution, area;
+  int		area;
 
   std::vector<Particle *>	particles;
 

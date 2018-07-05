@@ -67,56 +67,38 @@ extern ControlWindow	*controlWindow;
 /* -------------------------------------------------------------------- */
 bool CIP::isSyncWord(const unsigned char *p)
 {
-  return *p & 0x55;
+  return memcmp(p, (void *)&SyncWord, sizeof(SyncWord)) == 0;
 }
 
 /* -------------------------------------------------------------------- */
 struct recStats CIP::ProcessRecord(const P2d_rec *record, float version)
 {
-  stats.tBarElapsedtime = 0;
-  stats.nTimeBars = 0;
-  stats.nonRejectParticles = 0;
-  stats.minBar = 10000000;
-  stats.maxBar = 0;
-  stats.area = 0;
-  stats.DOFsampleVolume = 0.0;
-  stats.duplicate = false;
-  stats.particles.clear();
-  stats.tas = (float)record->tas;
-  if (version < 5.09)
-    stats.tas = stats.tas * 125 / 255;
+  ClearStats(record);
+  stats.DASelapsedTime = stats.thisTime - _prevTime;
 
-  stats.thisTime = (record->hour * 3600 + record->minute * 60 + record->second) * 1000 + record->msec; // in milliseconds
-
-  stats.resolution = Resolution();
-
-  stats.frequency = stats.resolution / stats.tas;
+  stats.frequency = Resolution() / stats.tas;
 
   int		startTime, overload = 0;
-  size_t	nBins, probeIdx = 0;
+  size_t	nBins;
   unsigned long long	*p, slice;
   unsigned long		startMilliSec;
   double	sampleVolume[maxDiodes], totalLiveTime;
 
   static Particle	*cp = new Particle();
 
-  static P2d_hdr	prevHdr[MAX_PROBES];
-  static unsigned long	prevTime[MAX_PROBES] = { 1,1,1,1 };
   unsigned long long	firstTimeWord = 0;
   static unsigned long long prevTimeWord = 0;
 
   if (version == -1)    // This means set time stamp only
   {
-    prevTime[probeIdx] = stats.thisTime;
-    memcpy((char *)&prevHdr[probeIdx], (char *)record, sizeof(P2d_hdr));
+    _prevTime = stats.thisTime;
+    memcpy((char *)&_prevHdr, (char *)record, sizeof(P2d_hdr));
     return(stats);
   }
 
 //#ifdef DEBUG
   printf("C8 %02d:%02d:%02d.%d - \n", record->hour, record->minute, record->second, record->msec);
 //#endif
-
-  stats.DASelapsedTime = stats.thisTime - prevTime[probeIdx];
 
   totalLiveTime = 0.0;
   memset(stats.accum, 0, sizeof(stats.accum));
@@ -140,8 +122,8 @@ for (int j = 0; j < 512; ++j, ++o)
   // Scan record, compute tBarElapsedtime and stats.
   p = (unsigned long long *)image;
 
-  startTime = prevTime[probeIdx] / 1000;
-  startMilliSec = prevHdr[probeIdx].msec;
+  startTime = _prevTime / 1000;
+  startMilliSec = _prevHdr.msec;
 
   // Loop through all slices in record.
   for (size_t i = 0; i < nSlices; ++i, ++p)
@@ -252,9 +234,8 @@ printf("CIP sync in process\n");
   computeDerived(sampleVolume, nBins, totalLiveTime);
 
   // Save time for next round.
-  prevTime[probeIdx] = stats.thisTime;
-  memcpy((char *)&prevHdr[probeIdx], (char *)record, sizeof(P2d_hdr));
-
+  _prevTime = stats.thisTime;
+  memcpy((char *)&_prevHdr, (char *)record, sizeof(P2d_hdr));
 
   return(stats);
 

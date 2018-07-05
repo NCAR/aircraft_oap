@@ -245,7 +245,7 @@ memset(part1, 0, sizeof(part1));
 {
   float		res2;
 
-  res2 = (float)probe->stats.resolution * probe->stats.resolution / 1000000;
+  res2 = (float)probe->Resolution() * probe->Resolution() / 1000000;
 
   switch (_displayMode)
     {

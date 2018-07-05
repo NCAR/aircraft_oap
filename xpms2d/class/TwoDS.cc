@@ -17,8 +17,6 @@ const unsigned char TwoDS::SyncString[] = { 0xaa, 0xaa, 0xaa };
 const unsigned char TwoDS::OverldString[] = { 0x55, 0x55, 0xaa };
 
 
-#define TimeWord_Microseconds(slice)      ((slice & 0x000000ffffffffffLL) / 12)
-
 
 /* -------------------------------------------------------------------- */
 TwoDS::TwoDS(const char xml_entry[], int recSize) : Probe(xml_entry, recSize)
@@ -34,6 +32,8 @@ TwoDS::TwoDS(const char xml_entry[], int recSize) : Probe(xml_entry, recSize)
   _name += XMLgetAttributeValue(xml_entry, "suffix");
 
   _resolution = atoi(XMLgetAttributeValue(xml_entry, "resolution").c_str());
+
+  init();
 
 printf("TwoDS:: id=%s, name=%s, resolution=%zu\n", _code, _name.c_str(), _resolution);
 }
@@ -60,34 +60,22 @@ struct recStats TwoDS::ProcessRecord(const P2d_rec *record, float version)
 {
   char	*probeID = (char *)&record->id;
 
-  stats.tBarElapsedtime = 0;
-  stats.nTimeBars = 0;
-  stats.nonRejectParticles = 0;
-  stats.minBar = 10000000;
-  stats.maxBar = 0;
-  stats.area = 0;
-  stats.DOFsampleVolume = 0.0;
-  stats.duplicate = false;
-  stats.particles.clear();
-  stats.tas = (float)record->tas;
-  if (version < 5.09)
-    stats.tas = stats.tas * 125 / 255;
-
-  stats.thisTime = (record->hour * 3600 + record->minute * 60 + record->second) * 1000 + record->msec; // in milliseconds
-
-  stats.resolution = Resolution();
+  ClearStats(record);
+  stats.DASelapsedTime = stats.thisTime - _prevTime;
 
   if (probeID[0] == 'P')
-    stats.SampleVolume = 261.0 * (stats.resolution * nDiodes() / 1000);
+    stats.SampleVolume = 261.0 * (Resolution() * nDiodes() / 1000);
   else
   if (probeID[0] == 'C')
-    stats.SampleVolume = 61.0 * (stats.resolution * nDiodes() / 1000);
+    stats.SampleVolume = 61.0 * (Resolution() * nDiodes() / 1000);
 
-  stats.frequency = stats.resolution / stats.tas;
+  stats.frequency = Resolution() / stats.tas;
   stats.SampleVolume *= stats.tas *
                         (stats.DASelapsedTime - record->overld) * 0.001;
 
 
+  _prevTime = stats.thisTime;
+  memcpy((char *)&_prevHdr, (char *)record, sizeof(P2d_hdr));
   return stats;
 
 }	// END PROCESSTWODS
