@@ -58,6 +58,14 @@ void CIP::init()
   _nSlices = P2D_DATA / _nDiodes * 8;
   _lrPpr = 1;
 
+  if (_code[0] == 'C')  // CIP
+    _armWidth = 100.0;
+
+  if (_code[0] == 'P')  // PIP
+    _armWidth = 260.0;
+
+  _sampleArea = _armWidth * Resolution() * nDiodes() * 0.001;
+
   SetSampleArea();
 }
 
@@ -73,7 +81,7 @@ bool CIP::isSyncWord(const unsigned char *p)
 /* -------------------------------------------------------------------- */
 struct recStats CIP::ProcessRecord(const P2d_rec *record, float version)
 {
-  char		*probeID = (char *)&record->id;
+//  char		*probeID = (char *)&record->id;
   int		startTime, overload = 0;
   size_t	nBins;
   unsigned long long	*p, slice;
@@ -88,12 +96,7 @@ struct recStats CIP::ProcessRecord(const P2d_rec *record, float version)
   ClearStats(record);
   stats.DASelapsedTime = stats.thisTime - _prevTime;
   stats.frequency = Resolution() / stats.tas;
-
-  if (probeID[0] == 'P')		// PIP
-    stats.SampleVolume = 260.0 * (Resolution() * nDiodes() / 1000);
-  else
-  if (probeID[0] == 'C')		// CIP
-    stats.SampleVolume = 100.0 * (Resolution() * nDiodes() / 1000);
+  stats.SampleVolume = SampleArea() * stats.tas;
 
   if (version == -1)    // This means set time stamp only
   {
@@ -112,7 +115,7 @@ struct recStats CIP::ProcessRecord(const P2d_rec *record, float version)
   switch (controlWindow->GetConcentration()) {
     case CENTER_IN:             nBins = 128; break;
     case RECONSTRUCTION:        nBins = 256; break;
-    default:                    nBins = 64;
+    default:                    nBins = nDiodes();
     }
 
   for (size_t i = 0; i < nBins; ++i)
@@ -223,8 +226,7 @@ printf("CIP sync in process\n");
 #endif
   }
 
-  stats.SampleVolume *= stats.tas *
-                        (stats.DASelapsedTime - overload) * 0.001;
+  stats.SampleVolume *= (stats.DASelapsedTime - overload) * 0.001;
 
   stats.tBarElapsedtime = (prevTimeWord - firstTimeWord) / 1000;
 

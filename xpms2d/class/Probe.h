@@ -101,6 +101,8 @@ public:
    */
   void SetSampleArea();
 
+  /// Crude sample area based on armWidth, nDiodes, and resolution.
+  float SampleArea() const	{ return _sampleArea; }
 
   /// @returns Logical-record length.  Exabyte hangover.
   long lrLen() const		{ return _lrLen; }
@@ -127,6 +129,8 @@ protected:
   ProbeType	_type;
   size_t	_resolution;
   size_t	_nDiodes;
+  float		_armWidth;
+  float		_sampleArea;	// crude sample area
   /// Number of slices per 4k buffer.
   size_t	_nSlices;
 

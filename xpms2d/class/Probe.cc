@@ -217,15 +217,17 @@ static float DOF2dC[] = { 0.0, 1.56, 6.25, 14.06, 25.0, 39.06, 56.25,
 
 void Probe::SetSampleArea()
 {
-  float	dia, eaw, dof;
+  float	dia, dof;
+  float	eawC = nDiodes() * Resolution() / 1000.0;
+  float	eawP = nDiodes() * Resolution() / 1000.0;
 
   switch (controlWindow->GetConcentration())
     {
     case BASIC:
       for (size_t i = 1; i < maxDiodes; ++i)
         {
-        sampleAreaC[i] = 61.0 * 0.8;
-        sampleAreaP[i] = 261.0 * 6.4;
+        sampleAreaC[i] = 61.0 * eawC;
+        sampleAreaP[i] = 261.0 * eawP;
         }
 
       break;
@@ -243,8 +245,8 @@ void Probe::SetSampleArea()
     case CENTER_IN:
       for (size_t i = 1; i <= nDiodes()<<1; ++i)
         {
-        sampleAreaC[i] = DOF2dC[i] * 0.8;
-        sampleAreaP[i] = DOF2dP[i] * 6.4;
+        sampleAreaC[i] = DOF2dC[i] * eawC;
+        sampleAreaP[i] = DOF2dP[i] * eawP;
 //printf("%e %e\n", sampleAreaC[i], sampleAreaP[i]);
         }
 
@@ -253,26 +255,26 @@ void Probe::SetSampleArea()
     case RECONSTRUCTION:
       for (size_t i = 1; i <= maxDiodes; ++i)
         {
-        dia = (float)i * 25;
-        eaw = ((nDiodes() * 25) + (2 * (dia / 2 - dia / 7.2414))) * 0.001;
+        dia = (float)i * Resolution();
+        eawC = ((nDiodes() * Resolution()) + (2 * (dia / 2 - dia / 7.2414))) * 0.001;
 
         if (i < 60)
           dof = DOF2dC[i];
         else
           dof = DOF2dC[60];
 
-        sampleAreaC[i] = dof * eaw;
+        sampleAreaC[i] = dof * eawC;
 
 
-        dia = (float)i * 200;
-        eaw = ((nDiodes() * 200) + (2 * (dia / 2 - dia / 7.2414))) * 0.001;
+        dia = (float)i * 200;	// 200um
+        eawP = ((nDiodes() * 200) + (2 * (dia / 2 - dia / 7.2414))) * 0.001;
 
         if (i < 60)
           dof = DOF2dP[i];
         else
           dof = DOF2dP[60];
 
-        sampleAreaP[i] = dof * eaw;
+        sampleAreaP[i] = dof * eawP;
 //printf("%d %f %f %e %e %e %e\n", i, (float)i * 25, dia, DOF2dC[i] * 0.8, sampleAreaC[i], DOF2dP[i] * 6.4, sampleAreaP[i]);
         }
 

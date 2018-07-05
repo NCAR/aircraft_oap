@@ -47,6 +47,14 @@ void Fast2D::init()
   _nSlices = P2D_DATA / _nDiodes * 8;
   _lrPpr = 1;
 
+  if (_code[0] == 'C')  // 2DC
+    _armWidth = 61.0;
+
+  if (_code[0] == 'P')  // 2DP
+    _armWidth = 261.0;
+
+  _sampleArea = _armWidth * Resolution() * nDiodes() * 0.001;
+
   SetSampleArea();
 }
 
@@ -62,7 +70,7 @@ bool Fast2D::isSyncWord(const unsigned char *p)
 /* -------------------------------------------------------------------- */
 struct recStats Fast2D::ProcessRecord(const P2d_rec *record, float version)
 {
-  char		*probeID = (char *)&record->id;
+//  char		*probeID = (char *)&record->id;
   int		startTime, overload = 0;
   size_t	nBins;
   const unsigned char	*p;
@@ -75,22 +83,12 @@ struct recStats Fast2D::ProcessRecord(const P2d_rec *record, float version)
   unsigned long long	firstTimeWord = 0;
   static unsigned long long prevTimeWord = 0;
 
-
   ClearStats(record);
-  if (version < 5.09)
-    stats.tas = stats.tas * 125 / 255;
 
   stats.DASelapsedTime = stats.thisTime - _prevTime;
   stats.frequency = Resolution() / stats.tas;
 
-  if (probeID[0] == 'P')
-    stats.SampleVolume = 261.0 * (Resolution() * nDiodes() / 1000);
-  else
-  if (probeID[0] == 'C')
-    stats.SampleVolume = 61.0 * (Resolution() * nDiodes() / 1000);
-
-  stats.SampleVolume *= stats.tas *
-                        (stats.DASelapsedTime - record->overld) * 0.001;
+  stats.SampleVolume = SampleArea() * stats.tas;
 
 
   if (version == -1)    // This means set time stamp only
@@ -110,7 +108,7 @@ struct recStats Fast2D::ProcessRecord(const P2d_rec *record, float version)
   switch (controlWindow->GetConcentration()) {
     case CENTER_IN:             nBins = 128; break;
     case RECONSTRUCTION:        nBins = 256; break;
-    default:                    nBins = 64;
+    default:                    nBins = nDiodes();
     }
 
   for (size_t i = 0; i < nBins; ++i)
@@ -224,8 +222,7 @@ struct recStats Fast2D::ProcessRecord(const P2d_rec *record, float version)
 #endif
   }
 
-  stats.SampleVolume *= stats.tas *
-                        (stats.DASelapsedTime - overload) * 0.001;
+  stats.SampleVolume *= (stats.DASelapsedTime - overload) * 0.001;
 
   stats.tBarElapsedtime = (prevTimeWord - firstTimeWord) / 1000;
 

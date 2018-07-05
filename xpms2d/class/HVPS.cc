@@ -78,6 +78,7 @@ void HVPS::init()
   _type = Probe::HVPS;
   _nDiodes = 256;
   _lrPpr = 1;
+  _armWidth = 203.0;
 }
 
 extern ControlWindow	*controlWindow;
@@ -106,7 +107,7 @@ struct recStats HVPS::ProcessRecord(const P2d_rec *record, float version)
   stats.DASelapsedTime = stats.thisTime - _prevTime;
 
   stats.frequency = Resolution() / stats.tas;
-  stats.SampleVolume = 203.0 * Resolution() * (256-80) * 1.0e-6;
+  stats.SampleVolume = _armWidth * Resolution() * (256-80) * 1.0e-6;
   stats.SampleVolume *= (stats.tas * TAS_COMPENSATE) *
                         (stats.DASelapsedTime - record->overld);
 
@@ -169,10 +170,6 @@ printf("\n");
     default:			nBins = 256;
     }
 
-
-  stats.SampleVolume = 203.0 * Resolution() * (256-80) * 1.0e-6;
-  stats.SampleVolume *= (stats.tas * TAS_COMPENSATE) *
-			(stats.DASelapsedTime - record->overld);
 
   // Scan record, compute tBarElapsedtime and stats.
   p = (unsigned short *)record->data;

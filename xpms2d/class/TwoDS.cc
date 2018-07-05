@@ -44,6 +44,11 @@ void TwoDS::init()
   _nDiodes = 128;
   _nSlices = P2D_DATA / _nDiodes * 8;
   _lrPpr = 1;
+  _armWidth = 50.8;
+
+  _sampleArea = _armWidth * Resolution() * nDiodes() * 0.001;
+
+  SetSampleArea();
 }
 
 
@@ -52,23 +57,37 @@ extern ControlWindow	*controlWindow;
 /* -------------------------------------------------------------------- */
 bool TwoDS::isSyncWord(const unsigned char *p)
 {
-  return *p & 0x55;
+  return *p & 0x55;	// Wrong
 }
 
 /* -------------------------------------------------------------------- */
 struct recStats TwoDS::ProcessRecord(const P2d_rec *record, float version)
 {
+  int		startTime, overload = 0;
+  size_t	nBins;
+  double	sampleVolume[maxDiodes], totalLiveTime;
+
+  static Particle	*cp = new Particle();
+
   ClearStats(record);
   stats.DASelapsedTime = stats.thisTime - _prevTime;
 
-  stats.SampleVolume = 50.8 * (Resolution() * nDiodes() / 1000);
-
   stats.frequency = Resolution() / stats.tas;
-  stats.SampleVolume *= stats.tas *
+  stats.SampleVolume = SampleArea() * stats.tas *
                         (stats.DASelapsedTime - record->overld) * 0.001;
 
+  switch (controlWindow->GetConcentration()) {
+    case CENTER_IN:		nBins = 256; break;
+    case RECONSTRUCTION:	nBins = 512; break;
+    default:			nBins = nDiodes();
+    }
+
+  for (size_t i = 0; i < nBins; ++i)
+    sampleVolume[i] = stats.tas * (sampleAreaC[i] * 2) * 0.001;
 
 
+
+  computeDerived(sampleVolume, nBins, totalLiveTime);
 
   _prevTime = stats.thisTime;
   memcpy((char *)&_prevHdr, (char *)record, sizeof(P2d_hdr));

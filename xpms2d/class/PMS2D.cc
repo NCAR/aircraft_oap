@@ -85,6 +85,14 @@ void PMS2D::init()
   _nSlices = P2D_DATA / _nDiodes * 8;
   _lrPpr = 1;
 
+  if (_code[0] == 'C')	// 2DC
+    _armWidth = 61.0;
+
+  if (_code[0] == 'P')	// 2DP
+    _armWidth = 261.0;
+
+  _sampleArea = _armWidth * Resolution() * nDiodes() * 0.001;
+
   SetSampleArea();
 }
 
@@ -114,16 +122,9 @@ struct recStats PMS2D::ProcessRecord(const P2d_rec *record, float version)
   if (version < 5.09)
     stats.tas = stats.tas * 125 / 255;
 
-  if (probeID[0] == 'P')
-    stats.SampleVolume = 261.0 * (Resolution() * nDiodes() / 1000);
-  else
-  if (probeID[0] == 'C')
-    stats.SampleVolume = 61.0 * (Resolution() * nDiodes() / 1000);
-
   stats.frequency = Resolution() / stats.tas;
-  stats.SampleVolume *= stats.tas *
+  stats.SampleVolume = SampleArea() * stats.tas *
                         (stats.DASelapsedTime - record->overld) * 0.001;
-
 
   if (version < 3.35)
     syncWord = SyncWordMask;
@@ -151,7 +152,7 @@ struct recStats PMS2D::ProcessRecord(const P2d_rec *record, float version)
   switch (controlWindow->GetConcentration()) {
     case CENTER_IN:		nBins = 64; break;
     case RECONSTRUCTION:	nBins = 128; break;
-    default:			nBins = 32;
+    default:			nBins = nDiodes();
     }
 
 
