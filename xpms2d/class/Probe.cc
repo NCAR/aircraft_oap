@@ -80,6 +80,22 @@ printf("Probe:: %s - %s, resolution = %zu\n", _name.c_str(), _code, _resolution)
 extern ControlWindow *controlWindow;
 
 /* -------------------------------------------------------------------- */
+void Probe::ClearStats(const P2d_rec *record)
+{
+  stats.tBarElapsedtime = 0;
+  stats.nTimeBars = 0;
+  stats.nonRejectParticles = 0;
+  stats.minBar = 10000000;
+  stats.maxBar = 0;
+  stats.area = 0;
+  stats.DOFsampleVolume = 0.0;
+  stats.duplicate = false;
+  stats.particles.clear();
+  stats.tas = (float)record->tas;
+  stats.thisTime = (record->hour * 3600 + record->minute * 60 + record->second) * 1000 + record->msec; // in milliseconds
+}
+
+/* -------------------------------------------------------------------- */
 size_t Probe::checkRejectionCriteria(Particle * cp, recStats & stats)
 {
   if (controlWindow->RejectZeroAreaImage() && cp->w == 0 && cp->h == 0)
@@ -165,7 +181,7 @@ void Probe::computeDerived(double sampleVolume[], size_t nBins, double totalLive
     else
       conc = 0.0;
 
-    diameter = i * stats.resolution;
+    diameter = i * Resolution();
     stats.lwc += conc * pow(diameter / 10, 3.0);
     z += conc * pow(diameter / 1000, 6.0);
 
