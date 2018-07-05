@@ -62,7 +62,19 @@ bool Fast2D::isSyncWord(const unsigned char *p)
 /* -------------------------------------------------------------------- */
 struct recStats Fast2D::ProcessRecord(const P2d_rec *record, float version)
 {
-  char	*probeID = (char *)&record->id;
+  char		*probeID = (char *)&record->id;
+  int		startTime, overload = 0;
+  size_t	nBins;
+  const unsigned char	*p;
+  unsigned long long	slice;
+  unsigned long	startMilliSec;
+  double	sampleVolume[maxDiodes], totalLiveTime;
+
+  static Particle	*cp = new Particle();
+
+  unsigned long long	firstTimeWord = 0;
+  static unsigned long long prevTimeWord = 0;
+
 
   ClearStats(record);
   if (version < 5.09)
@@ -80,18 +92,6 @@ struct recStats Fast2D::ProcessRecord(const P2d_rec *record, float version)
   stats.SampleVolume *= stats.tas *
                         (stats.DASelapsedTime - record->overld) * 0.001;
 
-
-  int		startTime, overload = 0;
-  size_t	nBins;
-  const unsigned char	*p;
-  unsigned long long	slice;
-  unsigned long	startMilliSec;
-  double	sampleVolume[maxDiodes], totalLiveTime;
-
-  static Particle	*cp = new Particle();
-
-  unsigned long long	firstTimeWord = 0;
-  static unsigned long long prevTimeWord = 0;
 
   if (version == -1)    // This means set time stamp only
   {

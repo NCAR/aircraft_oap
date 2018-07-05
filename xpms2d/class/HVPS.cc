@@ -91,14 +91,6 @@ bool HVPS::isSyncWord(const unsigned char *p)
 /* -------------------------------------------------------------------- */
 struct recStats HVPS::ProcessRecord(const P2d_rec *record, float version)
 {
-  ClearStats(record);
-  stats.DASelapsedTime = stats.thisTime - _prevTime;
-
-  stats.frequency = Resolution() / stats.tas;
-  stats.SampleVolume = 203.0 * Resolution() * (256-80) * 1.0e-6;
-  stats.SampleVolume *= (stats.tas * TAS_COMPENSATE) *
-                        (stats.DASelapsedTime - record->overld);
-
   int		startTime;
   size_t	nBins, shaded, unshaded;
   unsigned short	*p, slice, ppSlice, pSlice;
@@ -109,6 +101,14 @@ struct recStats HVPS::ProcessRecord(const P2d_rec *record, float version)
   Particle	*cp;
 
   static unsigned short	prevSlice[2];
+
+  ClearStats(record);
+  stats.DASelapsedTime = stats.thisTime - _prevTime;
+
+  stats.frequency = Resolution() / stats.tas;
+  stats.SampleVolume = 203.0 * Resolution() * (256-80) * 1.0e-6;
+  stats.SampleVolume *= (stats.tas * TAS_COMPENSATE) *
+                        (stats.DASelapsedTime - record->overld);
 
   p = (unsigned short *)record->data;
 

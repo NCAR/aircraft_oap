@@ -58,20 +58,16 @@ bool TwoDS::isSyncWord(const unsigned char *p)
 /* -------------------------------------------------------------------- */
 struct recStats TwoDS::ProcessRecord(const P2d_rec *record, float version)
 {
-  char	*probeID = (char *)&record->id;
-
   ClearStats(record);
   stats.DASelapsedTime = stats.thisTime - _prevTime;
 
-  if (probeID[0] == 'P')
-    stats.SampleVolume = 261.0 * (Resolution() * nDiodes() / 1000);
-  else
-  if (probeID[0] == 'C')
-    stats.SampleVolume = 61.0 * (Resolution() * nDiodes() / 1000);
+  stats.SampleVolume = 50.8 * (Resolution() * nDiodes() / 1000);
 
   stats.frequency = Resolution() / stats.tas;
   stats.SampleVolume *= stats.tas *
                         (stats.DASelapsedTime - record->overld) * 0.001;
+
+
 
 
   _prevTime = stats.thisTime;

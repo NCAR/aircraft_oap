@@ -73,11 +73,7 @@ bool CIP::isSyncWord(const unsigned char *p)
 /* -------------------------------------------------------------------- */
 struct recStats CIP::ProcessRecord(const P2d_rec *record, float version)
 {
-  ClearStats(record);
-  stats.DASelapsedTime = stats.thisTime - _prevTime;
-
-  stats.frequency = Resolution() / stats.tas;
-
+  char		*probeID = (char *)&record->id;
   int		startTime, overload = 0;
   size_t	nBins;
   unsigned long long	*p, slice;
@@ -88,6 +84,16 @@ struct recStats CIP::ProcessRecord(const P2d_rec *record, float version)
 
   unsigned long long	firstTimeWord = 0;
   static unsigned long long prevTimeWord = 0;
+
+  ClearStats(record);
+  stats.DASelapsedTime = stats.thisTime - _prevTime;
+  stats.frequency = Resolution() / stats.tas;
+
+  if (probeID[0] == 'P')		// PIP
+    stats.SampleVolume = 260.0 * (Resolution() * nDiodes() / 1000);
+  else
+  if (probeID[0] == 'C')		// CIP
+    stats.SampleVolume = 100.0 * (Resolution() * nDiodes() / 1000);
 
   if (version == -1)    // This means set time stamp only
   {

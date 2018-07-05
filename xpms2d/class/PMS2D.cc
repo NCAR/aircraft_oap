@@ -99,7 +99,14 @@ bool PMS2D::isSyncWord(const unsigned char *p)
 /* -------------------------------------------------------------------- */
 struct recStats PMS2D::ProcessRecord(const P2d_rec *record, float version)
 {
-  char	*probeID = (char *)&record->id;
+  char		*probeID = (char *)&record->id;
+  int		startTime, overload;
+  size_t	nBins;
+  uint32_t	*p, slice, pSlice, syncWord, startMilliSec;
+  bool		overloadAdded = false;
+  double	sampleVolume[maxDiodes], totalLiveTime;
+
+  static uint32_t	prevSlice;
 
   ClearStats(record);
   stats.DASelapsedTime = stats.thisTime - _prevTime;
@@ -117,14 +124,6 @@ struct recStats PMS2D::ProcessRecord(const P2d_rec *record, float version)
   stats.SampleVolume *= stats.tas *
                         (stats.DASelapsedTime - record->overld) * 0.001;
 
-
-  int		startTime, overload;
-  size_t	nBins;
-  uint32_t	*p, slice, pSlice, syncWord, startMilliSec;
-  bool		overloadAdded = false;
-  double	sampleVolume[maxDiodes], totalLiveTime;
-
-  static uint32_t	prevSlice;
 
   if (version < 3.35)
     syncWord = SyncWordMask;
