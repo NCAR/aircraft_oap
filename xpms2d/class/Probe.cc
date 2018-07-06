@@ -34,8 +34,6 @@ Probe::Probe(const char xml_entry[], int recSize) : _type(UNKNOWN), _displayed(f
   _name += XMLgetAttributeValue(xml_entry, "suffix");
 
   _resolution = atoi(XMLgetAttributeValue(xml_entry, "resolution").c_str());
-
-printf("Probe:: id=%s, name=%s, resolution=%zu\n", _code, _name.c_str(), _resolution);
 }
 
 /* -------------------------------------------------------------------- */
@@ -54,8 +52,6 @@ Probe::Probe(const char name[]) : _type(UNKNOWN), _displayed(false)
 
   if (_name[0] == 'P')
     _resolution = 200;
-
-printf("Probe:: %s, resolution = %zu\n", _name.c_str(), _resolution);
 }
 
 /* -------------------------------------------------------------------- */
@@ -72,8 +68,6 @@ Probe::Probe(Header * hdr, const Pms2 * p, int cnt) :_type(UNKNOWN),  _displayed
   _lrLen = hdr->lrLength(p);
   _lrPpr = hdr->lrPpr(p);
   _resolution = hdr->Resolution(p);
-
-printf("Probe:: %s - %s, resolution = %zu\n", _name.c_str(), _code, _resolution);
 }
 
 

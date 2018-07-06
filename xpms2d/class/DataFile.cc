@@ -274,9 +274,7 @@ void ADS_DataFile::AddToProbeListFromXML(const char xml_entry[])
       _probeList[*(uint16_t *)id] = new PMS2D(xml_entry, PMS2_SIZE);
       break;
     case Probe::FAST2D:
-printf("  id=%x [%s]\n", *(uint16_t *)id, id);
       _probeList[*(uint16_t *)id] = new Fast2D(xml_entry, PMS2_SIZE);
-printf("  id=%x [%s]\n", *(uint16_t *)id, id);
       break;
     case Probe::TWODS:
       _probeList[*(uint16_t *)id] = new TwoDS(xml_entry, PMS2_SIZE);
