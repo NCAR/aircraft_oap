@@ -36,6 +36,14 @@ void FileManager::NewFile(char fileName[])
 
   dataFile[0] = new ADS_DataFile(fileName);
 
+  // Save off this data path for subsequent calls.
+  strcpy(DataPath, fileName);
+  char *p = strrchr(DataPath, '/');
+  if (p)
+    strcpy(p, "/*2d*");
+  else
+    strcpy(DataPath, "*2d*");
+
 }	/* END NEWFILE */
 
 /* -------------------------------------------------------------------- */
