@@ -29,7 +29,7 @@ public:
   void	SetWrapDisplay()	{ _wrap = 1 - _wrap; }
   void	SetTimingWords()	{ _timingWord = 1 - _timingWord; }
 
-  void	reset(ADS_DataFile *file);
+  void	reset(ADS_DataFile *file, P2d_rec *rec);
   void	draw(P2d_rec *record, Probe *probe, float hdrVer, int probeNum, PostScript *ps);
   size_t maxRecords() const	{ return(maxRecs); }
   int	SpaceAvailable() const	{ return(Height() - y); }
@@ -43,6 +43,8 @@ public:
 
 
 protected:
+  void  setTitle(ADS_DataFile *file, P2d_rec *rec);
+
   void	drawPMS2D(P2d_rec *record, Probe *probe, float hdrVer, int probeNum, PostScript *ps);
   void	drawFast2D(P2d_rec *record, Probe *probe, float hdrVer, int probeNum, PostScript *ps);
   void	draw2DS(P2d_rec *record, Probe *probe, float hdrVer, int probeNum, PostScript *ps);

@@ -116,7 +116,7 @@ static void PrintPS(Widget w, XtPointer client, XtPointer call)
     return;
 
   cursor.WaitCursor(mainPlot->Wdgt());
-  mainPlot->reset(NULL);
+  mainPlot->reset(0, 0);
   version = atof(file->HeaderVersion());
  
   std::stringstream title;

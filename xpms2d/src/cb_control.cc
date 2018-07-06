@@ -114,7 +114,7 @@ void PageForward(Widget w, XtPointer client, XtPointer call)
   cursor.WaitCursor(mainPlot->Wdgt());
 
   mainPlot->Clear();
-  mainPlot->reset(fileMgr.CurrentFile());
+  mainPlot->reset(fileMgr.CurrentFile(), 0);
   version = atof(fileMgr.CurrentFile()->HeaderVersion());
 
   if (enchiladaWin)
@@ -133,7 +133,10 @@ void PageForward(Widget w, XtPointer client, XtPointer call)
       break;
 
     if (nBuffs == 0)
-      controlWindow->UpdateStartTime(&pgFbuff[nBuffs]);
+      {
+      controlWindow->UpdateStartTime(&pgFbuff[0]);
+      mainPlot->reset(fileMgr.CurrentFile(), &pgFbuff[0]);
+      }
 
     iter = probes.begin();
     for (int j = 0; iter != probes.end(); ++j, ++iter)

@@ -23,6 +23,7 @@ extern XPen	*pen;
 
 #include <algorithm>
 #include <cassert>
+#include <iomanip>
 #include <sstream>
 
 #include <sys/types.h>
@@ -44,7 +45,7 @@ MainCanvas::MainCanvas(Widget w) : Canvas(w)
   _wrap = false;
   _timingWord = true;
 
-  reset(NULL);
+  reset(0, 0);
 
 }       /* END CONSTRUCTOR */
 
@@ -70,22 +71,33 @@ void MainCanvas::SetDisplayMode(int mode)
 }	/* END SETDISPLAYMODE */
 
 /* -------------------------------------------------------------------- */
-void MainCanvas::reset(ADS_DataFile *file)
+void MainCanvas::reset(ADS_DataFile *file, P2d_rec *rec)
 {
   maxRecs = (Height() - TOP_OFFSET) / PIX_PER_Y;
   y = TOP_OFFSET;
 
+  setTitle(file, rec);
+}
+
+/* -------------------------------------------------------------------- */
+void MainCanvas::setTitle(ADS_DataFile *file, P2d_rec *rec)
+{
   if (file)
     {
     std::stringstream title;
-    title << file->ProjectNumber() << ", " << file->FlightNumber() << " - "
-	<< file->FlightDate();
+    title << file->ProjectNumber() << ", " << file->FlightNumber() << " - ";
+    if (rec)
+      {
+      title << std::setfill('0') << std::setw(2) << rec->spare2 << '/' << rec->spare3
+	    << '/' << std::setw(4) << rec->spare1;
+      }
+    else
+      title << file->FlightDate();
 
     pen->SetFont(fonts->Font(0));
     pen->DrawText(Surface(), 300, 25, title.str().c_str());
     }
-
-}	/* END RESET */
+}
 
 /* -------------------------------------------------------------------- */
 void MainCanvas::draw(P2d_rec *record, Probe *probe, float version, int probeNum, PostScript *ps)
@@ -564,9 +576,9 @@ pen->SetColor(color->GetColor(0)); }
 /* -------------------------------------------------------------------- */
 void MainCanvas::draw2DS(P2d_rec *record, Probe *probe, float version, int probeNum, PostScript *ps)
 {
-  Particle	*cp;
-  int		nextColor, cntr = 0;
-  bool		colorIsBlack = false;
+//  Particle	*cp;
+//  int		nextColor, cntr = 0;
+//  bool		colorIsBlack = false;
   unsigned char *p;
 
   static unsigned long prevTime;
