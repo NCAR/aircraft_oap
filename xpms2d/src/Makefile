@@ -44,17 +44,18 @@ PROG	= xpms2d
 HDRS	= ../class/define.h
 
 SRCS=	xpms2d.cc global.cc ccb.cc cb_canvas.cc cb_control.cc cb_mag.cc\
-	cb_menus.cc cb_printer.cc cb_text.cc process.cc xml.cc
+	cb_menus.cc cb_printer.cc cb_text.cc xml.cc
 
 OBJS=	xpms2d.o global.o ccb.o cb_canvas.o cb_control.o cb_mag.o\
-	cb_menus.o cb_printer.o cb_text.o process.o xml.o
+	cb_menus.o cb_printer.o cb_text.o xml.o
 
 
 O2DOB=	${O2D}/CanvasWindow.o\
 	${O2D}/ControlWindow.o ${O2D}/Colors.o ${O2D}/Enchilada.o\
 	${O2D}/DataFile.o ${O2D}/FileMgr.o ${O2D}/Hex.o\
 	${O2D}/Magnify.o ${O2D}/MagnifyCanvas.o ${O2D}/MagnifyWindow.o\
-	${O2D}/MainCanvas.o ${O2D}/Probe.o ${O2D}/Histogram.o
+	${O2D}/MainCanvas.o ${O2D}/Probe.o ${O2D}/Histogram.o ${O2D}/PMS2D.o\
+	${O2D}/Fast2D.o ${O2D}/TwoDS.o ${O2D}/CIP.o ${O2D}/HVPS.o ${O2D}/Particle.o
 
 
 ${PROG}: ${OBJS} classDir
