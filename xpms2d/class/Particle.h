@@ -1,3 +1,13 @@
+/*
+-------------------------------------------------------------------------
+OBJECT NAME:    Particle.h
+
+FULL NAME:      Particle Information
+
+COPYRIGHT:      University Corporation for Atmospheric Research, 1997-2018
+-------------------------------------------------------------------------
+*/
+
 #ifndef _particle_h_
 #define _particle_h_
 

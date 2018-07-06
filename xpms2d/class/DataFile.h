@@ -4,7 +4,7 @@ OBJECT NAME:	DataFile.h
 
 FULL NAME:	Data File Class
 
-COPYRIGHT:	University Corporation for Atmospheric Research, 1997
+COPYRIGHT:	University Corporation for Atmospheric Research, 1997-2018
 -------------------------------------------------------------------------
 */
 

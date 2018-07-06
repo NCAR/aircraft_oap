@@ -6,7 +6,7 @@ FULL NAME:	File Manager Class
 
 DESCRIPTION:	
 
-COPYRIGHT:	University Corporation for Atmospheric Research, 1997
+COPYRIGHT:	University Corporation for Atmospheric Research, 1997-2018
 -------------------------------------------------------------------------
 */
 

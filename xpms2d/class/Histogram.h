@@ -4,7 +4,7 @@ OBJECT NAME:	Histogram.h
 
 FULL NAME:	View Histogram Data
 
-COPYRIGHT:	University Corporation for Atmospheric Research, 2000-2009
+COPYRIGHT:	University Corporation for Atmospheric Research, 2000-2018
 -------------------------------------------------------------------------
 */
 

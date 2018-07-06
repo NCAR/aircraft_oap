@@ -4,7 +4,7 @@ OBJECT NAME:	MainCanvas.h
 
 FULL NAME:	Main canvas
 
-COPYRIGHT:	University Corporation for Atmospheric Research, 1997-2014
+COPYRIGHT:	University Corporation for Atmospheric Research, 1997-2018
 -------------------------------------------------------------------------
 */
 

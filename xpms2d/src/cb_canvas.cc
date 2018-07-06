@@ -13,7 +13,7 @@ STATIC FNS:
 
 DESCRIPTION:	
 
-COPYRIGHT:	University Corporation for Atmospheric Research, 1997-2006
+COPYRIGHT:	University Corporation for Atmospheric Research, 1997-2018
 -------------------------------------------------------------------------
 */
 

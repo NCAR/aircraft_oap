@@ -16,7 +16,7 @@ INPUT:		Command line options
 
 AUTHOR:		cjw@ucar.edu
 
-COPYRIGHT:      University Corporation for Atmospheric Research, 1997
+COPYRIGHT:      University Corporation for Atmospheric Research, 1997-2018
 -------------------------------------------------------------------------
 */
 

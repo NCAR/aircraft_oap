@@ -2,7 +2,7 @@
 -------------------------------------------------------------------------
 OBJECT NAME:	Enchilada.cc
 
-COPYRIGHT:	University Corporation for Atmospheric Research, 2000-2009
+COPYRIGHT:	University Corporation for Atmospheric Research, 2000-2018
 -------------------------------------------------------------------------
 */
 

@@ -4,7 +4,7 @@ OBJECT NAME:	PlotInfo.h
 
 FULL NAME:	Plot Information
 
-COPYRIGHT:	University Corporation for Atmospheric Research, 1997
+COPYRIGHT:	University Corporation for Atmospheric Research, 1997-2018
 -------------------------------------------------------------------------
 */
 

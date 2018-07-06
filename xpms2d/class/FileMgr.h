@@ -4,7 +4,7 @@ OBJECT NAME:	FileMgr.h
 
 FULL NAME:	Data File Manager
 
-COPYRIGHT:	University Corporation for Atmospheric Research, 1997
+COPYRIGHT:	University Corporation for Atmospheric Research, 1997-2018
 -------------------------------------------------------------------------
 */
 

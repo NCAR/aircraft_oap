@@ -4,7 +4,7 @@ OBJECT NAME:	ControlWindow.h
 
 FULL NAME:	Create Main Control Window
 
-COPYRIGHT:	University Corporation for Atmospheric Research, 1997
+COPYRIGHT:	University Corporation for Atmospheric Research, 1997-2018
 -------------------------------------------------------------------------
 */
 
