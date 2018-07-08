@@ -232,20 +232,31 @@ void SetProbe(Widget w, XtPointer client, XtPointer call)
 /* -------------------------------------------------------------------- */
 void SetDensity(Widget w, XtPointer client, XtPointer call)
 {
-  controlWindow->SetWaterDensity((long)client);
-  PageCurrent();
+  // skip the unset of other button.
+  if (((XmToggleButtonCallbackStruct *)call)->set)
+    {
+    controlWindow->SetWaterDensity((long)client);
+    PageCurrent();
+    }
 }
 
 /* -------------------------------------------------------------------- */
 void SetAreaRatioRej(Widget w, XtPointer client, XtPointer call)
 {
-  controlWindow->SetAreaRatioReject((long)client);
-  PageCurrent();
+  if (((XmToggleButtonCallbackStruct *)call)->set)
+    {
+    controlWindow->SetAreaRatioReject((long)client);
+    PageCurrent();
+    }
 }
 
 /* -------------------------------------------------------------------- */
 void SetConcentration(Widget w, XtPointer client, XtPointer call)
 {
+  // skip the unset of other button.
+  if (((XmToggleButtonCallbackStruct *)call)->set == false)
+    return;
+
   controlWindow->SetConcentrationCalc((long)client);
 
   const ProbeList & probes = fileMgr.CurrentFile()->Probes();
