@@ -41,7 +41,7 @@ public:
 
 protected:
 
-  void init();
+  void hvps_init();
 
   static const size_t lowerMask, upperMask;
 

@@ -39,7 +39,7 @@ const size_t MAX_PROBES = 4;
 
 struct recStats
 {
-  int	thisTime;		// Time of this record in secs since midnight.
+  unsigned long	thisTime;	// Time of this record in secs since midnight.
   int	DASelapsedTime;		// milliseconds.
   int	tBarElapsedtime;	// milliseconds.
 

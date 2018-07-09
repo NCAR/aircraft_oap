@@ -44,7 +44,7 @@ public:
 
 protected:
 
-  void init();
+  void dmt_init();
 
   long long TimeWord_Microseconds(unsigned long long slice);
 

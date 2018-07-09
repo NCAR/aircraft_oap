@@ -44,7 +44,7 @@ public:
 
 protected:
 
-  void init();
+  void pms2d_init();
 
 };
 

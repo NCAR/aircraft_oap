@@ -20,12 +20,11 @@ const unsigned char Probe::BlankSlice[] =
 
 
 /* -------------------------------------------------------------------- */
-Probe::Probe(const char xml_entry[], int recSize) : _type(UNKNOWN), _displayed(false)
+Probe::Probe(ProbeType type, const char xml_entry[], int recSize, size_t ndiodes) : _type(type), _nDiodes(ndiodes)
 {
   std::string XMLgetAttributeValue(const char s[], const char target[]);
 
   _lrLen = recSize;
-  _lrPpr = 1;
 
   std::string id = XMLgetAttributeValue(xml_entry, "id");
   strcpy(_code, id.c_str());
@@ -34,10 +33,12 @@ Probe::Probe(const char xml_entry[], int recSize) : _type(UNKNOWN), _displayed(f
   _name += XMLgetAttributeValue(xml_entry, "suffix");
 
   _resolution = atoi(XMLgetAttributeValue(xml_entry, "resolution").c_str());
+
+  init();
 }
 
 /* -------------------------------------------------------------------- */
-Probe::Probe(const char name[]) : _type(UNKNOWN), _displayed(false)
+Probe::Probe(ProbeType type, const char name[], size_t ndiodes) : _type(type), _nDiodes(ndiodes)
 {
   _name.push_back(name[0]);
   _name.push_back(name[1]);
@@ -45,17 +46,24 @@ Probe::Probe(const char name[]) : _type(UNKNOWN), _displayed(false)
   strcpy(_code, _name.c_str());
 
   _lrLen = 4116;
-  _lrPpr = 1;
 
   if (_name[0] == 'C')
+  {
     _resolution = 25;
+    _armWidth = 61.0;
+  }
 
   if (_name[0] == 'P')
+  {
     _resolution = 200;
+    _armWidth = 261.0;
+  }
+
+  init();
 }
 
 /* -------------------------------------------------------------------- */
-Probe::Probe(Header * hdr, const Pms2 * p, int cnt) :_type(UNKNOWN),  _displayed(false)
+Probe::Probe(ProbeType type, Header * hdr, const Pms2 * p, int cnt, size_t ndiodes) : _type(type), _nDiodes(ndiodes)
 {
   // Extract stuff from Header.
   _name = hdr->VariableName(p);
@@ -65,9 +73,26 @@ Probe::Probe(Header * hdr, const Pms2 * p, int cnt) :_type(UNKNOWN),  _displayed
 
   _code[0] = _name[3]; _code[1] = cnt + '0'; _code[2] = '\0';
 
+  _resolution = hdr->Resolution(p);
+
+  init();
+
   _lrLen = hdr->lrLength(p);
   _lrPpr = hdr->lrPpr(p);
-  _resolution = hdr->Resolution(p);
+}
+
+void Probe::init()
+{
+  sampleArea = 0;
+  _nSlices = P2D_DATA / _nDiodes * 8;
+  _eaw = nDiodes() * Resolution() * 0.001;
+
+  _lrPpr = 1;
+
+  _displayed = false;
+  _prevTime = 0;
+
+  memset((void *)&stats, 0, sizeof(stats));
 }
 
 
@@ -86,7 +111,9 @@ void Probe::ClearStats(const P2d_rec *record)
   stats.duplicate = false;
   stats.particles.clear();
   stats.tas = (float)record->tas;
+  stats.frequency = Resolution() / stats.tas;
   stats.thisTime = (record->hour * 3600 + record->minute * 60 + record->second) * 1000 + record->msec; // in milliseconds
+  memset(stats.accum, 0, sizeof(stats.accum));
 }
 
 /* -------------------------------------------------------------------- */
@@ -149,7 +176,7 @@ size_t Probe::checkRejectionCriteria(Particle * cp, recStats & stats)
       break;
     }
 
-  if (!cp->reject && bin < maxDiodes)
+  if (!cp->reject && bin < (nDiodes()<<2))
   {
     stats.accum[bin]++;
     stats.area += cp->area;
@@ -209,71 +236,82 @@ static float DOF2dC[] = { 0.0, 1.56, 6.25, 14.06, 25.0, 39.06, 56.25,
   61.0, 61.0, 61.0, 61.0, 61.0, 61.0, 61.0, 61.0, 61.0, 61.0, 61.0,
   61.0, 61.0, 61.0 };
 
+
 void Probe::SetSampleArea()
 {
+  int	dofIdx;	// DOF above only goes to 64, some probes need to compute to 128 r 256.
   float	dia, dof;
-  float	eawC = nDiodes() * Resolution() / 1000.0;
-  float	eawP = nDiodes() * Resolution() / 1000.0;
+  float *dofP;
 
+  _eaw = nDiodes() * Resolution(); 
+  _sampleArea = _armWidth * _eaw;
+
+  if (sampleArea == 0)
+    sampleArea = new float[(nDiodes() << 2)];
+
+  if (Resolution() < 100)
+    dofP = DOF2dC;
+  else
+    dofP = DOF2dP;
+
+printf("SetSampleArea: %s: _eaw=%f %d\n", _name.c_str(), _eaw, controlWindow->GetConcentration());
   switch (controlWindow->GetConcentration())
     {
     case BASIC:
-      for (size_t i = 1; i < maxDiodes; ++i)
-        {
-        sampleAreaC[i] = 61.0 * eawC;
-        sampleAreaP[i] = 261.0 * eawP;
-        }
+      for (size_t i = 1; i < nDiodes(); ++i)
+        sampleArea[i] = _armWidth * _eaw;
 
       break;
 
     case ENTIRE_IN:
-      for (size_t i = 1; i <= nDiodes(); ++i)
+      for (size_t i = 1; i < nDiodes(); ++i)
         {
-        sampleAreaC[i] = DOF2dC[i] * diodeDiameter * (nDiodes() - i - 1) / 8.0;
-        sampleAreaP[i] = DOF2dP[i] * diodeDiameter * (nDiodes() - i - 1) / 1.0;
-//printf("%d %f %f %e %e\n", i, (float)i*25, (float)i*200, sampleAreaC[i], sampleAreaP[i]);
+        if (i < 60)
+          dofIdx = i;
+        else
+          dofIdx = 60;
+
+        sampleArea[i] = dofP[dofIdx] * diodeDiameter * (nDiodes() - i - 1) / 1.0;
+        if (Code()[0] == 'C')
+          sampleArea[i] /= 8.0;		// Why?
+//printf(" %zu : %f = %f * %f\n", i, sampleArea[i], dofP[dofIdx], diodeDiameter * (nDiodes() - i - 1) / 8.0);
         }
 
       break;
 
     case CENTER_IN:
-      for (size_t i = 1; i <= nDiodes()<<1; ++i)
+      for (size_t i = 1; i < nDiodes()<<1; ++i)
         {
-        sampleAreaC[i] = DOF2dC[i] * eawC;
-        sampleAreaP[i] = DOF2dP[i] * eawP;
-//printf("%e %e\n", sampleAreaC[i], sampleAreaP[i]);
+        if (i < 60)
+          dofIdx = i;
+        else
+          dofIdx = 60;
+
+        sampleArea[i] = dofP[dofIdx] * _eaw;
+//printf(" %zu : %f = %f * %f\n", i, sampleArea[i], dofP[dofIdx], _eaw);
         }
 
       break;
 
     case RECONSTRUCTION:
-      for (size_t i = 1; i <= maxDiodes; ++i)
+      for (size_t i = 1; i < nDiodes()<<2; ++i)
         {
         dia = (float)i * Resolution();
-        eawC = ((nDiodes() * Resolution()) + (2 * (dia / 2 - dia / 7.2414))) * 0.001;
+        _eaw = ((nDiodes() * Resolution()) + (2 * (dia / 2 - dia / 7.2414))) * 0.001;
 
         if (i < 60)
-          dof = DOF2dC[i];
+          dofIdx = i;
         else
-          dof = DOF2dC[60];
+          dofIdx = 60;
 
-        sampleAreaC[i] = dof * eawC;
-
-
-        dia = (float)i * 200;	// 200um
-        eawP = ((nDiodes() * 200) + (2 * (dia / 2 - dia / 7.2414))) * 0.001;
-
-        if (i < 60)
-          dof = DOF2dP[i];
-        else
-          dof = DOF2dP[60];
-
-        sampleAreaP[i] = dof * eawP;
-//printf("%d %f %f %e %e %e %e\n", i, (float)i * 25, dia, DOF2dC[i] * 0.8, sampleAreaC[i], DOF2dP[i] * 6.4, sampleAreaP[i]);
+        sampleArea[i] = dofP[dofIdx] * _eaw;
+//printf(" %zu : %f = %f * %f\n", i, sampleArea[i], dofP[dofIdx], _eaw);
         }
 
       break;
     }
+
+printf("\n");
 
 }	/* END SETSAMPLEAREA */
 

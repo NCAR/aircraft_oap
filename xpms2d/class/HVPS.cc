@@ -20,11 +20,10 @@ const size_t HVPS::upperMask = 40;	// HVPS masks.
 
 
 /* -------------------------------------------------------------------- */
-HVPS::HVPS(const char xml_entry[], int recSize) : Probe(xml_entry, recSize)
+HVPS::HVPS(const char xml_entry[], int recSize) : Probe(Probe::HVPS, xml_entry, recSize, 256)
 {
   std::string XMLgetAttributeValue(const char s[], const char target[]);
 
-  init();
   _lrLen = recSize;
 
   std::string id = XMLgetAttributeValue(xml_entry, "id");
@@ -35,50 +34,34 @@ HVPS::HVPS(const char xml_entry[], int recSize) : Probe(xml_entry, recSize)
 
   _resolution = atoi(XMLgetAttributeValue(xml_entry, "resolution").c_str());
 
-printf("HVPS:: id=%s, name=%s, resolution=%zu\n", _code, _name.c_str(), _resolution);
+  hvps_init();
+
+printf("HVPS::OAP id=%s, name=%s, resolution=%zu, armWidth=%f, eaw=%f\n", _code, _name.c_str(), _resolution, _armWidth, _eaw);
 }
 
 /* -------------------------------------------------------------------- */
-HVPS::HVPS(const char name[]) : Probe(name)
+HVPS::HVPS(const char name[]) : Probe(Probe::HVPS, name, 256)
 {
-  _name.push_back(name[0]);
-  _name.push_back(name[1]);
-  _name.push_back('\0');
-  strcpy(_code, _name.c_str());
-
-  init();
-  _lrLen = 4116;
-
   _resolution = 200;
 
-printf("HVPS:: %s, resolution = %zu\n", _name.c_str(), _resolution);
+  hvps_init();
+
+printf("HVPS::NoHdr id=%s, name=%s, resolution=%zu, armWidth=%f, eaw=%f\n", _code, _name.c_str(), _resolution, _armWidth, _eaw);
 }
 
 /* -------------------------------------------------------------------- */
-HVPS::HVPS(Header * hdr, const Pms2 * p, int cnt) : Probe(hdr, p, cnt)
+HVPS::HVPS(Header * hdr, const Pms2 * p, int cnt) : Probe(Probe::HVPS, hdr, p, cnt, 256)
 {
-  init();
-  // Extract stuff from Header.
-  _name = hdr->VariableName(p);
-  _name += "_";
-  _name += hdr->AircraftLocation(p);
-  _serialNumber = hdr->SerialNumber(p);
+  hvps_init();
 
-  _code[0] = _name[3]; _code[1] = cnt + '0'; _code[2] = '\0';
-
-  _lrLen = hdr->lrLength(p);
-  _lrPpr = hdr->lrPpr(p);
-  _resolution = hdr->Resolution(p);
-
-printf("HVPS:: %s - %s\n", _name.c_str(), _code);
+printf("HVPS::ADS2 %s - %s\n", _name.c_str(), _code);
 }
 
-void HVPS::init()
+void HVPS::hvps_init()
 {
-  _type = Probe::HVPS;
-  _nDiodes = 256;
-  _lrPpr = 1;
   _armWidth = 203.0;
+
+  SetSampleArea();
 }
 
 extern ControlWindow	*controlWindow;
@@ -105,8 +88,6 @@ struct recStats HVPS::ProcessRecord(const P2d_rec *record, float version)
 
   ClearStats(record);
   stats.DASelapsedTime = stats.thisTime - _prevTime;
-
-  stats.frequency = Resolution() / stats.tas;
   stats.SampleVolume = _armWidth * Resolution() * (256-80) * 1.0e-6;
   stats.SampleVolume *= (stats.tas * TAS_COMPENSATE) *
                         (stats.DASelapsedTime - record->overld);
@@ -163,11 +144,10 @@ printf("\n");
 #endif
 
   totalLiveTime = 0.0;
-  memset(stats.accum, 0, sizeof(stats.accum));
 
   switch (controlWindow->GetConcentration()) {
     case CENTER_IN:		nBins = 512; break;
-    default:			nBins = 256;
+    default:			nBins = nDiodes();
     }
 
 

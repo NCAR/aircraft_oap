@@ -36,8 +36,6 @@ public:
 
 protected:
 
-  void init();
-
 };
 
 #endif

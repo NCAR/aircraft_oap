@@ -31,7 +31,7 @@ public:
 
 protected:
 
-  void init();
+  void f2d_init();
 
 };
 

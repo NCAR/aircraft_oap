@@ -51,27 +51,12 @@ COPYRIGHT:	University Corporation for Atmospheric Research, 1997-2018
 #define SPEC2DSH        0x5348
 #define SPEC2DSV        0x5356
 
-#define maxDiodes	(256)
 
 /* -------------------------------------------------------------------- */
 class Probe {
 
 public:
   enum ProbeType { UNKNOWN, PMS2D, HVPS, GREYSCALE, FAST2D, TWODS, CIP };
-
-  /**
-   * Probe conctructor for ADS2 header.
-   */
-  Probe(Header *hdr, const Pms2 *p, int cnt);
-  /**
-   * Probe constructor for new PMS2D data files.  New means starting
-   * in 2007 with PACDEX project.
-   */
-  Probe(const char xml_string[], int recSize);
-  /**
-   * Probe constructor for no file header.  Univ Wyoming.
-   */
-  Probe(const char hdr[]);
 
   virtual ~Probe() { }
 
@@ -117,6 +102,23 @@ public:
 
 
 protected:
+  /**
+   * Probe conctructor for ADS2 header.  This will only ever have 32 diode
+   * PMS2D probes an HVPS once.
+   */
+  Probe(ProbeType type, Header *hdr, const Pms2 *p, int cnt, size_t ndiodes);
+  /**
+   * Probe constructor for new PMS2D data files.  New means starting
+   * in 2007 with PACDEX project.  These files follow the OAPfiles standard.
+   */
+  Probe(ProbeType type, const char xml_string[], int recSize, size_t ndiodes);
+  /**
+   * Probe constructor for no file header.  Univ Wyoming.
+   */
+  Probe(ProbeType type, const char hdr[], size_t ndiodes);
+
+  /// Common initialization for all constructors.
+  void init();
 
   void ClearStats(const P2d_rec *record);
   void computeDerived(double sv[], size_t nBins, double liveTime);
@@ -127,10 +129,16 @@ protected:
 
   char		_code[4];
   ProbeType	_type;
+  /// Probe resolution per diode in micron
   size_t	_resolution;
+  /// Number of diodes in the array
   size_t	_nDiodes;
+  /// Physical distance between the two probe arms.
   float		_armWidth;
-  float		_sampleArea;	// crude sample area
+  /// Effective Area Width
+  float		_eaw;
+  /// Crude sample area - as opposed to the 'per bin' sample area.
+  float		_sampleArea;
   /// Number of slices per 4k buffer.
   size_t	_nSlices;
 
@@ -145,7 +153,7 @@ protected:
 
   static const float diodeDiameter;
 
-  float sampleAreaC[maxDiodes], sampleAreaP[maxDiodes];
+  float *sampleArea;
 
 };
 

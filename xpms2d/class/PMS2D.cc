@@ -18,7 +18,7 @@ const uint32_t PMS2D::SyncWordMask = 0xff000000;
 
 
 /* -------------------------------------------------------------------- */
-PMS2D::PMS2D(const char xml_entry[], int recSize) : Probe(xml_entry, recSize)
+PMS2D::PMS2D(const char xml_entry[], int recSize) : Probe(Probe::PMS2D, xml_entry, recSize, 32)
 {
   std::string XMLgetAttributeValue(const char s[], const char target[]);
 
@@ -32,66 +32,34 @@ PMS2D::PMS2D(const char xml_entry[], int recSize) : Probe(xml_entry, recSize)
 
   _resolution = atoi(XMLgetAttributeValue(xml_entry, "resolution").c_str());
 
-  init();
+  pms2d_init();
 
-printf("PMS2D:: id=%s, name=%s, resolution=%zu\n", _code, _name.c_str(), _resolution);
+printf("PMS2D::OAP id=%s, name=%s, resolution=%zu, armWidth=%f, eaw=%f\n", _code, _name.c_str(), _resolution, _armWidth, _eaw);
 }
 
 /* -------------------------------------------------------------------- */
-PMS2D::PMS2D(const char name[]) : Probe(name)
+PMS2D::PMS2D(const char name[]) : Probe(Probe::PMS2D, name, 32)
 {
-  _name.push_back(name[0]);
-  _name.push_back(name[1]);
-  _name.push_back('\0');
-  strcpy(_code, _name.c_str());
+  pms2d_init();
 
-  _lrLen = 4116;
-
-  if (_name[0] == 'C')	// 2DC
-    _resolution = 25;
-
-  if (_name[0] == 'P')	// 2DP
-    _resolution = 200;
-
-  init();
-
-printf("PMS2D:: %s, resolution = %zu\n", _name.c_str(), _resolution);
+printf("PMS2D::NoHdr id=%s, name=%s, resolution=%zu, armWidth=%f, eaw=%f\n", _code, _name.c_str(), _resolution, _armWidth, _eaw);
 }
 
 /* -------------------------------------------------------------------- */
-PMS2D::PMS2D(Header * hdr, const Pms2 * p, int cnt) : Probe(hdr, p, cnt)
+PMS2D::PMS2D(Header * hdr, const Pms2 * p, int cnt) : Probe(Probe::PMS2D, hdr, p, cnt, 32)
 {
-  // Extract stuff from Header.
-  _name = hdr->VariableName(p);
-  _name += "_";
-  _name += hdr->AircraftLocation(p);
-  _serialNumber = hdr->SerialNumber(p);
+  pms2d_init();
 
-  _code[0] = _name[3]; _code[1] = cnt + '0'; _code[2] = '\0';
-
-  _lrLen = hdr->lrLength(p);
-  _lrPpr = hdr->lrPpr(p);
-  _resolution = hdr->Resolution(p);
-
-  init();
-
-printf("PMS2D:: %s - %s\n", _name.c_str(), _code);
+printf("PMS2D::ADS2 id=%s, name=%s, resolution=%zu, armWidth=%f, eaw=%f\n", _code, _name.c_str(), _resolution, _armWidth, _eaw);
 }
 
-void PMS2D::init()
+void PMS2D::pms2d_init()
 {
-  _type = Probe::PMS2D;
-  _nDiodes = 32;
-  _nSlices = P2D_DATA / _nDiodes * 8;
-  _lrPpr = 1;
-
   if (_code[0] == 'C')	// 2DC
     _armWidth = 61.0;
 
   if (_code[0] == 'P')	// 2DP
     _armWidth = 261.0;
-
-  _sampleArea = _armWidth * Resolution() * nDiodes() * 0.001;
 
   SetSampleArea();
 }
@@ -107,31 +75,26 @@ bool PMS2D::isSyncWord(const unsigned char *p)
 /* -------------------------------------------------------------------- */
 struct recStats PMS2D::ProcessRecord(const P2d_rec *record, float version)
 {
-  char		*probeID = (char *)&record->id;
   int		startTime, overload;
   size_t	nBins;
   uint32_t	*p, slice, pSlice, syncWord, startMilliSec;
   bool		overloadAdded = false;
-  double	sampleVolume[maxDiodes], totalLiveTime;
+  double	sampleVolume[(nDiodes()<<2)+1], totalLiveTime;
 
   static uint32_t	prevSlice;
 
   ClearStats(record);
   stats.DASelapsedTime = stats.thisTime - _prevTime;
 
+  // ADS2 recorded tas encoded, decode here.
   if (version < 5.09)
+  {
     stats.tas = stats.tas * 125 / 255;
+    stats.frequency = Resolution() / stats.tas;
+  }
 
-  stats.frequency = Resolution() / stats.tas;
   stats.SampleVolume = SampleArea() * stats.tas *
                         (stats.DASelapsedTime - record->overld) * 0.001;
-
-  if (version < 3.35)
-    syncWord = SyncWordMask;
-  else
-    syncWord = StandardSyncWord;
-
-//if (record->msec == 397) debug = true; else debug = false;
 
   if (version == -1)	// This means set time stamp only
   {
@@ -140,6 +103,11 @@ struct recStats PMS2D::ProcessRecord(const P2d_rec *record, float version)
     return(stats);
   }
 
+  if (version < 3.35)
+    syncWord = SyncWordMask;
+  else
+    syncWord = StandardSyncWord;
+
 #ifdef DEBUG
   printf("%02d:%02d:%02d.%d - ", record->hour, record->minute, record->second, record->msec);
 #endif
@@ -147,7 +115,6 @@ struct recStats PMS2D::ProcessRecord(const P2d_rec *record, float version)
   overload = _prevHdr.overld;
 
   totalLiveTime = 0.0;
-  memset(stats.accum, 0, sizeof(stats.accum));
 
   switch (controlWindow->GetConcentration()) {
     case CENTER_IN:		nBins = 64; break;
@@ -159,16 +126,8 @@ struct recStats PMS2D::ProcessRecord(const P2d_rec *record, float version)
   // Compute frequency, which is used to convert timing words from TAS clock
   // pulses to milliseconds.  Most of sample volume is here, time comes in
   // later.
-  if (probeID[0] == 'P')
-    {
-    for (size_t i = 0; i < nBins; ++i)
-      sampleVolume[i] = stats.tas * sampleAreaP[i] * 0.001;
-    }
-  else
-    {
-    for (size_t i = 0; i < nBins; ++i)
-      sampleVolume[i] = stats.tas * sampleAreaC[i] * 0.001;
-    }
+  for (size_t i = 0; i < nBins; ++i)
+    sampleVolume[i] = stats.tas * sampleArea[i] * 0.001;
 
   // Scan record, compute tBarElapsedtime and stats.
   p = (uint32_t *)record->data;

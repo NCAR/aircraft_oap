@@ -16,7 +16,7 @@ COPYRIGHT:	University Corporation for Atmospheric Research, 1997-2018
 const unsigned long long CIP::SyncWord = 0xAAAAAAAAAAAAAAAALL;
 
 /* -------------------------------------------------------------------- */
-CIP::CIP(const char xml_entry[], int recSize) : Probe(xml_entry, recSize)
+CIP::CIP(const char xml_entry[], int recSize) : Probe(Probe::CIP, xml_entry, recSize, 64)
 {
   std::string XMLgetAttributeValue(const char s[], const char target[]);
 
@@ -30,41 +30,28 @@ CIP::CIP(const char xml_entry[], int recSize) : Probe(xml_entry, recSize)
 
   _resolution = atoi(XMLgetAttributeValue(xml_entry, "resolution").c_str());
 
-  init();
+  dmt_init();
 
-printf("CIP:: id=%s, name=%s, resolution=%zu\n", _code, _name.c_str(), _resolution);
+printf("CIP::OAP id=%s, name=%s, resolution=%zu, armWidth=%f, eaw=%f\n", _code, _name.c_str(), _resolution, _armWidth, _eaw);
 }
 
 /* -------------------------------------------------------------------- */
-CIP::CIP(const char name[]) : Probe(name)
+CIP::CIP(const char name[]) : Probe(Probe::CIP, name, 64)
 {
-  _name.push_back(name[0]);
-  _name.push_back(name[1]);
-  _name.push_back('\0');
-  strcpy(_code, _name.c_str());
-
   _resolution = 25;
 
-  init();
-  _lrLen = 4116;
+  dmt_init();
 
-printf("CIP:: %s, resolution = %zu\n", _name.c_str(), _resolution);
+printf("CIP::PADS id=%s, name=%s, resolution=%zu, armWidth=%f, eaw=%f\n", _code, _name.c_str(), _resolution, _armWidth, _eaw);
 }
 
-void CIP::init()
+void CIP::dmt_init()
 {
-  _type = Probe::CIP;
-  _nDiodes = 64;
-  _nSlices = P2D_DATA / _nDiodes * 8;
-  _lrPpr = 1;
-
   if (_code[0] == 'C')  // CIP
     _armWidth = 100.0;
 
   if (_code[0] == 'P')  // PIP
     _armWidth = 260.0;
-
-  _sampleArea = _armWidth * Resolution() * nDiodes() * 0.001;
 
   SetSampleArea();
 }
@@ -86,7 +73,7 @@ struct recStats CIP::ProcessRecord(const P2d_rec *record, float version)
   size_t	nBins;
   unsigned long long	*p, slice;
   unsigned long		startMilliSec;
-  double	sampleVolume[maxDiodes], totalLiveTime;
+  double	sampleVolume[(nDiodes()<<2)+1], totalLiveTime;
 
   static Particle	*cp = new Particle();
 
@@ -95,7 +82,6 @@ struct recStats CIP::ProcessRecord(const P2d_rec *record, float version)
 
   ClearStats(record);
   stats.DASelapsedTime = stats.thisTime - _prevTime;
-  stats.frequency = Resolution() / stats.tas;
   stats.SampleVolume = SampleArea() * stats.tas;
 
   if (version == -1)    // This means set time stamp only
@@ -110,7 +96,6 @@ struct recStats CIP::ProcessRecord(const P2d_rec *record, float version)
 //#endif
 
   totalLiveTime = 0.0;
-  memset(stats.accum, 0, sizeof(stats.accum));
 
   switch (controlWindow->GetConcentration()) {
     case CENTER_IN:             nBins = 128; break;
@@ -119,11 +104,13 @@ struct recStats CIP::ProcessRecord(const P2d_rec *record, float version)
     }
 
   for (size_t i = 0; i < nBins; ++i)
-    sampleVolume[i] = stats.tas * (sampleAreaC[i] * 2) * 0.001;
-  
+    sampleVolume[i] = stats.tas * sampleArea[i] * 0.001;
+
+#ifdef DEBUG
 unsigned long long *o = (unsigned long long *)record->data;
 for (int j = 0; j < 512; ++j, ++o)
   printf("%llx\n",  *o);
+#endif
 
   unsigned char image[16000];
   size_t nSlices = uncompress(image, record->data, 4096);
@@ -227,7 +214,6 @@ printf("CIP sync in process\n");
   }
 
   stats.SampleVolume *= (stats.DASelapsedTime - overload) * 0.001;
-
   stats.tBarElapsedtime = (prevTimeWord - firstTimeWord) / 1000;
 
   if (stats.nTimeBars > 0)

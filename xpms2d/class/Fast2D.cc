@@ -21,7 +21,7 @@ const unsigned char Fast2D::OverldString[] = { 0x55, 0x55, 0xaa };
 
 
 /* -------------------------------------------------------------------- */
-Fast2D::Fast2D(const char xml_entry[], int recSize) : Probe(xml_entry, recSize)
+Fast2D::Fast2D(const char xml_entry[], int recSize) : Probe(Probe::FAST2D, xml_entry, recSize, 64)
 {
   std::string XMLgetAttributeValue(const char s[], const char target[]);
 
@@ -35,25 +35,18 @@ Fast2D::Fast2D(const char xml_entry[], int recSize) : Probe(xml_entry, recSize)
 
   _resolution = atoi(XMLgetAttributeValue(xml_entry, "resolution").c_str());
 
-  init();
+  f2d_init();
 
-printf("Fast2D:: id=%s, name=%s, resolution=%zu\n", _code, _name.c_str(), _resolution);
+printf("Fast2D::OAP id=%s, name=%s, resolution=%zu, armWidth=%f, eaw=%f\n", _code, _name.c_str(), _resolution, _armWidth, _eaw);
 }
 
-void Fast2D::init()
+void Fast2D::f2d_init()
 {
-  _type = Probe::FAST2D;
-  _nDiodes = 64;
-  _nSlices = P2D_DATA / _nDiodes * 8;
-  _lrPpr = 1;
-
   if (_code[0] == 'C')  // 2DC
     _armWidth = 61.0;
 
   if (_code[0] == 'P')  // 2DP
     _armWidth = 261.0;
-
-  _sampleArea = _armWidth * Resolution() * nDiodes() * 0.001;
 
   SetSampleArea();
 }
@@ -70,13 +63,12 @@ bool Fast2D::isSyncWord(const unsigned char *p)
 /* -------------------------------------------------------------------- */
 struct recStats Fast2D::ProcessRecord(const P2d_rec *record, float version)
 {
-//  char		*probeID = (char *)&record->id;
   int		startTime, overload = 0;
   size_t	nBins;
   const unsigned char	*p;
   unsigned long long	slice;
   unsigned long	startMilliSec;
-  double	sampleVolume[maxDiodes], totalLiveTime;
+  double	sampleVolume[(nDiodes()<<2)+1], totalLiveTime;
 
   static Particle	*cp = new Particle();
 
@@ -84,12 +76,8 @@ struct recStats Fast2D::ProcessRecord(const P2d_rec *record, float version)
   static unsigned long long prevTimeWord = 0;
 
   ClearStats(record);
-
   stats.DASelapsedTime = stats.thisTime - _prevTime;
-  stats.frequency = Resolution() / stats.tas;
-
   stats.SampleVolume = SampleArea() * stats.tas;
-
 
   if (version == -1)    // This means set time stamp only
   {
@@ -103,7 +91,6 @@ struct recStats Fast2D::ProcessRecord(const P2d_rec *record, float version)
 #endif
 
   totalLiveTime = 0.0;
-  memset(stats.accum, 0, sizeof(stats.accum));
 
   switch (controlWindow->GetConcentration()) {
     case CENTER_IN:             nBins = 128; break;
@@ -112,7 +99,7 @@ struct recStats Fast2D::ProcessRecord(const P2d_rec *record, float version)
     }
 
   for (size_t i = 0; i < nBins; ++i)
-    sampleVolume[i] = stats.tas * (sampleAreaC[i] * 2) * 0.001;
+    sampleVolume[i] = stats.tas * sampleArea[i] * 0.001;	// Why * 2 ?
   
   // Scan record, compute tBarElapsedtime and stats.
   p = record->data;
@@ -223,7 +210,6 @@ struct recStats Fast2D::ProcessRecord(const P2d_rec *record, float version)
   }
 
   stats.SampleVolume *= (stats.DASelapsedTime - overload) * 0.001;
-
   stats.tBarElapsedtime = (prevTimeWord - firstTimeWord) / 1000;
 
   if (stats.nTimeBars > 0)
