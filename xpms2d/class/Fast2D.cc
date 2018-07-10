@@ -17,11 +17,11 @@ const unsigned char Fast2D::SyncString[] = { 0xaa, 0xaa, 0xaa };
 const unsigned char Fast2D::OverldString[] = { 0x55, 0x55, 0xaa };
 
 
-#define TimeWord_Microseconds(slice)      ((slice & 0x000000ffffffffffLL) / 12)
+#define TimeWord_Microseconds(slice)      ((slice & 0x000000ffffffffffLL) / _clockMhz)
 
 
 /* -------------------------------------------------------------------- */
-Fast2D::Fast2D(const char xml_entry[], int recSize) : Probe(Probe::FAST2D, xml_entry, recSize, 64)
+Fast2D::Fast2D(const char xml_entry[], int recSize) : Probe(Probe::FAST2D, xml_entry, recSize, 64), _clockMhz(12)
 {
   std::string XMLgetAttributeValue(const char s[], const char target[]);
 
@@ -47,6 +47,9 @@ void Fast2D::f2d_init()
 
   if (_code[0] == 'P')  // 2DP
     _armWidth = 261.0;
+
+  if (_name.find("v2") != std::string::npos)
+    _clockMhz = 33;
 
   SetSampleArea();
 }
