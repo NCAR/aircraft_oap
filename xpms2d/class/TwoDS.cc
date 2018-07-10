@@ -33,6 +33,7 @@ TwoDS::TwoDS(const char xml_entry[], int recSize) : Probe(Probe::TWODS, xml_entr
 
   _resolution = atoi(XMLgetAttributeValue(xml_entry, "resolution").c_str());
   _armWidth = 50.8;
+  _dof_const = 5.13;
 
   SetSampleArea();
 printf("TwoDS::OAP id=%s, name=%s, resolution=%zu, armWidth=%f, eaw=%f\n", _code, _name.c_str(), _resolution, _armWidth, _eaw);

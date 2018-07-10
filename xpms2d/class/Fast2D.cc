@@ -99,7 +99,7 @@ struct recStats Fast2D::ProcessRecord(const P2d_rec *record, float version)
     }
 
   for (size_t i = 0; i < nBins; ++i)
-    sampleVolume[i] = stats.tas * sampleArea[i] * 0.001;	// Why * 2 ?
+    sampleVolume[i] = stats.tas * sampleArea[i] * 0.001;
   
   // Scan record, compute tBarElapsedtime and stats.
   p = record->data;

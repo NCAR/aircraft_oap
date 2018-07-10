@@ -86,6 +86,7 @@ void Probe::init()
   sampleArea = 0;
   _nSlices = P2D_DATA / _nDiodes * 8;
   _eaw = nDiodes() * Resolution() * 0.001;
+  _dof_const = 2.37;	// Default for PMS probes.
 
   _lrPpr = 1;
 
@@ -220,41 +221,19 @@ void Probe::computeDerived(double sampleVolume[], size_t nBins, double totalLive
 
 
 /* -------------------------------------------------------------------- */
-static float DOF2dP[] = { 0.0, 145.203, 261.0, 261.0, 261.0,
-  261.0, 261.0, 261.0, 261.0, 261.0, 261.0, 261.0, 261.0, 261.0, 261.0,
-  261.0, 261.0, 261.0, 261.0, 261.0, 261.0, 261.0, 261.0, 261.0, 261.0,
-  261.0, 261.0, 261.0, 261.0, 261.0, 261.0, 261.0, 261.0, 261.0, 261.0,
-  261.0, 261.0, 261.0, 261.0, 261.0, 261.0, 261.0, 261.0, 261.0, 261.0,
-  261.0, 261.0, 261.0, 261.0, 261.0, 261.0, 261.0, 261.0, 261.0, 261.0,
-  261.0, 261.0, 261.0, 261.0, 261.0, 261.0, 261.0, 261.0, 261.0, 261.0 };
-
-static float DOF2dC[] = { 0.0, 1.56, 6.25, 14.06, 25.0, 39.06, 56.25,
-  61.0, 61.0, 61.0, 61.0, 61.0, 61.0, 61.0, 61.0, 61.0, 61.0, 61.0,
-  61.0, 61.0, 61.0, 61.0, 61.0, 61.0, 61.0, 61.0, 61.0, 61.0, 61.0,
-  61.0, 61.0, 61.0, 61.0, 61.0, 61.0, 61.0, 61.0, 61.0, 61.0, 61.0,
-  61.0, 61.0, 61.0, 61.0, 61.0, 61.0, 61.0, 61.0, 61.0, 61.0, 61.0,
-  61.0, 61.0, 61.0, 61.0, 61.0, 61.0, 61.0, 61.0, 61.0, 61.0, 61.0,
-  61.0, 61.0, 61.0 };
-
-
 void Probe::SetSampleArea()
 {
-  int	dofIdx;	// DOF above only goes to 64, some probes need to compute to 128 r 256.
-  float	dia, dof;
-  float *dofP;
+  float diam, DoF;
 
-  _eaw = nDiodes() * Resolution(); 
-  _sampleArea = _armWidth * _eaw;
+  float prht	= _armWidth * 1000;	// in micron
+  float mag	= diodeDiameter / ((float)Resolution() / 1000);
+  	_eaw	= nDiodes() * Resolution() * 0.001;	// in mm
+  	_sampleArea = _armWidth * _eaw;
 
   if (sampleArea == 0)
     sampleArea = new float[(nDiodes() << 2)];
 
-  if (Resolution() < 100)
-    dofP = DOF2dC;
-  else
-    dofP = DOF2dP;
-
-printf("SetSampleArea: %s: _eaw=%f %d\n", _name.c_str(), _eaw, controlWindow->GetConcentration());
+//printf("SetSampleArea: %s: mag=%f _eaw=%f %d\n", _name.c_str(), mag, _eaw, controlWindow->GetConcentration());
   switch (controlWindow->GetConcentration())
     {
     case BASIC:
@@ -266,15 +245,10 @@ printf("SetSampleArea: %s: _eaw=%f %d\n", _name.c_str(), _eaw, controlWindow->Ge
     case ENTIRE_IN:
       for (size_t i = 1; i < nDiodes(); ++i)
         {
-        if (i < 60)
-          dofIdx = i;
-        else
-          dofIdx = 60;
-
-        sampleArea[i] = dofP[dofIdx] * diodeDiameter * (nDiodes() - i - 1) / 1.0;
-        if (Code()[0] == 'C')
-          sampleArea[i] /= 8.0;		// Why?
-//printf(" %zu : %f = %f * %f\n", i, sampleArea[i], dofP[dofIdx], diodeDiameter * (nDiodes() - i - 1) / 8.0);
+        diam = i * Resolution();
+        DoF = std::min((_dof_const * diam*diam), prht) * 0.001;
+        sampleArea[i] = DoF * (diodeDiameter * (nDiodes() - i - 1) / mag);
+//printf(" %zu : %f = %f * %f\n", i, sampleArea[i], DoF, diodeDiameter * (nDiodes() - i - 1) / mag);
         }
 
       break;
@@ -282,13 +256,10 @@ printf("SetSampleArea: %s: _eaw=%f %d\n", _name.c_str(), _eaw, controlWindow->Ge
     case CENTER_IN:
       for (size_t i = 1; i < nDiodes()<<1; ++i)
         {
-        if (i < 60)
-          dofIdx = i;
-        else
-          dofIdx = 60;
-
-        sampleArea[i] = dofP[dofIdx] * _eaw;
-//printf(" %zu : %f = %f * %f\n", i, sampleArea[i], dofP[dofIdx], _eaw);
+        diam = i * Resolution();
+        DoF = std::min((_dof_const * diam*diam), prht) * 0.001;
+        sampleArea[i] = DoF * _eaw;
+//printf(" %zu : %f = %f * %f\n", i, sampleArea[i], DoF, _eaw);
         }
 
       break;
@@ -296,22 +267,17 @@ printf("SetSampleArea: %s: _eaw=%f %d\n", _name.c_str(), _eaw, controlWindow->Ge
     case RECONSTRUCTION:
       for (size_t i = 1; i < nDiodes()<<2; ++i)
         {
-        dia = (float)i * Resolution();
-        _eaw = ((nDiodes() * Resolution()) + (2 * (dia / 2 - dia / 7.2414))) * 0.001;
-
-        if (i < 60)
-          dofIdx = i;
-        else
-          dofIdx = 60;
-
-        sampleArea[i] = dofP[dofIdx] * _eaw;
-//printf(" %zu : %f = %f * %f\n", i, sampleArea[i], dofP[dofIdx], _eaw);
+        diam = (float)i * Resolution();
+        _eaw = ((nDiodes() * Resolution()) + (2 * (diam / 2 - diam / 7.2414))) * 0.001;
+        DoF = std::min((_dof_const * diam*diam), prht) * 0.001;
+        sampleArea[i] = DoF * _eaw;
+//printf(" %zu : %f = %f * %f\n", i, sampleArea[i], DoF, _eaw);
         }
 
       break;
     }
 
-printf("\n");
+//printf("\n");
 
 }	/* END SETSAMPLEAREA */
 

@@ -82,7 +82,7 @@ public:
 
   /**
    * Set sample area based on user selected calculation type Entire-in
-   * vs center-in, etc.
+   * vs Center-in, etc.  Output is sampleArea[] in mm^2
    */
   void SetSampleArea();
 
@@ -133,10 +133,12 @@ protected:
   size_t	_resolution;
   /// Number of diodes in the array
   size_t	_nDiodes;
-  /// Physical distance between the two probe arms.
+  /// Physical distance between the two probe arms in mm.
   float		_armWidth;
   /// Effective Area Width
   float		_eaw;
+  /// DOF constant.
+  float		_dof_const;
   /// Crude sample area - as opposed to the 'per bin' sample area.
   float		_sampleArea;
   /// Number of slices per 4k buffer.
@@ -153,6 +155,7 @@ protected:
 
   static const float diodeDiameter;
 
+  /// Sample area per bin in mm^2
   float *sampleArea;
 
 };
