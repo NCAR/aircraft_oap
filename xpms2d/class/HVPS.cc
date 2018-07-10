@@ -82,8 +82,6 @@ struct recStats HVPS::ProcessRecord(const P2d_rec *record, float version)
   bool		overloadAdded = false;
   double	diameter, z, conc, totalLiveTime;
 
-  Particle	*cp;
-
   static unsigned short	prevSlice[2];
 
   ClearStats(record);
@@ -279,6 +277,7 @@ printf("\n");
       totalLiveTime += checkRejectionCriteria(cp, stats);
 
       stats.particles.push_back(cp);
+      cp = new Particle();
 
       startMilliSec += (cp->deltaTime + cp->liveTime);
 

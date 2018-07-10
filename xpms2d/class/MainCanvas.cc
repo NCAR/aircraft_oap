@@ -280,7 +280,7 @@ memset(part1, 0, sizeof(part1));
       else pen->DrawText(Surface(), 505, y+62, buffer);
       break;
     }
-    for (size_t i = 0; probe->stats.particles.size(); ++i)
+    for (size_t i = 0; i < probe->stats.particles.size(); ++i)
       delete probe->stats.particles[i];
     probe->stats.particles.clear();
 }
@@ -459,12 +459,12 @@ void MainCanvas::drawFast2D(P2d_rec *record, Probe *probe, float version, int pr
     p = record->data;
     for (size_t i = 0; i < probe->nSlices(); ++i, p += sizeof(long long))	// 2DC and/or 2DP
     {
-      if (memcmp((void *)p, (void *)Fast2D::SyncString, 2) == 0)
+      if (probe->isSyncWord(p))
       {
         if (ps) ps->SetColor(color->GetColorPS(GREEN));
         else pen->SetColor(color->GetColor(GREEN));
       }
-      if (memcmp((void *)p, (void *)Fast2D::OverldString, 2) == 0)
+      if (probe->isOverloadWord(p))
       {
         if (ps) ps->SetColor(color->GetColorPS(BLUE));
         else pen->SetColor(color->GetColor(BLUE));
@@ -495,8 +495,7 @@ void MainCanvas::drawFast2D(P2d_rec *record, Probe *probe, float version, int pr
     else
       nextColor = probeNum;
 
-    if (memcmp((void *)p, (void *)Fast2D::SyncString, 2) == 0 ||
-        memcmp((void *)p, (void *)Fast2D::OverldString, 2) == 0)
+    if (probe->isSyncWord(p) || probe->isOverloadWord(p))
     {
       /**
        * Color code timing words:
@@ -505,7 +504,7 @@ void MainCanvas::drawFast2D(P2d_rec *record, Probe *probe, float version, int pr
        * 	Red = rejected.
        * 	Blue = overload word, also rejected.
        */
-      if (memcmp((void *)p, (void *)Fast2D::OverldString, 2) == 0)
+      if (probe->isOverloadWord(p))
       {
         if (ps) ps->SetColor(color->GetColorPS(BLUE));
         else pen->SetColor(color->GetColor(BLUE));
@@ -545,8 +544,8 @@ void MainCanvas::drawFast2D(P2d_rec *record, Probe *probe, float version, int pr
       else
         colorIsBlack = false;
 
-      for (; i < probe->nSlices() && memcmp((void *)p, (void *)Fast2D::SyncString, 2)
-		&& memcmp((void *)p, (void *)Fast2D::OverldString, 2); p += sizeof(long long))
+      for (; i < probe->nSlices() && !probe->isSyncWord(p) && !probe->isOverloadWord(p)
+		; p += sizeof(long long))
         drawSlice(ps, i++, p, probe->nDiodes());
 
       if (enchiladaWin)
@@ -607,14 +606,14 @@ void MainCanvas::draw2DS(P2d_rec *record, Probe *probe, float version, int probe
     p = (unsigned char *)record->data;
     for (size_t i = 0; i < probe->nSlices(); ++i, p += 16)
     {
-      if (memcmp((void *)p, (void *)Fast2D::SyncString, 3) == 0)
+      if (probe->isSyncWord(p))
       {
 //unsigned long long *word = (unsigned long long *)p;
 //printf("%llu\n", *word & 0x0000ffffffffffff);
         if (ps) ps->SetColor(color->GetColorPS(GREEN));
         else pen->SetColor(color->GetColor(GREEN));
       }
-      if (memcmp((void *)p, (void *)Fast2D::OverldString, 3) == 0)
+      if (probe->isOverloadWord(p))
       {
         if (ps) ps->SetColor(color->GetColorPS(BLUE));
         else pen->SetColor(color->GetColor(BLUE));
@@ -624,7 +623,7 @@ void MainCanvas::draw2DS(P2d_rec *record, Probe *probe, float version, int probe
       if (ps) ps->SetColor(color->GetColorPS(BLACK));
       else pen->SetColor(color->GetColor(BLACK));
     }
-/*
+
     if (_displayMode == RAW_RECORD)
       y += 130;  // Add enough room for a second copy of this record.
     else
@@ -632,8 +631,12 @@ void MainCanvas::draw2DS(P2d_rec *record, Probe *probe, float version, int probe
       y += 32;  // Bail out (no particles detected from process.cc).
       return;
     }
-*/
   }
+
+
+
+
+
 
 
   if (_displayMode == DIAGNOSTIC)
@@ -649,7 +652,7 @@ void MainCanvas::draw2DS(P2d_rec *record, Probe *probe, float version, int probe
 
 /* -------------------------------------------------------------------- */
 // DMT CIP/PIP probes are run length encoded.  Decode here.
-// Duplicated in src/process.cc, not consolidated at this time due to static variables.
+// Duplicated in CIP.cc, not consolidated at this time due to static variables.
 size_t MainCanvas::uncompressCIP(unsigned char *dest, const unsigned char src[], int nbytes)
 {
   int d_idx = 0, i = 0;

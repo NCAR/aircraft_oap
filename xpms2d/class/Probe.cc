@@ -92,7 +92,9 @@ void Probe::init()
 
   _displayed = false;
   _prevTime = 0;
+  _prevTimeWord = 0;
 
+  cp = new Particle();
   memset((void *)&stats, 0, sizeof(stats));
 }
 

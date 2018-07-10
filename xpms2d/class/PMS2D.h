@@ -46,6 +46,8 @@ protected:
 
   void pms2d_init();
 
+  uint32_t	_prevSlice;
+
 };
 
 #endif

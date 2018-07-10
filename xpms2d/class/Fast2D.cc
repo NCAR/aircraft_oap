@@ -48,6 +48,7 @@ void Fast2D::f2d_init()
   if (_code[0] == 'P')  // 2DP
     _armWidth = 261.0;
 
+  // Version two of the Fast2D uses a 33Mhz clock.
   if (_name.find("v2") != std::string::npos)
     _clockMhz = 33;
 
@@ -64,19 +65,21 @@ bool Fast2D::isSyncWord(const unsigned char *p)
 }
 
 /* -------------------------------------------------------------------- */
+bool Fast2D::isOverloadWord(const unsigned char *p)
+{
+  return memcmp(p, (void *)&OverldString, 2) == 0;
+}
+
+/* -------------------------------------------------------------------- */
 struct recStats Fast2D::ProcessRecord(const P2d_rec *record, float version)
 {
   int		startTime, overload = 0;
   size_t	nBins;
-  const unsigned char	*p;
   unsigned long long	slice;
   unsigned long	startMilliSec;
   double	sampleVolume[(nDiodes()<<2)+1], totalLiveTime;
 
-  static Particle	*cp = new Particle();
-
   unsigned long long	firstTimeWord = 0;
-  static unsigned long long prevTimeWord = 0;
 
   ClearStats(record);
   stats.DASelapsedTime = stats.thisTime - _prevTime;
@@ -105,7 +108,7 @@ struct recStats Fast2D::ProcessRecord(const P2d_rec *record, float version)
     sampleVolume[i] = stats.tas * sampleArea[i] * 0.001;
   
   // Scan record, compute tBarElapsedtime and stats.
-  p = record->data;
+  const unsigned char *p = record->data;
 
   startTime = _prevTime / 1000;
   startMilliSec = _prevHdr.msec;
@@ -117,14 +120,14 @@ struct recStats Fast2D::ProcessRecord(const P2d_rec *record, float version)
   
     /* Have particle, will travel.
      */
-    if (memcmp(p, SyncString, 2) == 0 || memcmp(p, OverldString, 2) == 0)
+    if (isSyncWord(p) || isOverloadWord(p))
     {
       unsigned long long thisTimeWord = TimeWord_Microseconds(slice);
 
       if (firstTimeWord == 0)
         firstTimeWord = thisTimeWord;
 
-      if (memcmp(p, OverldString, 2) == 0)
+      if (isOverloadWord(p))
       {
         // Set 'overload' variable here.  There is no way to determine overload.
         // Leave zero, they are less than a milli-second anyways.
@@ -144,16 +147,14 @@ struct recStats Fast2D::ProcessRecord(const P2d_rec *record, float version)
         unsigned long msec = startMilliSec + ((thisTimeWord - firstTimeWord) / 1000);
         cp->time = startTime + (msec / 1000);
         cp->msec = msec % 1000;
-        cp->deltaTime = cp->timeWord - prevTimeWord;
+        cp->deltaTime = cp->timeWord - _prevTimeWord;
         cp->timeWord /= 1000;	// Store as millseconds for this probe, since this is not a 48 bit word
         totalLiveTime += checkRejectionCriteria(cp, stats);
         stats.particles.push_back(cp);
+        cp = new Particle();
       }
 
-      prevTimeWord = thisTimeWord;
-
-      // Start new particle.
-      cp = new Particle();
+      _prevTimeWord = thisTimeWord;
 
       ++stats.nTimeBars;
       stats.minBar = std::min(stats.minBar, cp->deltaTime);
@@ -213,7 +214,7 @@ struct recStats Fast2D::ProcessRecord(const P2d_rec *record, float version)
   }
 
   stats.SampleVolume *= (stats.DASelapsedTime - overload) * 0.001;
-  stats.tBarElapsedtime = (prevTimeWord - firstTimeWord) / 1000;
+  stats.tBarElapsedtime = (_prevTimeWord - firstTimeWord) / 1000;
 
   if (stats.nTimeBars > 0)
     stats.meanBar = stats.tBarElapsedtime / stats.nTimeBars;

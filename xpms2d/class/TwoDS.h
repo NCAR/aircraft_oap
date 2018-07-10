@@ -29,12 +29,18 @@ public:
   struct recStats ProcessRecord(const P2d_rec * record, float version);
 
   bool isSyncWord(const unsigned char *p);
+  bool isOverloadWord(const unsigned char *p);
 
   static const unsigned char SyncString[3];
   static const unsigned char OverldString[3];
 
 
 protected:
+
+  /**
+   * Clock speed of the probe.
+   */
+  unsigned int	_clockMhz;
 
 };
 

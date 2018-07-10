@@ -19,7 +19,6 @@ COPYRIGHT:	University Corporation for Atmospheric Research, 1997-2018
 
 #include <unistd.h>
 #include <algorithm>
-#include <vector>
 
 const size_t nSlices_32bit = 1024;
 const size_t nSlices_64bit = 512;

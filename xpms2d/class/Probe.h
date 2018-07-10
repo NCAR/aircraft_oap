@@ -77,6 +77,7 @@ public:
   virtual struct recStats ProcessRecord(const P2d_rec * record, float version) = 0;
 
   virtual bool isSyncWord(const unsigned char *p) = 0;
+  virtual bool isOverloadWord(const unsigned char *p)	{ return false; }
 
   ProbeType Type() const	{ return _type; }
 
@@ -129,18 +130,25 @@ protected:
 
   char		_code[4];
   ProbeType	_type;
+
   /// Probe resolution per diode in micron
   size_t	_resolution;
+
   /// Number of diodes in the array
   size_t	_nDiodes;
+
   /// Physical distance between the two probe arms in mm.
   float		_armWidth;
-  /// Effective Area Width
+
+  /// Effective Area Width in mm.
   float		_eaw;
-  /// DOF constant.
+
+  /// Depth of Field constant.
   float		_dof_const;
+
   /// Crude sample area - as opposed to the 'per bin' sample area.
   float		_sampleArea;
+
   /// Number of slices per 4k buffer.
   size_t	_nSlices;
 
@@ -152,11 +160,15 @@ protected:
   // Store prevtime and hdr for ProcessRecord, so we can compute elapsed time.
   P2d_hdr	_prevHdr;
   int		_prevTime;
+  unsigned long long _prevTimeWord;
 
   static const float diodeDiameter;
 
   /// Sample area per bin in mm^2
   float *sampleArea;
+
+  // current Particle data.  Member so it can carry across records.
+  Particle	*cp;
 
 };
 

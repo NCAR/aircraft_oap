@@ -68,17 +68,13 @@ bool CIP::isSyncWord(const unsigned char *p)
 /* -------------------------------------------------------------------- */
 struct recStats CIP::ProcessRecord(const P2d_rec *record, float version)
 {
-//  char		*probeID = (char *)&record->id;
   int		startTime, overload = 0;
   size_t	nBins;
   unsigned long long	*p, slice;
   unsigned long		startMilliSec;
   double	sampleVolume[(nDiodes()<<2)+1], totalLiveTime;
 
-  static Particle	*cp = new Particle();
-
   unsigned long long	firstTimeWord = 0;
-  static unsigned long long prevTimeWord = 0;
 
   ClearStats(record);
   stats.DASelapsedTime = stats.thisTime - _prevTime;
@@ -145,16 +141,14 @@ printf("CIP sync in process\n");
         unsigned long msec = startMilliSec + ((thisTimeWord - firstTimeWord) / 1000);
         cp->time = startTime + (msec / 1000);
         cp->msec = msec % 1000;
-        cp->deltaTime = cp->timeWord - prevTimeWord;
+        cp->deltaTime = cp->timeWord - _prevTimeWord;
         cp->timeWord /= 1000;	// Store as millseconds for this probe, since this is not a 48 bit word
         totalLiveTime += checkRejectionCriteria(cp, stats);
         stats.particles.push_back(cp);
+        cp = new Particle();
       }
 
-      prevTimeWord = thisTimeWord;
-
-      // Start new particle.
-      cp = new Particle();
+      _prevTimeWord = thisTimeWord;
 
       ++stats.nTimeBars;
       stats.minBar = std::min(stats.minBar, cp->deltaTime);
@@ -214,7 +208,7 @@ printf("CIP sync in process\n");
   }
 
   stats.SampleVolume *= (stats.DASelapsedTime - overload) * 0.001;
-  stats.tBarElapsedtime = (prevTimeWord - firstTimeWord) / 1000;
+  stats.tBarElapsedtime = (_prevTimeWord - firstTimeWord) / 1000;
 
   if (stats.nTimeBars > 0)
     stats.meanBar = stats.tBarElapsedtime / stats.nTimeBars;

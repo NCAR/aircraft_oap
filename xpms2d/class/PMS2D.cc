@@ -69,7 +69,7 @@ extern ControlWindow	*controlWindow;
 /* -------------------------------------------------------------------- */
 bool PMS2D::isSyncWord(const unsigned char *p)
 {
-  return *p & 0x55;
+  return *p == 0x55;
 }
 
 /* -------------------------------------------------------------------- */
@@ -80,8 +80,6 @@ struct recStats PMS2D::ProcessRecord(const P2d_rec *record, float version)
   uint32_t	*p, slice, pSlice, syncWord, startMilliSec;
   bool		overloadAdded = false;
   double	sampleVolume[(nDiodes()<<2)+1], totalLiveTime;
-
-  static uint32_t	prevSlice;
 
   ClearStats(record);
   stats.DASelapsedTime = stats.thisTime - _prevTime;
@@ -131,7 +129,7 @@ struct recStats PMS2D::ProcessRecord(const P2d_rec *record, float version)
 
   // Scan record, compute tBarElapsedtime and stats.
   p = (uint32_t *)record->data;
-  pSlice = prevSlice;
+  pSlice = _prevSlice;
 
   startTime = _prevTime / 1000;
   startMilliSec = _prevHdr.msec * 1000;
@@ -152,7 +150,6 @@ struct recStats PMS2D::ProcessRecord(const P2d_rec *record, float version)
 #endif
     if (pSlice == 0xffffffff && (p[i] & 0x55) == 0x55 && ntohl(p[i+1]) == syncWord)
       {
-      Particle * cp = new Particle();
       cp->time = startTime;
       cp->msec = startMilliSec;
 
@@ -233,10 +230,11 @@ struct recStats PMS2D::ProcessRecord(const P2d_rec *record, float version)
         cp->reject = true;
 
       totalLiveTime += checkRejectionCriteria(cp, stats);
+      startMilliSec += (cp->deltaTime + cp->liveTime);
 
       stats.particles.push_back(cp);
+      cp = new Particle();
 
-      startMilliSec += (cp->deltaTime + cp->liveTime);
 
       if (startMilliSec >= 1000000)
         {
@@ -269,7 +267,7 @@ stats.tBarElapsedtime += (uint32_t)(nSlices() * stats.frequency);
   memcpy((char *)&_prevHdr, (char *)record, sizeof(P2d_hdr));
 
   p = (uint32_t *)record->data;
-  prevSlice = p[1023];
+  _prevSlice = p[1023];
 
   return(stats);
 
