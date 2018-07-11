@@ -17,9 +17,6 @@ const unsigned char Fast2D::SyncString[] = { 0xaa, 0xaa, 0xaa };
 const unsigned char Fast2D::OverldString[] = { 0x55, 0x55, 0xaa };
 
 
-#define TimeWord_Microseconds(slice)      ((slice & 0x000000ffffffffffLL) / _clockMhz)
-
-
 /* -------------------------------------------------------------------- */
 Fast2D::Fast2D(const char xml_entry[], int recSize) : Probe(Probe::FAST2D, xml_entry, recSize, 64), _clockMhz(12)
 {
@@ -59,6 +56,13 @@ void Fast2D::f2d_init()
 extern ControlWindow	*controlWindow;
 
 /* -------------------------------------------------------------------- */
+unsigned long long Fast2D::TimeWord_Microseconds(const unsigned char *p)
+{
+  // Fast2D uses 40 bit timing word; v2 uses 42 bits.
+  return (ntohll((long long *)p) & 0x000000ffffffffffLL) / _clockMhz;
+}
+
+/* -------------------------------------------------------------------- */
 bool Fast2D::isSyncWord(const unsigned char *p)
 {
   return memcmp(p, (void *)&SyncString, 2) == 0;
@@ -75,7 +79,6 @@ struct recStats Fast2D::ProcessRecord(const P2d_rec *record, float version)
 {
   int		startTime, overload = 0;
   size_t	nBins;
-  unsigned long long	slice;
   unsigned long	startMilliSec;
   double	sampleVolume[(nDiodes()<<2)+1], totalLiveTime;
 
@@ -116,13 +119,11 @@ struct recStats Fast2D::ProcessRecord(const P2d_rec *record, float version)
   // Loop through all slices in record.
   for (size_t i = 0; i < nSlices(); ++i, p += sizeof(long long))
   {
-    slice = ntohll((long long *)p);
-  
     /* Have particle, will travel.
      */
     if (isSyncWord(p) || isOverloadWord(p))
     {
-      unsigned long long thisTimeWord = TimeWord_Microseconds(slice);
+      unsigned long long thisTimeWord = TimeWord_Microseconds(p);
 
       if (firstTimeWord == 0)
         firstTimeWord = thisTimeWord;

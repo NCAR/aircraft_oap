@@ -16,8 +16,6 @@ COPYRIGHT:	University Corporation for Atmospheric Research, 1997-2018
 const unsigned char TwoDS::SyncString[] = { 0xaa, 0xaa, 0xaa };
 const unsigned char TwoDS::OverldString[] = { 0x55, 0x55, 0xaa };
 
-#define TimeWord_Microseconds(slice)      ((slice & 0x000000ffffffffffLL) / _clockMhz)
-
 
 /* -------------------------------------------------------------------- */
 TwoDS::TwoDS(const char xml_entry[], int recSize) : Probe(Probe::TWODS, xml_entry, recSize, 128)
@@ -45,6 +43,13 @@ printf("TwoDS::OAP id=%s, name=%s, resolution=%zu, armWidth=%f, eaw=%f\n", _code
 extern ControlWindow	*controlWindow;
 
 /* -------------------------------------------------------------------- */
+unsigned long long TwoDS::TimeWord_Microseconds(const unsigned char *p)
+{
+  // SPEC uses a 48 bit timing word.
+  return (ntohll((long long *)p) & 0x0000ffffffffffffLL) / _clockMhz;
+}
+
+/* -------------------------------------------------------------------- */
 bool TwoDS::isSyncWord(const unsigned char *p)
 {
   return memcmp(p, (void *)&SyncString, 3) == 0;
@@ -61,7 +66,6 @@ struct recStats TwoDS::ProcessRecord(const P2d_rec *record, float version)
 {
   int		startTime, overload = 0;
   size_t	nBins;
-  unsigned long long slice;
   unsigned long startMilliSec;
   double	sampleVolume[(nDiodes()<<2)+1], totalLiveTime;
 
@@ -107,8 +111,7 @@ struct recStats TwoDS::ProcessRecord(const P2d_rec *record, float version)
      */
     if (isSyncWord(p) || isOverloadWord(p))
     {
-      slice = ntohll((long long *)&p[8]);
-      unsigned long long thisTimeWord = TimeWord_Microseconds(slice);
+      unsigned long long thisTimeWord = TimeWord_Microseconds(&p[8]);
 
       if (firstTimeWord == 0)
         firstTimeWord = thisTimeWord;

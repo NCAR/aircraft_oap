@@ -37,6 +37,9 @@ public:
 
 protected:
 
+  unsigned long long
+  TimeWord_Microseconds(const unsigned char *p);
+
   /**
    * Clock speed of the probe.
    */

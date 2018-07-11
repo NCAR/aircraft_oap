@@ -34,6 +34,9 @@ protected:
 
   void f2d_init();
 
+  unsigned long long
+  TimeWord_Microseconds(const unsigned char *p);
+
   /**
    * Clock speed of the probe.  Version one was 12Mhz.  Versions 2 was 33Mhz
    * This is used to turn the timing word into millisconds.
