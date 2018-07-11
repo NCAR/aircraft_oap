@@ -176,9 +176,9 @@ struct recStats PMS2D::ProcessRecord(const P2d_rec *record, float version)
         {
         ++cp->w;
 
-        checkEdgeDiodes(cp, (const unsigned char *)p);
-        cp->area += area((const unsigned char *)p);
-        cp->h = std::max(height((const unsigned char *)p), cp->h);
+        checkEdgeDiodes(cp, (const unsigned char *)&p[i]);
+        cp->area += area((const unsigned char *)&p[i]);
+        cp->h = std::max(height((const unsigned char *)&p[i]), cp->h);
         }
 
       /* If the particle becomes rejected later, we need to now much time the
@@ -188,10 +188,6 @@ struct recStats PMS2D::ProcessRecord(const P2d_rec *record, float version)
       cp->liveTime = (uint32_t)((float)(cp->w + 3) * stats.frequency);
 
       cp->msec /= 1000;
-
-#ifdef DEBUG
-  printf("%06x %zu %zu\n", cp->timeWord, cp->w, cp->h);
-#endif
 
 
       // This will not get caught in checkRejectionCriteria(), so do it here.
