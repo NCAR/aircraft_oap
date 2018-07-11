@@ -27,11 +27,11 @@ public:
 
   void	SetDisplayMode(int mode);
   void	SetWrapDisplay()	{ _wrap = 1 - _wrap; }
-  void	SetTimingWords()	{ _timingWord = 1 - _timingWord; }
+  void	SetTimingWords()	{ _showTimingWords = 1 - _showTimingWords; }
 
   void	reset(ADS_DataFile *file, P2d_rec *rec);
   void	draw(P2d_rec *record, Probe *probe, float hdrVer, int probeNum, PostScript *ps);
-  size_t maxRecords() const	{ return(maxRecs); }
+  size_t maxRecords() const	{ return(_maxRecs); }
   int	SpaceAvailable() const	{ return(Height() - y); }
 
   /**
@@ -51,7 +51,7 @@ protected:
   void	drawHVPS(P2d_rec *record, Probe *probe, float hdrVer, int probeNum, PostScript *ps);
   void	drawCIP(P2d_rec *record, Probe *probe, float hdrVer, int probeNum, PostScript *ps);
 
-  void	drawSlice(PostScript *ps, int i, const unsigned char *slice, size_t nDiodes);
+  void	drawSlice(PostScript *ps, int i, const unsigned char *slice, Probe *probe);
   void	drawSlice(PostScript *ps, int i, uint32_t slice);
 
   /**
@@ -67,19 +67,22 @@ protected:
   /**
    * Count all shadowed diodes across the flight track and display histogram.
    */
-  void drawDiodeHistogram(P2d_rec *record, size_t nDiodes);
-  void drawDiodeHistogram(P2d_rec *record, size_t nDiodes, uint32_t sync);
+  void drawDiodeHistogram(P2d_rec *record, Probe *probe);
+  void drawDiodeHistogram(P2d_rec *record, Probe *probe, uint32_t sync);
 
   void drawAccumHistogram(struct recStats &stats, size_t xOffset);
 
   size_t uncompressCIP(unsigned char *dest, const unsigned char src[], int nbytes);
 
-  int	y, maxRecs;
+  int	y, _maxRecs;
   int	_displayMode;
-  int	PIX_PER_Y;
+  /// Number of pixels per row, nDiodes+38 for text.
+  int	_pixelsPerY;
 
-  bool	_wrap,		// Wrap display around (HVPS mostly)
-	_timingWord;	// Toggle timing words on/off.
+  /// Wrap display around (HVPS mostly)
+  bool	_wrap;			// Wrap display around (HVPS mostly)
+  /// Toggle timing words on/off.
+  bool  _showTimingWords;
 
 };	/* END MAINCANVAS.H */
 

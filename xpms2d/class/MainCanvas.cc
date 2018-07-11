@@ -43,7 +43,8 @@ MainCanvas::MainCanvas(Widget w) : Canvas(w)
   SetDisplayMode(NORMAL);
 
   _wrap = false;
-  _timingWord = true;
+  _showTimingWords = true;
+  _pixelsPerY = 70;	// generally nDiodes() + 38
 
   reset(0, 0);
 
@@ -58,22 +59,19 @@ void MainCanvas::SetDisplayMode(int mode)
     {
     case NORMAL:
     case DIAGNOSTIC:
-      PIX_PER_Y = 70;
-      break;
-
-    case ENCHILADA:
-      PIX_PER_Y = 600;
+    case RAW_RECORD:
+      _pixelsPerY = 70;
       break;
     }
 
-  maxRecs = (Height() - TOP_OFFSET) / PIX_PER_Y;
+  _maxRecs = (Height() - TOP_OFFSET) / _pixelsPerY;
 
 }	/* END SETDISPLAYMODE */
 
 /* -------------------------------------------------------------------- */
 void MainCanvas::reset(ADS_DataFile *file, P2d_rec *rec)
 {
-  maxRecs = (Height() - TOP_OFFSET) / PIX_PER_Y;
+  _maxRecs = (Height() - TOP_OFFSET) / _pixelsPerY;
   y = TOP_OFFSET;
 
   setTitle(file, rec);
@@ -131,7 +129,7 @@ memset(part1, 0, sizeof(part1));
     drawFast2D(record, probe, version, probeNum, ps);
   else
   if (ADS_DataFile::ProbeType((unsigned char *)record) == Probe::TWODS)
-    draw2DS(record, probe, version, probeNum, ps);
+    drawFast2D(record, probe, version, probeNum, ps);
   else
   if (ADS_DataFile::ProbeType((unsigned char *)record) == Probe::HVPS)
     drawHVPS(record, probe, version, probeNum, ps);
@@ -261,7 +259,7 @@ memset(part1, 0, sizeof(part1));
 
   switch (_displayMode)
     {
-    case ENCHILADA:
+    case RAW_RECORD:
     case NORMAL:
       sprintf(buffer,
 	"sv: act = %.2lfL, used = %.3lfL, area = %.2fmm2, conc = %.3lfN/L, lw = %.3lfg/M3, z = %.3lfdb",
@@ -286,7 +284,7 @@ memset(part1, 0, sizeof(part1));
 }
 
   prevOverLoad = record->overld;
-  y += PIX_PER_Y;
+  y += _pixelsPerY;
 
   if (histogramWin)
     histogramWin->AddLineItem(record, probe->stats);
@@ -345,12 +343,12 @@ void MainCanvas::drawPMS2D(P2d_rec *record, Probe *probe, float version, int pro
 
         if (ps) {
           ps->SetColor(color->GetColorPS(RED));
-          ps->MoveTo(i+10, 750-(y+(PIX_PER_Y-30)));
+          ps->MoveTo(i+10, 750-(y+(_pixelsPerY-30)));
           ps->ShowStr(buffer);
           }
         else {
           pen->SetColor(color->GetColor(RED));
-          pen->DrawText(Surface(), i+10, y+(PIX_PER_Y-30), buffer);
+          pen->DrawText(Surface(), i+10, y+(_pixelsPerY-30), buffer);
           }
         }
 
@@ -373,10 +371,10 @@ void MainCanvas::drawPMS2D(P2d_rec *record, Probe *probe, float version, int pro
         nextColor = probeNum;
         }
 
-      if (_timingWord)
+      if (_showTimingWords)
         {
-        drawSlice(ps, i, (unsigned char *)&p[i], probe->nDiodes()); ++i;
-        drawSlice(ps, i, (unsigned char *)&p[i], probe->nDiodes()); ++i;
+        drawSlice(ps, i, (unsigned char *)&p[i], probe); ++i;
+        drawSlice(ps, i, (unsigned char *)&p[i], probe); ++i;
         }
 
       if (ps) ps->SetColor(color->GetColorPS(nextColor));
@@ -388,7 +386,7 @@ void MainCanvas::drawPMS2D(P2d_rec *record, Probe *probe, float version, int pro
         colorIsBlack = false;
 
       for (; i < probe->nSlices() && p[i] != 0xffffffff; ++i)
-        drawSlice(ps, i, (unsigned char *)&p[i], probe->nDiodes());
+        drawSlice(ps, i, (unsigned char *)&p[i], probe);
 
       if (enchiladaWin)
         enchiladaWin->AddLineItem(cntr++, cp);
@@ -406,7 +404,7 @@ void MainCanvas::drawPMS2D(P2d_rec *record, Probe *probe, float version, int pro
         colorIsBlack = true;
         }
 
-      drawSlice(ps, i, (unsigned char *)&p[i], probe->nDiodes()); ++i;
+      drawSlice(ps, i, (unsigned char *)&p[i], probe); ++i;
       }
     else
       ++i;
@@ -415,7 +413,7 @@ void MainCanvas::drawPMS2D(P2d_rec *record, Probe *probe, float version, int pro
     }
 
   if (_displayMode == DIAGNOSTIC)
-    drawDiodeHistogram(record, probe->nDiodes(), syncWord);
+    drawDiodeHistogram(record, probe, syncWord);
   else
     drawAccumHistogram(probe->stats, 1050);
 /*
@@ -437,6 +435,7 @@ void MainCanvas::drawFast2D(P2d_rec *record, Probe *probe, float version, int pr
   int		nextColor, cntr = 0;
   bool		colorIsBlack = false;
   unsigned char *p;
+  size_t	bytesPerSlice = probe->nDiodes() / 8;
 
   static unsigned long prevTime;
   static P2d_rec prevRec;
@@ -444,11 +443,19 @@ void MainCanvas::drawFast2D(P2d_rec *record, Probe *probe, float version, int pr
   if (memcmp((void *)record, (void *)&prevRec, sizeof(P2d_rec)) == 0)
     probe->stats.duplicate = true;
 
-  /*
-   * If using the View->Raw Data menu item, or if no particles were detected
-   * in the record, then come in here and do a raw display of the record.
-   * Only color code timing (green) and overload (blue) words.
-   */
+/* This was so we could put all the uncompressed 2DS data on one row.  Not sure
+ * how to handle this now that drawRawRecord exists and draw2DS merged into
+ * here.  Also hard to use static variables on re-entrant methods.
+
+  if (	probe->nDiodes() == 128 &&	// 2DS and 3V-CPI; name test would be better
+	memcmp((void *)record, (void *)&prevRec, 18) == 0 && x < 800)
+  {
+    y -= (_pixelsPerY + 96);
+  }
+  else
+    x = 0;
+*/
+
   if (_displayMode == RAW_RECORD || probe->stats.particles.size() == 0)
     drawRawRecord(record->data, probe, ps);
 
@@ -491,9 +498,9 @@ void MainCanvas::drawFast2D(P2d_rec *record, Probe *probe, float version, int pr
         else pen->SetColor(color->GetColor(GREEN));
       }
 
-      if (_timingWord)
-        drawSlice(ps, i, p, probe->nDiodes());
-      ++i; p += sizeof(long long);
+      if (_showTimingWords)
+        drawSlice(ps, i, p, probe);
+      ++i; p += bytesPerSlice;
 
       // Get next particle.
       delete cp;
@@ -513,28 +520,21 @@ void MainCanvas::drawFast2D(P2d_rec *record, Probe *probe, float version, int pr
         colorIsBlack = false;
 
       for (; i < probe->nSlices() && !probe->isSyncWord(p) && !probe->isOverloadWord(p)
-		; p += sizeof(long long))
-        drawSlice(ps, i++, p, probe->nDiodes());
+		; p += bytesPerSlice)
+        drawSlice(ps, i++, p, probe);
 
       if (enchiladaWin)
         enchiladaWin->AddLineItem(cntr++, cp);
     }
   }
 
-/*
-// For diagnostics, display record as is on 2nd half of screen/window.
-  for (size_t i = 0; i < probe->nSlices(); ++i)
-{ if (((unsigned long long *)record->data)[i] == 0xffffffffffffffffLL) { pen->SetColor(color->GetColor(YELLOW)); ((unsigned long long *)record->data)[i] = 0; }
-    drawSlice(ps, probe->nSlices()+i, ((unsigned long long *)record->data)[i]);
-pen->SetColor(color->GetColor(0)); }
-*/
 
   if (_displayMode == DIAGNOSTIC)
-    drawDiodeHistogram(record, probe->nDiodes());
+    drawDiodeHistogram(record, probe);
   else
     drawAccumHistogram(probe->stats, 700);
 
-  y += 32;
+  y += probe->nDiodes() - 32;
   probe->stats.prevTime = prevTime;
   prevTime = probe->stats.thisTime;
   memcpy((void *)&prevRec, (void *)record, sizeof(P2d_rec));
@@ -543,9 +543,6 @@ pen->SetColor(color->GetColor(0)); }
 /* -------------------------------------------------------------------- */
 void MainCanvas::draw2DS(P2d_rec *record, Probe *probe, float version, int probeNum, PostScript *ps)
 {
-//  Particle	*cp;
-//  int		nextColor, cntr = 0;
-//  bool		colorIsBlack = false;
   unsigned char *p;
 
   static unsigned long prevTime;
@@ -555,20 +552,14 @@ void MainCanvas::draw2DS(P2d_rec *record, Probe *probe, float version, int probe
   if (memcmp((void *)record, (void *)&prevRec, sizeof(P2d_rec)) == 0)
     probe->stats.duplicate = true;
 
-  if (memcmp((void *)record, (void *)&prevRec, 18) == 0 && x < 800)
+  if (	probe->nDiodes() == 128 &&	// 2DS and 3V-CPI; name test would be better
+	memcmp((void *)record, (void *)&prevRec, 18) == 0 && x < 800)
   {
-//    printf("dup time\n");
-    y -= (PIX_PER_Y + 96);
-//    x += 5;
+    y -= (_pixelsPerY + 96);
   }
   else
     x = 0;
 
-  /**
-   * If using the View->Raw Data menu item, or if no particles were detected
-   * in the record, then come in here and do a raw display of the record.
-   * Only color code timing (green) and overload (blue) words.
-   */
   if (_displayMode == RAW_RECORD || probe->stats.particles.size() == 0)
     drawRawRecord((const unsigned char *)record->data, probe, ps);
 
@@ -579,7 +570,7 @@ void MainCanvas::draw2DS(P2d_rec *record, Probe *probe, float version, int probe
 
 
   if (_displayMode == DIAGNOSTIC)
-    drawDiodeHistogram(record, probe->nDiodes());
+    drawDiodeHistogram(record, probe);
   else
     drawAccumHistogram(probe->stats, 700);
 
@@ -679,11 +670,6 @@ void MainCanvas::drawCIP(P2d_rec *record, Probe *probe, float version, int probe
   unsigned char image[16000];
   size_t nSlices = uncompressCIP(image, record->data, 4096);
 
-  /**
-   * If using the View->Raw Data menu item, or if no particles were detected
-   * in the record, then come in here and do a raw display of the record.
-   * Only color code timing (green) and overload (blue) words.
-   */
   if (_displayMode == RAW_RECORD || probe->stats.particles.size() == 0)
     drawRawRecord((const unsigned char *)record->data, probe, ps);
 
@@ -719,7 +705,7 @@ void MainCanvas::drawCIP(P2d_rec *record, Probe *probe, float version, int probe
         else pen->SetColor(color->GetColor(GREEN));
       }
 
-      if (_timingWord)
+      if (_showTimingWords)
         drawSlice(ps, i, *p);
       ++i; ++p;
 
@@ -746,16 +732,8 @@ void MainCanvas::drawCIP(P2d_rec *record, Probe *probe, float version, int probe
     }
   }
 
-/*
-// For diagnostics, display record as is on 2nd half of screen/window.
-  for (size_t i = 0; i < nSlices; ++i)
-{ if (((unsigned long long *)record->data)[i] == 0xffffffffffffffffLL) { pen->SetColor(color->GetColor(YELLOW)); ((unsigned long long *)record->data)[i] = 0; }
-    drawSlice(ps, nSlices+i, ((unsigned long long *)record->data)[i]);
-pen->SetColor(color->GetColor(0)); }
-*/
-
   if (_displayMode == DIAGNOSTIC)
-    drawDiodeHistogram(record, 64);
+    drawDiodeHistogram(record, probe);
   else
     drawAccumHistogram(probe->stats, 700);
 
@@ -795,7 +773,7 @@ void MainCanvas::drawHVPS(P2d_rec *record, Probe *probe, float version, int prob
     if (_wrap && line >= Width()-(LEFT_MARGIN<<1))
       {
       line = LEFT_MARGIN;
-      y += 190 + PIX_PER_Y - (HVPS_MASKED<<1);
+      y += 190 + _pixelsPerY - (HVPS_MASKED<<1);
 
       if (ps) {
         ps->SetColor(color->GetColorPS(RED));
@@ -817,7 +795,7 @@ void MainCanvas::drawHVPS(P2d_rec *record, Probe *probe, float version, int prob
 
       line += 2;
 
-      if (_timingWord)
+      if (_showTimingWords)
         {
         if (cp && cp->reject) {
           if (ps) ps->SetColor(color->GetColorPS(RED));
@@ -909,7 +887,7 @@ void MainCanvas::drawRawRecord(const unsigned char *p, Probe *probe, PostScript 
       else pen->SetColor(color->GetColor(BLUE));
     }
 
-    drawSlice(ps, i, p, probe->nDiodes());
+    drawSlice(ps, i, p, probe);
     if (ps) ps->SetColor(color->GetColorPS(BLACK));
     else pen->SetColor(color->GetColor(BLACK));
   }
@@ -980,28 +958,27 @@ void MainCanvas::drawAccumHistogram(struct recStats &stats, size_t xOffset)
 }
 
 /* -------------------------------------------------------------------- */
-void MainCanvas::drawDiodeHistogram(P2d_rec *record, size_t nDiodes, uint32_t syncWord)
+void MainCanvas::drawDiodeHistogram(P2d_rec *record, Probe *probe, uint32_t syncWord)
 {
   size_t histo[32];
   uint32_t slice;
-  size_t nSlices = 4096 / nDiodes / 8;
   memset(histo, 0, sizeof(histo));
 
   uint32_t *p = (uint32_t *)record->data;
-  for (size_t i = 0; i < nSlices; ++i)			/* 2DC and/or 2DP       */
+  for (size_t i = 0; i < probe->nSlices(); ++i)			/* 2DC and/or 2DP       */
   {
     slice = ntohl(p[i]);
     if ((slice & PMS2D::SyncWordMask) == syncWord)
       continue;
 
-    for (size_t j = 0; j < nDiodes; ++j)
+    for (size_t j = 0; j < probe->nDiodes(); ++j)
       if ( !((slice >> j) & 0x00000001) )
         histo[j]++;
   }
 
   pen->SetColor(color->GetColor(BLACK));
 
-  for (size_t i = 0; i < nDiodes; ++i)
+  for (size_t i = 0; i < probe->nDiodes(); ++i)
   {
     if (histo[i] > 0)
       pen->DrawLine(Surface(), 1050, y+(31-i), 1050+histo[i], y+(31-i));
@@ -1009,19 +986,17 @@ void MainCanvas::drawDiodeHistogram(P2d_rec *record, size_t nDiodes, uint32_t sy
 }
 
 /* -------------------------------------------------------------------- */
-void MainCanvas::drawDiodeHistogram(P2d_rec *record, size_t nDiodes)
+void MainCanvas::drawDiodeHistogram(P2d_rec *record, Probe *probe)
 {
-  size_t nBytes = nDiodes / 8;
-  size_t nSlices = 4096 / nBytes;
+  size_t nBytes = probe->nDiodes() / 8;
 
   size_t histo[256];
   memset(histo, 0, sizeof(histo));
 
   unsigned char *p = record->data;
-  for (size_t i = 0; i < nSlices; ++i, p += nBytes)	/* 2DC and/or 2DP       */
+  for (size_t i = 0; i < probe->nSlices(); ++i, p += nBytes)	/* 2DC and/or 2DP       */
   {
-    if (memcmp((void *)p, (void *)Fast2D::SyncString, 2) == 0 ||
-        memcmp((void *)p, (void *)Fast2D::OverldString, 2) == 0)
+    if (probe->isSyncWord(p) || probe->isOverloadWord(p))
       continue;
 
     for (size_t j = 0; j < nBytes; ++j)
@@ -1032,7 +1007,7 @@ void MainCanvas::drawDiodeHistogram(P2d_rec *record, size_t nDiodes)
 
   pen->SetColor(color->GetColor(BLACK));
 
-  for (size_t i = 0; i < nDiodes; ++i)
+  for (size_t i = 0; i < probe->nDiodes(); ++i)
   {
     if (histo[i] > 0)
       pen->DrawLine(Surface(), 800, y+i, 800+histo[i], y+i);
@@ -1050,8 +1025,9 @@ int MainCanvas::memchrcmp(const void *s1, const int c, size_t n)
 }
 
 /* -------------------------------------------------------------------- */
-void MainCanvas::drawSlice(PostScript *ps, int x, const unsigned char *slice, size_t nDiodes)
+void MainCanvas::drawSlice(PostScript *ps, int x, const unsigned char *slice, Probe *probe)
 {
+  size_t nDiodes = probe->nDiodes();
   assert(nDiodes >= 32 && (nDiodes % 32) == 0);
 
   size_t	cnt = 0;

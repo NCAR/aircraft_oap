@@ -62,10 +62,10 @@ struct recStats
 
 
 /* Values for rejection/concentration stuff*/
-enum { BASIC, ENTIRE_IN, CENTER_IN, RECONSTRUCTION };
+enum AlgoType { BASIC, ENTIRE_IN, CENTER_IN, RECONSTRUCTION };
 
 /* Values for "displayLevel"		*/
-enum { NORMAL, DIAGNOSTIC, ENCHILADA, RAW_RECORD };
+enum { NORMAL, DIAGNOSTIC, RAW_RECORD };
 
 /* Values for "HandleError"		*/
 enum { RETURN, EXIT, IRET };
