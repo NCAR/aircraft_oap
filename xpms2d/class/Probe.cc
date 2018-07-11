@@ -168,7 +168,7 @@ size_t Probe::height(const unsigned char *p)
 
   for (size_t i = 0; i < nBytes; ++i)
   {
-    for (j = 0; j < 8 && ((p[7-i] >> j) & 0x01); ++j)
+    for (j = 0; j < 8 && ((p[nBytes-i-1] >> j) & 0x01); ++j)
       h--;
     if (j < 8) break;
   }

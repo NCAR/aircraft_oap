@@ -139,6 +139,9 @@ protected:
   char		_code[4];
   ProbeType	_type;
 
+  long	_lrLen;
+  int	_lrPpr;
+
   /// Probe resolution per diode in micron
   size_t	_resolution;
 
@@ -154,29 +157,29 @@ protected:
   /// Depth of Field constant.
   float		_dof_const;
 
-  /// Crude sample area - as opposed to the 'per bin' sample area.
-  float		_sampleArea;
-
   /// Number of slices per 4k buffer.
   size_t	_nSlices;
 
-  long	_lrLen;
-  int	_lrPpr;
 
-  bool	_displayed;
+  /// IS this probe being displayed.
+  bool		_displayed;
+
 
   // Store prevtime and hdr for ProcessRecord, so we can compute elapsed time.
   P2d_hdr	_prevHdr;
   int		_prevTime;
   unsigned long long _prevTimeWord;
 
-  static const float diodeDiameter;
+  /// Crude sample area - as opposed to the 'per bin' sample area.
+  float		_sampleArea;
 
   /// Sample area per bin in mm^2
   float *sampleArea;
 
-  // current Particle data.  Member so it can carry across records.
+  /// Current Particle data.  Class member so it can carry across records.
   Particle	*cp;
+
+  static const float diodeDiameter;
 
 };
 
