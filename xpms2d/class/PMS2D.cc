@@ -77,7 +77,7 @@ struct recStats PMS2D::ProcessRecord(const P2d_rec *record, float version)
 {
   int		startTime, overload;
   size_t	nBins;
-  uint32_t	*p, slice, pSlice, syncWord, startMilliSec;
+  uint32_t	*p, pSlice, syncWord, startMilliSec;
   bool		overloadAdded = false;
   double	sampleVolume[(nDiodes()<<2)+1], totalLiveTime;
 
@@ -176,40 +176,9 @@ struct recStats PMS2D::ProcessRecord(const P2d_rec *record, float version)
         {
         ++cp->w;
 
-        slice = ~ntohl(p[i]);
-
-        /* Potential problem/bug with computing of x1, x2.  Works good if all
-         * edge touches are contigious (water), not so good for snow, where
-         * it will all get bunched up.  Counts total number of contacts for
-         * each edge.
-         */
-        if (slice & 0x80000000)	// touched edge
-          {
-          cp->edge |= 0x0F;
-          cp->x1++;
-          }
-
-        if (slice & 0x00000001) // touched edge
-          {
-          cp->edge |= 0xF0;
-          cp->x2++;
-          }
-
-        for (size_t j = 0; j < nDiodes(); ++j, slice >>= 1)
-          cp->area += slice & 0x0001;
-
-        int h = nDiodes();
-        slice = ntohl(p[i]);
-        for (size_t j = 0;
-                j < nDiodes() && (slice & 0x80000000); slice <<= 1, ++j)
-          --h;
-        slice = ntohl(p[i]);
-        for (size_t j = 0;
-                j < nDiodes() && (slice & 0x00000001); slice >>= 1, ++j)
-          --h;
-
-        if (h > 0)
-          cp->h = std::max((size_t)h, cp->h);
+        checkEdgeDiodes(cp, (const unsigned char *)p);
+        cp->area += area((const unsigned char *)p);
+        cp->h = std::max(height((const unsigned char *)p), cp->h);
         }
 
       /* If the particle becomes rejected later, we need to now much time the

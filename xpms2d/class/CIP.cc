@@ -70,7 +70,8 @@ struct recStats CIP::ProcessRecord(const P2d_rec *record, float version)
 {
   int		startTime, overload = 0;
   size_t	nBins;
-  unsigned long long	*p, slice;
+  const unsigned char	*p;
+  unsigned long long	*sp, slice;
   unsigned long		startMilliSec;
   double	sampleVolume[(nDiodes()<<2)+1], totalLiveTime;
 
@@ -112,23 +113,24 @@ for (int j = 0; j < 512; ++j, ++o)
   size_t nSlices = uncompress(image, record->data, 4096);
 
   // Scan record, compute tBarElapsedtime and stats.
-  p = (unsigned long long *)image;
+  sp = (unsigned long long *)image;
+  p = (unsigned char *)image;
 
   startTime = _prevTime / 1000;
   startMilliSec = _prevHdr.msec;
 
   // Loop through all slices in record.
-  for (size_t i = 0; i < nSlices; ++i, ++p)
+  for (size_t i = 0; i < nSlices; ++i, ++sp)
   {
-    slice = *p;
+    slice = *sp;
 printf("%llx\n", slice);
     /* Have particle, will travel.
      */
-    if (slice == SyncWord)
+    if (isSyncWord(p))
     {
 printf("CIP sync in process\n");
-      ++p;
-      slice = *p;
+      ++sp;
+      slice = *sp;
       unsigned long long thisTimeWord = TimeWord_Microseconds(slice);
 
       if (firstTimeWord == 0)
@@ -157,44 +159,14 @@ printf("CIP sync in process\n");
     }
 
 
-    if (*p == 0xffffffffffffffffLL)	// Skip blank slice.
+    if (isBlankSlice(p))
       continue;
 
     ++cp->w;
 
-    slice = ~(*p);
-
-    /* Potential problem/bug with computing of x1, x2.  Works good if all
-     * edge touches are contigious (water), not so good for snow, where
-     * it will all get bunched up.  Counts total number of contacts for
-     * each edge.
-     */
-    if (slice & 0x8000000000000000LL) // touched edge
-    {
-      cp->edge |= 0x0F;
-      cp->x1++;
-    }
-
-    if (slice & 0x00000001LL) // touched edge
-    {
-      cp->edge |= 0xF0;
-      cp->x2++;
-    }
-
-    for (size_t j = 0; j < nDiodes(); ++j, slice >>= 1)
-      cp->area += slice & 0x0001;
-
-    slice = *p;
-    int h = nDiodes();
-    for (size_t j = 0; j < nDiodes() && (slice & 0x8000000000000000LL); slice <<= 1, ++j)
-      --h;
-    slice = *p;
-    for (size_t j = 0; j < nDiodes() && (slice & 0x00000001LL); slice >>= 1, ++j)
-      --h;
-
-    if (h > 0)
-      cp->h = std::max((size_t)h, cp->h);
-
+    checkEdgeDiodes(cp, p);
+    cp->area += area(p);
+    cp->h = std::max(height(p), cp->h);
 
     /* If the particle becomes rejected later, we need to now much time the
      * particle consumed, so we can add it to the deadTime, so sampleVolume

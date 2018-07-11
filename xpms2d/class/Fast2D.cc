@@ -143,7 +143,7 @@ struct recStats Fast2D::ProcessRecord(const P2d_rec *record, float version)
       // Close out particle.  Timeword belongs to previous particle.
       if (cp)
       {
-        cp->timeWord = thisTimeWord;	// !!!! Is timeWord big enough ????
+        cp->timeWord = thisTimeWord;
         unsigned long msec = startMilliSec + ((thisTimeWord - firstTimeWord) / 1000);
         cp->time = startTime + (msec / 1000);
         cp->msec = msec % 1000;
@@ -163,44 +163,14 @@ struct recStats Fast2D::ProcessRecord(const P2d_rec *record, float version)
     }
 
 
-    if (memcmp(p, BlankSlice, 8) == 0)	// Skip blank slice.
+    if (isBlankSlice(p))
       continue;
 
     ++cp->w;
 
-    slice = ~(ntohll((long long *)p));
-
-    /* Potential problem/bug with computing of x1, x2.  Works good if all
-     * edge touches are contigious (water), not so good for snow, where
-     * it will all get bunched up.  Counts total number of contacts for
-     * each edge.
-     */
-    if (slice & 0x8000000000000000LL) // touched edge
-    {
-      cp->edge |= 0x0F;
-      cp->x1++;
-    }
-
-    if (slice & 0x00000001LL) // touched edge
-    {
-      cp->edge |= 0xF0;
-      cp->x2++;
-    }
-
-    for (size_t j = 0; j < nDiodes(); ++j, slice >>= 1)
-      cp->area += slice & 0x0001;
-
-    slice = ntohll((long long *)p);
-    int h = nDiodes();
-    for (size_t j = 0; j < nDiodes() && (slice & 0x8000000000000000LL); slice <<= 1, ++j)
-      --h;
-    slice = ntohll((long long *)p);
-    for (size_t j = 0; j < nDiodes() && (slice & 0x00000001LL); slice >>= 1, ++j)
-      --h;
-
-    if (h > 0)
-      cp->h = std::max((size_t)h, cp->h);
-
+    checkEdgeDiodes(cp, p);
+    cp->area += area(p);
+    cp->h = std::max(height(p), cp->h);
 
     /* If the particle becomes rejected later, we need to now much time the
      * particle consumed, so we can add it to the deadTime, so sampleVolume
