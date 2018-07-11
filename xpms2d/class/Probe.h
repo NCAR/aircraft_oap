@@ -74,10 +74,15 @@ public:
   bool Display() const		{ return _displayed; }
   void setDisplay(bool b)	{ _displayed = b; }
 
-  virtual struct recStats ProcessRecord(const P2d_rec * record, float version) = 0;
+  virtual struct recStats
+  ProcessRecord(const P2d_rec * record, float version) = 0;
 
-  virtual bool isSyncWord(const unsigned char *p) = 0;
-  virtual bool isOverloadWord(const unsigned char *p)	{ return false; }
+  virtual bool
+  isSyncWord(const unsigned char *p) = 0;
+  virtual bool
+  isOverloadWord(const unsigned char *p)	{ return false; }
+  virtual bool
+  isBlankSlice(const unsigned char *p)	{ return memcmp(p, BlankSlice, nDiodes()/8) == 0; }
 
   ProbeType Type() const	{ return _type; }
 
@@ -122,6 +127,9 @@ protected:
   void init();
 
   void ClearStats(const P2d_rec *record);
+  void checkEdgeDiodes(Particle * cp, const unsigned char *p);
+  size_t area(const unsigned char *p);
+  size_t height(const unsigned char *p);
   void computeDerived(double sv[], size_t nBins, double liveTime);
   size_t checkRejectionCriteria(Particle * cp, recStats & stats);
 

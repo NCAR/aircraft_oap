@@ -120,6 +120,63 @@ void Probe::ClearStats(const P2d_rec *record)
 }
 
 /* -------------------------------------------------------------------- */
+void Probe::checkEdgeDiodes(Particle * cp, const unsigned char *p)
+{
+  /* Potential problem/bug with computing of x1, x2.  Works good if all
+   * edge touches are contigious (water), not so good for snow, where
+   * it will all get bunched up.  Counts total number of contacts for
+   * each edge.
+   */
+  if ((p[0] & 0x80) == 0)	// touched upper edge
+  {
+    cp->edge |= 0x0F;
+    cp->x1++;
+  }
+
+  if ((p[nDiodes()/8] & 0x01) == 0) // touched lower edge
+  {
+    cp->edge |= 0xF0;
+    cp->x2++;
+  }
+}
+
+/* -------------------------------------------------------------------- */
+size_t Probe::area(const unsigned char *p)
+{
+  size_t area = 0;
+  size_t nBytes = nDiodes() / 8;
+
+  for (size_t i = 0; i < nBytes; ++i)
+    for (size_t j = 0; j < 8; ++j)
+      area += 1 - ((p[i] >> j) & 0x0001);	// data is inverted.
+
+  return area;
+}
+
+/* -------------------------------------------------------------------- */
+size_t Probe::height(const unsigned char *p)
+{
+  size_t j, h = nDiodes();
+  size_t nBytes = nDiodes() / 8;
+
+  for (size_t i = 0; i < nBytes; ++i)
+  {
+    for (j = 0; j < 8 && ((p[i] << j) & 0x80); ++j)
+      h--;
+    if (j < 8) break;
+  }
+
+  for (size_t i = 0; i < nBytes; ++i)
+  {
+    for (j = 0; j < 8 && ((p[7-i] >> j) & 0x01); ++j)
+      h--;
+    if (j < 8) break;
+  }
+
+  return h;
+}
+
+/* -------------------------------------------------------------------- */
 size_t Probe::checkRejectionCriteria(Particle * cp, recStats & stats)
 {
   if (controlWindow->RejectZeroAreaImage() && cp->w == 0 && cp->h == 0)
