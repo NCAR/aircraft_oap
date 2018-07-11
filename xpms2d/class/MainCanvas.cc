@@ -317,13 +317,8 @@ void MainCanvas::drawPMS2D(P2d_rec *record, Probe *probe, float version, int pro
     syncWord = PMS2D::StandardSyncWord;
 
   if (_displayMode == RAW_RECORD)
-    {
-    p = (uint32_t *)record->data;
-    for (size_t i = 0; i < probe->nSlices(); ++i)		/* 2DC and/or 2DP	*/
-      drawSlice(ps, i, (unsigned char *)&p[i], probe->nDiodes());
+    drawRawRecord((const unsigned char *)record->data, probe, ps);
 
-    y += 34;
-    }
 
   p = (uint32_t *)record->data;
   for (size_t i = 0; i < probe->nSlices(); )		/* 2DC and/or 2DP	*/
@@ -339,7 +334,7 @@ void MainCanvas::drawPMS2D(P2d_rec *record, Probe *probe, float version, int pro
       probe->stats.particles.erase(probe->stats.particles.begin() + 0);
 
 #ifdef DEBUG
-  if (cp) printf("dq: %06x %zu %zu\n", cp->timeWord, cp->h, cp->w); else printf("NULL\n");
+  if (cp) printf("dq: %06lx %zu %zu\n", cp->timeWord, cp->h, cp->w); else printf("NULL\n");
 #endif
 
       uint32_t timeWord = (uint32_t)((float)cp->timeWord * probe->stats.frequency);
@@ -455,34 +450,7 @@ void MainCanvas::drawFast2D(P2d_rec *record, Probe *probe, float version, int pr
    * Only color code timing (green) and overload (blue) words.
    */
   if (_displayMode == RAW_RECORD || probe->stats.particles.size() == 0)
-  {
-    p = record->data;
-    for (size_t i = 0; i < probe->nSlices(); ++i, p += sizeof(long long))	// 2DC and/or 2DP
-    {
-      if (probe->isSyncWord(p))
-      {
-        if (ps) ps->SetColor(color->GetColorPS(GREEN));
-        else pen->SetColor(color->GetColor(GREEN));
-      }
-      if (probe->isOverloadWord(p))
-      {
-        if (ps) ps->SetColor(color->GetColorPS(BLUE));
-        else pen->SetColor(color->GetColor(BLUE));
-      }
-
-      drawSlice(ps, i, p, probe->nDiodes());
-      if (ps) ps->SetColor(color->GetColorPS(BLACK));
-      else pen->SetColor(color->GetColor(BLACK));
-    }
-
-    if (_displayMode == RAW_RECORD)
-      y += 66;	// Add enough room for a second copy of this record.
-    else
-    {
-      y += 32;	// Bail out (no particles detected from process.cc).
-      return;
-    }
-  }
+    drawRawRecord(record->data, probe, ps);
 
 
   p = record->data;
@@ -602,36 +570,7 @@ void MainCanvas::draw2DS(P2d_rec *record, Probe *probe, float version, int probe
    * Only color code timing (green) and overload (blue) words.
    */
   if (_displayMode == RAW_RECORD || probe->stats.particles.size() == 0)
-  {
-    p = (unsigned char *)record->data;
-    for (size_t i = 0; i < probe->nSlices(); ++i, p += 16)
-    {
-      if (probe->isSyncWord(p))
-      {
-//unsigned long long *word = (unsigned long long *)p;
-//printf("%llu\n", *word & 0x0000ffffffffffff);
-        if (ps) ps->SetColor(color->GetColorPS(GREEN));
-        else pen->SetColor(color->GetColor(GREEN));
-      }
-      if (probe->isOverloadWord(p))
-      {
-        if (ps) ps->SetColor(color->GetColorPS(BLUE));
-        else pen->SetColor(color->GetColor(BLUE));
-      }
-
-      drawSlice(ps, x++, p, probe->nDiodes());
-      if (ps) ps->SetColor(color->GetColorPS(BLACK));
-      else pen->SetColor(color->GetColor(BLACK));
-    }
-
-    if (_displayMode == RAW_RECORD)
-      y += 130;  // Add enough room for a second copy of this record.
-    else
-    {
-      y += 32;  // Bail out (no particles detected from process.cc).
-      return;
-    }
-  }
+    drawRawRecord((const unsigned char *)record->data, probe, ps);
 
 
 
@@ -641,8 +580,8 @@ void MainCanvas::draw2DS(P2d_rec *record, Probe *probe, float version, int probe
 
   if (_displayMode == DIAGNOSTIC)
     drawDiodeHistogram(record, probe->nDiodes());
-//  else
-//    drawAccumHistogram(probe->stats, 700);
+  else
+    drawAccumHistogram(probe->stats, 700);
 
   y += 96;
   probe->stats.prevTime = prevTime;
@@ -746,32 +685,8 @@ void MainCanvas::drawCIP(P2d_rec *record, Probe *probe, float version, int probe
    * Only color code timing (green) and overload (blue) words.
    */
   if (_displayMode == RAW_RECORD || probe->stats.particles.size() == 0)
-  {
-    p = (unsigned long long *)image;
-    for (size_t i = 0; i < nSlices; ++i, ++p)
-    {
-      if (*p  == CIP::SyncWord)
-      {
-        if (ps) ps->SetColor(color->GetColorPS(GREEN));
-        else pen->SetColor(color->GetColor(GREEN));
-      }
+    drawRawRecord((const unsigned char *)record->data, probe, ps);
 
-      drawSlice(ps, i, *p);
-      if (ps) ps->SetColor(color->GetColorPS(BLACK));
-      else pen->SetColor(color->GetColor(BLACK));
-    }
-
-    if (_displayMode == RAW_RECORD)
-      y += 66;	// Add enough room for a second copy of this record.
-    else
-    {
-      y += 32;	// Bail out (no particles detected from process.cc).
-      return;
-    }
-  }
-
-//  if ((cp = (Particle *)probe->stats.particles.Front()) == NULL)
-//    return;
 
   p = (unsigned long long *)image;
   cp = probe->stats.particles[0];
@@ -782,7 +697,7 @@ void MainCanvas::drawCIP(P2d_rec *record, Probe *probe, float version, int probe
     else
       nextColor = probeNum;
 
-    if (*p == CIP::SyncWord)
+    if (probe->isSyncWord((const unsigned char *)p))
     {
       /**
        * Color code timing words:
@@ -823,7 +738,7 @@ void MainCanvas::drawCIP(P2d_rec *record, Probe *probe, float version, int probe
       else
         colorIsBlack = false;
 
-      for (; i < nSlices && *p != CIP::SyncWord; ++p)
+      for (; i < nSlices && !probe->isSyncWord((const unsigned char *)p); ++p)
         drawSlice(ps, i++, *p);
 
       if (enchiladaWin)
@@ -969,6 +884,43 @@ void MainCanvas::drawHVPS(P2d_rec *record, Probe *probe, float version, int prob
   probe->stats.prevTime = prevTime;
   prevTime = probe->stats.thisTime;
   memcpy((void *)&prevRec, (void *)record, sizeof(P2d_rec));
+}
+
+
+/* -------------------------------------------------------------------- */
+void MainCanvas::drawRawRecord(const unsigned char *p, Probe *probe, PostScript *ps)
+{
+  size_t bytesPerSlice = probe->nDiodes() / 8;
+  /*
+   * If using the View->Raw Data menu item, or if no particles were detected
+   * in the record, then come in here and do a raw display of the record.
+   * Only color code timing (green) and overload (blue) words.
+   */
+  for (size_t i = 0; i < probe->nSlices(); ++i, p += bytesPerSlice)       // 2DC and/or 2DP
+  {
+    if (probe->isSyncWord(p))
+    {
+      if (ps) ps->SetColor(color->GetColorPS(GREEN));
+      else pen->SetColor(color->GetColor(GREEN));
+    }
+    if (probe->isOverloadWord(p))
+    {
+      if (ps) ps->SetColor(color->GetColorPS(BLUE));
+      else pen->SetColor(color->GetColor(BLUE));
+    }
+
+    drawSlice(ps, i, p, probe->nDiodes());
+    if (ps) ps->SetColor(color->GetColorPS(BLACK));
+    else pen->SetColor(color->GetColor(BLACK));
+  }
+
+  if (_displayMode == RAW_RECORD)
+    y += probe->nDiodes() + 2;  // Add enough room for a second copy of this record.
+  else
+  {
+    y += 32;  // Bail out (no particles detected from process.cc).
+    return;
+  }
 }
 
 /* -------------------------------------------------------------------- */

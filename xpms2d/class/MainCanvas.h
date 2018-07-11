@@ -62,6 +62,8 @@ protected:
    */
   void draw_2DC_as_2DP(P2d_rec *record);
 
+  void drawRawRecord(const unsigned char *p, Probe *probe, PostScript *ps);
+
   /**
    * Count all shadowed diodes across the flight track and display histogram.
    */
