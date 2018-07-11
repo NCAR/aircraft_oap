@@ -798,7 +798,7 @@ int process2d(Config & cfg, netCDF & ncfile, ProbeInfo & probe)
 
            // Stored little-endian, check far side of 16 bytes.
            if (memcmp(&image_buff[(islice*bytesPerSlice)+bytesPerSlice-3], syncString, 3) == 0) {
-              timeline = slice & 0x000000ffffffffffULL;
+              timeline = slice & 0x0000ffffffffffffULL;
               timeline_divisor = 2.0e+07;
               syncWord = true;
            }
