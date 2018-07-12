@@ -115,6 +115,7 @@ void Probe::ClearStats(const P2d_rec *record)
   stats.particles.clear();
   stats.tas = (float)record->tas;
   stats.frequency = Resolution() / stats.tas;
+  stats.prevTime = stats.thisTime;
   stats.thisTime = (record->hour * 3600 + record->minute * 60 + record->second) * 1000 + record->msec; // in milliseconds
   memset(stats.accum, 0, sizeof(stats.accum));
 }

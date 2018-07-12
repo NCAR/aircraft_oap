@@ -34,6 +34,8 @@ static const int	LEFT_MARGIN = 5;
 // RAF HVPS, 40 pixels masked at each end of diode array.
 static const int	HVPS_MASKED = 40;
 
+std::map<int16_t, P2d_rec> prevRec;
+
 static bool part1[512][64];
 static int part1slice = 0, part2slice = 0;
 
@@ -301,12 +303,10 @@ void MainCanvas::drawPMS2D(P2d_rec *record, Probe *probe, float version, int pro
   char		buffer[256];
 
   static uint32_t	prevSlice;
-  static uint32_t	prevTime;
-  static P2d_rec	prevRec;
 
   p = (uint32_t *)record->data;
 
-  if (memcmp((void *)record, (void *)&prevRec, sizeof(P2d_rec)) == 0)
+  if (memcmp((void *)record, (void *)&prevRec[record->id], sizeof(P2d_rec)) == 0)
     probe->stats.duplicate = true;
 
   if (version < 3.35)
@@ -423,9 +423,7 @@ for (size_t i = 0; i < probe->nSlices(); ++i)
 */
   p = (uint32_t *)record->data;
   prevSlice = p[1023];
-  probe->stats.prevTime = prevTime;
-  prevTime = probe->stats.thisTime;
-  memcpy((void *)&prevRec, (void *)record, sizeof(P2d_rec));
+  prevRec[record->id] = *record;
 }
 
 /* -------------------------------------------------------------------- */
@@ -437,10 +435,7 @@ void MainCanvas::drawFast2D(P2d_rec *record, Probe *probe, float version, int pr
   unsigned char *p;
   size_t	bytesPerSlice = probe->nDiodes() / 8;
 
-  static unsigned long prevTime;
-  static P2d_rec prevRec;
-
-  if (memcmp((void *)record, (void *)&prevRec, sizeof(P2d_rec)) == 0)
+  if (memcmp((void *)record, (void *)&prevRec[record->id], sizeof(P2d_rec)) == 0)
     probe->stats.duplicate = true;
 
 /* This was so we could put all the uncompressed 2DS data on one row.  Not sure
@@ -448,7 +443,7 @@ void MainCanvas::drawFast2D(P2d_rec *record, Probe *probe, float version, int pr
  * here.  Also hard to use static variables on re-entrant methods.
 
   if (	probe->nDiodes() == 128 &&	// 2DS and 3V-CPI; name test would be better
-	memcmp((void *)record, (void *)&prevRec, 18) == 0 && x < 800)
+	memcmp((void *)record, (void *)&prevRec[record->id], 18) == 0 && x < 800)
   {
     y -= (_pixelsPerY + 96);
   }
@@ -535,9 +530,7 @@ void MainCanvas::drawFast2D(P2d_rec *record, Probe *probe, float version, int pr
     drawAccumHistogram(probe->stats, 700);
 
   y += probe->nDiodes() - 32;
-  probe->stats.prevTime = prevTime;
-  prevTime = probe->stats.thisTime;
-  memcpy((void *)&prevRec, (void *)record, sizeof(P2d_rec));
+  prevRec[record->id] = *record;
 }
 
 /* -------------------------------------------------------------------- */
@@ -545,15 +538,13 @@ void MainCanvas::draw2DS(P2d_rec *record, Probe *probe, float version, int probe
 {
   unsigned char *p;
 
-  static unsigned long prevTime;
-  static P2d_rec prevRec;
   static int x = 0;
 
-  if (memcmp((void *)record, (void *)&prevRec, sizeof(P2d_rec)) == 0)
+  if (memcmp((void *)record, (void *)&prevRec[record->id], sizeof(P2d_rec)) == 0)
     probe->stats.duplicate = true;
 
   if (	probe->nDiodes() == 128 &&	// 2DS and 3V-CPI; name test would be better
-	memcmp((void *)record, (void *)&prevRec, 18) == 0 && x < 800)
+	memcmp((void *)record, (void *)&prevRec[record->id], 18) == 0 && x < 800)
   {
     y -= (_pixelsPerY + 96);
   }
@@ -575,9 +566,7 @@ void MainCanvas::draw2DS(P2d_rec *record, Probe *probe, float version, int probe
     drawAccumHistogram(probe->stats, 700);
 
   y += 96;
-  probe->stats.prevTime = prevTime;
-  prevTime = probe->stats.thisTime;
-  memcpy((void *)&prevRec, (void *)record, sizeof(P2d_rec));
+  prevRec[record->id] = *record;
 }
 
 /* -------------------------------------------------------------------- */
@@ -661,10 +650,7 @@ void MainCanvas::drawCIP(P2d_rec *record, Probe *probe, float version, int probe
   bool		colorIsBlack = false;
   unsigned long long *p;
 
-  static unsigned long prevTime;
-  static P2d_rec prevRec;
-
-  if (memcmp((void *)record, (void *)&prevRec, sizeof(P2d_rec)) == 0)
+  if (memcmp((void *)record, (void *)&prevRec[record->id], sizeof(P2d_rec)) == 0)
     probe->stats.duplicate = true;
 
   unsigned char image[16000];
@@ -738,9 +724,7 @@ void MainCanvas::drawCIP(P2d_rec *record, Probe *probe, float version, int probe
     drawAccumHistogram(probe->stats, 700);
 
   y += 32;
-  probe->stats.prevTime = prevTime;
-  prevTime = probe->stats.thisTime;
-  memcpy((void *)&prevRec, (void *)record, sizeof(P2d_rec));
+  prevRec[record->id] = *record;
 }
 
 /* -------------------------------------------------------------------- */
@@ -750,10 +734,7 @@ void MainCanvas::drawHVPS(P2d_rec *record, Probe *probe, float version, int prob
   unsigned short	*sp = (unsigned short *)record->data;
   Particle	*cp;
 
-  static uint32_t	prevTime;
-  static P2d_rec	prevRec;
-
-  if (memcmp((void *)record, (void *)&prevRec, sizeof(P2d_rec)) == 0)
+  if (memcmp((void *)record, (void *)&prevRec[record->id], sizeof(P2d_rec)) == 0)
     probe->stats.duplicate = true;
 
   if (*sp == 0xcaaa)
@@ -859,9 +840,7 @@ void MainCanvas::drawHVPS(P2d_rec *record, Probe *probe, float version, int prob
     }
 
   y += 224 - (HVPS_MASKED<<1);
-  probe->stats.prevTime = prevTime;
-  prevTime = probe->stats.thisTime;
-  memcpy((void *)&prevRec, (void *)record, sizeof(P2d_rec));
+  prevRec[record->id] = *record;
 }
 
 

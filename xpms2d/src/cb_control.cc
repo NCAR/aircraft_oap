@@ -141,7 +141,7 @@ void PageForward(Widget w, XtPointer client, XtPointer call)
     iter = probes.begin();
     for (int j = 0; iter != probes.end(); ++j, ++iter)
       {
-      if (!strncmp(iter->second->Code(), buff_p, 2) && iter->second->Display())
+      if (!memcmp(iter->second->Code(), buff_p, 2) && iter->second->Display())
         {
         pen->SetColor(color->GetColor(j+1));
         mainPlot->draw(&pgFbuff[nBuffs], iter->second, version, j+1, NULL);

@@ -80,8 +80,8 @@ protected:
   int	_pixelsPerY;
 
   /// Wrap display around (HVPS mostly)
-  bool	_wrap;			// Wrap display around (HVPS mostly)
-  /// Toggle timing words on/off.
+  bool	_wrap;
+  /// Display timing words or not.
   bool  _showTimingWords;
 
 };	/* END MAINCANVAS.H */
