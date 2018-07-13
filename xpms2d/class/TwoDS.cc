@@ -18,7 +18,7 @@ const unsigned char TwoDS::OverldString[] = { 0x55, 0x55, 0xaa };
 
 
 /* -------------------------------------------------------------------- */
-TwoDS::TwoDS(const char xml_entry[], int recSize) : Probe(Probe::TWODS, xml_entry, recSize, 128)
+TwoDS::TwoDS(UserConfig *cfg, const char xml_entry[], int recSize) : Probe(Probe::TWODS, cfg, xml_entry, recSize, 128)
 {
   std::string XMLgetAttributeValue(const char s[], const char target[]);
 
@@ -39,8 +39,6 @@ TwoDS::TwoDS(const char xml_entry[], int recSize) : Probe(Probe::TWODS, xml_entr
 printf("TwoDS::OAP id=%s, name=%s, resolution=%zu, armWidth=%f, eaw=%f\n", _code, _name.c_str(), _resolution, _armWidth, _eaw);
 }
 
-
-extern ControlWindow	*controlWindow;
 
 /* -------------------------------------------------------------------- */
 unsigned long long TwoDS::TimeWord_Microseconds(const unsigned char *p)
@@ -88,7 +86,7 @@ struct recStats TwoDS::ProcessRecord(const P2d_rec *record, float version)
 
   totalLiveTime = 0.0;
 
-  switch (controlWindow->GetConcentration()) {
+  switch (_userConfig->GetConcentration()) {
     case CENTER_IN:		nBins = 256; break;
     case RECONSTRUCTION:	nBins = 512; break;
     default:			nBins = nDiodes();

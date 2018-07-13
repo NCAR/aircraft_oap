@@ -23,7 +23,7 @@ public:
    * Probe constructor for new TwoDS data files.  New means starting
    * in 2007 with PACDEX project.
    */
-  TwoDS(const char xml_string[], int recSize);
+  TwoDS(UserConfig *cfg, const char xml_string[], int recSize);
 
 
   struct recStats ProcessRecord(const P2d_rec * record, float version);

@@ -16,7 +16,7 @@ COPYRIGHT:	University Corporation for Atmospheric Research, 1997-2018
 const unsigned long long CIP::SyncWord = 0xAAAAAAAAAAAAAAAALL;
 
 /* -------------------------------------------------------------------- */
-CIP::CIP(const char xml_entry[], int recSize) : Probe(Probe::CIP, xml_entry, recSize, 64)
+CIP::CIP(UserConfig *cfg, const char xml_entry[], int recSize) : Probe(Probe::CIP, cfg, xml_entry, recSize, 64)
 {
   std::string XMLgetAttributeValue(const char s[], const char target[]);
 
@@ -36,7 +36,7 @@ printf("CIP::OAP id=%s, name=%s, resolution=%zu, armWidth=%f, eaw=%f\n", _code, 
 }
 
 /* -------------------------------------------------------------------- */
-CIP::CIP(const char name[]) : Probe(Probe::CIP, name, 64)
+CIP::CIP(UserConfig *cfg, const char name[]) : Probe(Probe::CIP, cfg, name, 64)
 {
   _resolution = 25;
 
@@ -56,8 +56,6 @@ void CIP::dmt_init()
   SetSampleArea();
 }
 
-
-extern ControlWindow	*controlWindow;
 
 /* -------------------------------------------------------------------- */
 bool CIP::isSyncWord(const unsigned char *p)
@@ -94,7 +92,7 @@ struct recStats CIP::ProcessRecord(const P2d_rec *record, float version)
 
   totalLiveTime = 0.0;
 
-  switch (controlWindow->GetConcentration()) {
+  switch (_userConfig->GetConcentration()) {
     case CENTER_IN:             nBins = 128; break;
     case RECONSTRUCTION:        nBins = 256; break;
     default:                    nBins = nDiodes();

@@ -22,16 +22,16 @@ public:
   /**
    * Probe conctructor for ADS2 header.
    */
-  HVPS(Header *hdr, const Pms2 *p, int cnt);
+  HVPS(UserConfig *cfg, Header *hdr, const Pms2 *p, int cnt);
   /**
    * Probe constructor for new PMS2D data files.  New means starting
    * in 2007 with PACDEX project.
    */
-  HVPS(const char xml_string[], int recSize);
+  HVPS(UserConfig *cfg, const char xml_string[], int recSize);
   /**
    * Probe constructor for no file header.  Univ Wyoming.
    */
-  HVPS(const char hdr[]);
+  HVPS(UserConfig *cfg, const char hdr[]);
 
 
   struct recStats ProcessRecord(const P2d_rec * record, float version);

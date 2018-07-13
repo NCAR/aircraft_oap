@@ -26,33 +26,35 @@ COPYRIGHT:	University Corporation for Atmospheric Research, 1997-2018
 #include <Xm/TextF.h>
 #include <Xm/ToggleB.h>
 
+#include "UserConfig.h"
+
 
 /* -------------------------------------------------------------------- */
 class ControlWindow : public WinForm {
 
 public:
-		ControlWindow(Widget parent);
-  void		PopUp();
+	ControlWindow(Widget parent);
+  void	PopUp();
 
-  void		SetFileNames();
-  void		SetProbes();
+  void	SetFileNames();
+  void	SetProbes();
 
-  Widget	StartTime() const	{ return(timeText); }
+  Widget StartTime() const	{ return timeText; }
 
-  void		UpdateStartTime(P2d_rec *buff);
-  void		UpdateTimeScale();
+  void	UpdateStartTime(P2d_rec *buff);
+  void	UpdateTimeScale();
 
-  float		GetDensity() const	{ return(density[densIdx].density); }
-  float		GetAreaRatioReject() const	{ return(ratio[ratioIdx].density); }
-  int		GetConcentration() const	{ return(concIdx); }
+  float	GetWaterDensity(int idx) const	{ return density[idx].density ; }
+  float	GetAreaRatioReject(int idx) const	{ return ratio[idx].density ; }
+  Sizing GetSizingAlgo(int idx) const	{ return (Sizing)idx; }
 
-  bool		RejectZeroAreaImage() const	{ return(true); }
+//  bool	RejectZeroAreaImage() const	{ return(true); }
 
-  void		SetWaterDensity(int idx)	{ densIdx = idx; }
-  void		SetAreaRatioReject(int idx)	{ ratioIdx = idx; }
-  void		SetConcentrationCalc(int idx)	{ concIdx = idx; }
-  void		SetUserDensity();
-  void		SetDelay(), PositionTime(bool), Start(), Stop();
+//  void	SetWaterDensity(int idx)	{ densIdx = idx; }
+//  void	SetAreaRatioReject(int idx)	{ ratioIdx = idx; }
+//  void	SetConcentrationCalc(int idx)	{ concIdx = idx; }
+  void	SetUserDensity();
+  void	SetDelay(), PositionTime(bool), Start(), Stop();
 
 
 private:
@@ -60,7 +62,7 @@ private:
 		probeB[MAX_PROBES], densB[4], densTxt,
 		delayScale, timeScale, cncB[4], ratioB[7];
 
-  int		concIdx, densIdx, delay, ratioIdx;
+  int		delay;
   bool		movieRunning;
 
 struct _dens {

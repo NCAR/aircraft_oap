@@ -11,7 +11,7 @@ COPYRIGHT:	University Corporation for Atmospheric Research, 1997-2018
 */
 
 #include "Probe.h"
-#include "ControlWindow.h"
+#include "UserConfig.h"
 
 const float	Probe::diodeDiameter = 0.2;
 
@@ -20,7 +20,7 @@ const unsigned char Probe::BlankSlice[] =
 
 
 /* -------------------------------------------------------------------- */
-Probe::Probe(ProbeType type, const char xml_entry[], int recSize, size_t ndiodes) : _type(type), _nDiodes(ndiodes)
+Probe::Probe(ProbeType type, UserConfig *cfg, const char xml_entry[], int recSize, size_t ndiodes) : _userConfig(cfg), _type(type), _nDiodes(ndiodes)
 {
   std::string XMLgetAttributeValue(const char s[], const char target[]);
 
@@ -38,7 +38,7 @@ Probe::Probe(ProbeType type, const char xml_entry[], int recSize, size_t ndiodes
 }
 
 /* -------------------------------------------------------------------- */
-Probe::Probe(ProbeType type, const char name[], size_t ndiodes) : _type(type), _nDiodes(ndiodes)
+Probe::Probe(ProbeType type, UserConfig *cfg, const char name[], size_t ndiodes) : _userConfig(cfg), _type(type), _nDiodes(ndiodes)
 {
   _name.push_back(name[0]);
   _name.push_back(name[1]);
@@ -63,7 +63,7 @@ Probe::Probe(ProbeType type, const char name[], size_t ndiodes) : _type(type), _
 }
 
 /* -------------------------------------------------------------------- */
-Probe::Probe(ProbeType type, Header * hdr, const Pms2 * p, int cnt, size_t ndiodes) : _type(type), _nDiodes(ndiodes)
+Probe::Probe(ProbeType type, UserConfig *cfg, Header * hdr, const Pms2 * p, int cnt, size_t ndiodes) : _userConfig(cfg), _type(type), _nDiodes(ndiodes)
 {
   // Extract stuff from Header.
   _name = hdr->VariableName(p);
@@ -99,8 +99,6 @@ void Probe::init()
 }
 
 
-extern ControlWindow *controlWindow;
-
 /* -------------------------------------------------------------------- */
 void Probe::ClearStats(const P2d_rec *record)
 {
@@ -134,7 +132,7 @@ void Probe::checkEdgeDiodes(Particle * cp, const unsigned char *p)
     cp->x1++;
   }
 
-  if ((p[nDiodes()/8] & 0x01) == 0) // touched lower edge
+  if ((p[(nDiodes()/8)-1] & 0x01) == 0) // touched lower edge
   {
     cp->edge |= 0xF0;
     cp->x2++;
@@ -180,17 +178,17 @@ size_t Probe::height(const unsigned char *p)
 /* -------------------------------------------------------------------- */
 size_t Probe::checkRejectionCriteria(Particle * cp, recStats & stats)
 {
-  if (controlWindow->RejectZeroAreaImage() && cp->w == 0 && cp->h == 0)
+  if (_userConfig->RejectZeroAreaImage() && cp->w == 0 && cp->h == 0)
     cp->reject = true;
 
   if (cp->h == 1 && cp->w > 3)	// Stuck bit detection.
     cp->reject = true;
 
-  if ((float)cp->area / (std::pow(std::max(cp->w, cp->h), 2.0) * M_PI / 4.0) <= controlWindow->GetAreaRatioReject())
+  if ((float)cp->area / (std::pow(std::max(cp->w, cp->h), 2.0) * M_PI / 4.0) <= _userConfig->GetAreaRatioReject())
     cp->reject = true;
 
   size_t bin = 0;
-  switch (controlWindow->GetConcentration())
+  switch (_userConfig->GetConcentration())
   {
     case BASIC:
       bin = std::max(cp->w, cp->h);
@@ -271,7 +269,7 @@ void Probe::computeDerived(double sampleVolume[], size_t nBins, double totalLive
     }
 
   z /= 1000;
-  stats.lwc *= M_PI / 6.0 * 1.0e-6 * controlWindow->GetDensity();
+  stats.lwc *= M_PI / 6.0 * 1.0e-6 * _userConfig->GetDensity();
 
   if (z > 0.0)
     stats.dbz = 10.0 * log10(z * 1.0e6);
@@ -293,8 +291,8 @@ void Probe::SetSampleArea()
   if (sampleArea == 0)
     sampleArea = new float[(nDiodes() << 2)];
 
-//printf("SetSampleArea: %s: mag=%f _eaw=%f %d\n", _name.c_str(), mag, _eaw, controlWindow->GetConcentration());
-  switch (controlWindow->GetConcentration())
+//printf("SetSampleArea: %s: mag=%f _eaw=%f %d\n", _name.c_str(), mag, _eaw, _userConfig->GetConcentration());
+  switch (_userConfig->GetConcentration())
     {
     case BASIC:
       for (size_t i = 1; i < nDiodes(); ++i)

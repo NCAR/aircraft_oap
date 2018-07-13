@@ -19,7 +19,7 @@ class Fast2D : public Probe
 {
 
 public:
-  Fast2D(const char xml_string[], int recSize);
+  Fast2D(UserConfig *cfg, const char xml_string[], int recSize);
 
   struct recStats ProcessRecord(const P2d_rec * record, float version);
 

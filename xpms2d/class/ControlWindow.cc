@@ -46,9 +46,6 @@ ControlWindow::ControlWindow(Widget parent) : WinForm(parent, "control", RowColu
   size_t	i, n;
 
   delay = 0;
-  densIdx = 0;
-  concIdx = 0;
-  ratioIdx = 0;
 
   /* Did anyone every mention that C++'s ability to have pre-initialized
    * stuff in a class sucks the big one.
@@ -195,7 +192,7 @@ trc = XmCreateRowColumn(Window(), (char *)"trc", args, 0);
     }
 
   XtManageChildren(cncB, i);
-  XmToggleButtonSetState(cncB[concIdx], True, False);
+  XmToggleButtonSetState(cncB[0], True, False);
 
   /* Water density
    */
@@ -208,7 +205,7 @@ trc = XmCreateRowColumn(Window(), (char *)"trc", args, 0);
     }
 
   XtManageChildren(densB, i);
-  XmToggleButtonSetState(densB[densIdx], True, False);
+  XmToggleButtonSetState(densB[0], True, False);
 
   /* Area ratio reject
    */
@@ -221,7 +218,7 @@ trc = XmCreateRowColumn(Window(), (char *)"trc", args, 0);
     }
 
   XtManageChildren(ratioB, i);
-  XmToggleButtonSetState(ratioB[ratioIdx], True, False);
+  XmToggleButtonSetState(ratioB[0], True, False);
 
 }	/* END CONTROLWINDOW */
 

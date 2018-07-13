@@ -90,7 +90,7 @@ static const size_t P2dLRpPR = 1;
 
 
 /* -------------------------------------------------------------------- */
-ADS_DataFile::ADS_DataFile(const char fName[])
+ADS_DataFile::ADS_DataFile(const char fName[], UserConfig &cfg)
 {
   unsigned char buffer[4096];
 
@@ -140,7 +140,7 @@ ADS_DataFile::ADS_DataFile(const char fName[])
   if (strstr((char *)buffer, "<OAP") || strstr((char *)buffer, "<PMS2D>"))
     {
     printf("initADS3(%s)\n", _fileName.c_str());
-    initADS3((const char *)buffer);	// the XML header file.
+    initADS3((const char *)buffer, &cfg);	// the XML header file.
     }
   else
   if (isValidProbe(buffer))
@@ -151,11 +151,11 @@ ADS_DataFile::ADS_DataFile(const char fName[])
   else
     {
     printf("initADS2(%s)\n", _fileName.c_str());
-    initADS2();
+    initADS2(&cfg);
     if (_hdr) strcpy(_version, _hdr->Version());
     }
 
-  buildIndices();
+  buildIndices(&cfg);
 
   currLR = -1; currPhys = 0;
 
@@ -168,7 +168,7 @@ ADS_DataFile::ADS_DataFile(const char fName[])
 }	/* END CONSTRUCTOR */
 
 /* -------------------------------------------------------------------- */
-void ADS_DataFile::initADS2()
+void ADS_DataFile::initADS2(UserConfig *cfg)
 {
   int	Ccnt, Pcnt, Hcnt;
   Ccnt = Pcnt = Hcnt = 0;
@@ -189,26 +189,26 @@ void ADS_DataFile::initADS2()
 
     if (name[3] == 'P')
       {
-      PMS2D *p = new PMS2D(_hdr, (Pms2 *)p, ++Pcnt);
+      PMS2D *p = new PMS2D(cfg, _hdr, (Pms2 *)p, ++Pcnt);
       _probeList[*(uint16_t *)p->Code()] = p;
       }
     else
     if (name[3] == 'C')
       {
-      PMS2D *p = new PMS2D(_hdr, (Pms2 *)p, ++Ccnt);
+      PMS2D *p = new PMS2D(cfg, _hdr, (Pms2 *)p, ++Ccnt);
       _probeList[*(uint16_t *)p->Code()] = p;
       }
     else
     if (name[3] == 'H')
       {
-      HVPS *p = new HVPS(_hdr, (Pms2 *)p, ++Hcnt);
+      HVPS *p = new HVPS(cfg, _hdr, (Pms2 *)p, ++Hcnt);
       _probeList[*(uint16_t *)p->Code()] = p;
       }
     }
 }
 
 /* -------------------------------------------------------------------- */
-void ADS_DataFile::initADS3(const char *hdrString)
+void ADS_DataFile::initADS3(const char *hdrString, UserConfig *cfg)
 {
   std::string XMLgetElementValue(const char s[]);
 
@@ -255,13 +255,13 @@ void ADS_DataFile::initADS3(const char *hdrString)
     else
     if ( strstr(p, "<probe") )
       {
-      AddToProbeListFromXML(p);
+      AddToProbeListFromXML(p, cfg);
       }
     }
 }
 
 /* -------------------------------------------------------------------- */
-void ADS_DataFile::AddToProbeListFromXML(const char xml_entry[])
+void ADS_DataFile::AddToProbeListFromXML(const char xml_entry[], UserConfig *cfg)
 {
   char *id = strstr((char *)xml_entry, "id=") + 4;
   if (id == 0)
@@ -270,19 +270,19 @@ void ADS_DataFile::AddToProbeListFromXML(const char xml_entry[])
   switch (ProbeType((const unsigned char *)id))
   {
     case Probe::PMS2D:
-      _probeList[*(uint16_t *)id] = new PMS2D(xml_entry, PMS2_SIZE);
+      _probeList[*(uint16_t *)id] = new PMS2D(cfg, xml_entry, PMS2_SIZE);
       break;
     case Probe::FAST2D:
-      _probeList[*(uint16_t *)id] = new Fast2D(xml_entry, PMS2_SIZE);
+      _probeList[*(uint16_t *)id] = new Fast2D(cfg, xml_entry, PMS2_SIZE);
       break;
     case Probe::TWODS:
-      _probeList[*(uint16_t *)id] = new TwoDS(xml_entry, PMS2_SIZE);
+      _probeList[*(uint16_t *)id] = new TwoDS(cfg, xml_entry, PMS2_SIZE);
       break;
     case Probe::HVPS:
-      _probeList[*(uint16_t *)id] = new HVPS(xml_entry, PMS2_SIZE);
+      _probeList[*(uint16_t *)id] = new HVPS(cfg, xml_entry, PMS2_SIZE);
       break;
     case Probe::CIP:
-      _probeList[*(uint16_t *)id] = new CIP(xml_entry, PMS2_SIZE);
+      _probeList[*(uint16_t *)id] = new CIP(cfg, xml_entry, PMS2_SIZE);
       break;
     default:
       fprintf(stderr, "DataFile::initOAP, Unknown probe type, [%c%c]\n", id[0], id[1]);
@@ -291,7 +291,7 @@ void ADS_DataFile::AddToProbeListFromXML(const char xml_entry[])
 }
 
 /* -------------------------------------------------------------------- */
-void ADS_DataFile::AddToProbeList(const char *id)
+void ADS_DataFile::AddToProbeList(const char *id, UserConfig *cfg)
 {
   if (id == 0)
     return;
@@ -299,13 +299,13 @@ void ADS_DataFile::AddToProbeList(const char *id)
   switch (ProbeType((const unsigned char *)id))
   {
     case Probe::PMS2D:
-      _probeList[*(uint16_t *)id] = new PMS2D(id);
+      _probeList[*(uint16_t *)id] = new PMS2D(cfg, id);
       break;
     case Probe::HVPS:
-      _probeList[*(uint16_t *)id] = new HVPS(id);
+      _probeList[*(uint16_t *)id] = new HVPS(cfg, id);
       break;
     case Probe::CIP:
-      _probeList[*(uint16_t *)id] = new CIP(id);
+      _probeList[*(uint16_t *)id] = new CIP(cfg, id);
       break;
     default:
       fprintf(stderr, "DataFile::initOAP, Unknown probe type, [%c%c]\n", id[0], id[1]);
@@ -687,7 +687,7 @@ int ADS_DataFile::NextPhysicalRecord(unsigned char buff[])
 }	/* END NEXTPHYSICALRECORD */
 
 /* -------------------------------------------------------------------- */
-void ADS_DataFile::buildIndices()
+void ADS_DataFile::buildIndices(UserConfig *cfg)
 {
   size_t cnt = 0;
   int	rc;
@@ -774,7 +774,7 @@ void ADS_DataFile::buildIndices()
         continue;
 
       if (iter == _probeList.end())
-        AddToProbeList((const char *)buffer);
+        AddToProbeList((const char *)buffer, cfg);
       }
 
     for (i = 0; i < 1; ++i)

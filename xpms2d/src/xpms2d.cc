@@ -30,12 +30,13 @@ COPYRIGHT:      University Corporation for Atmospheric Research, 1997-2018
 #include <ControlWindow.h>
 #include <Colors.h>
 #include <raf/Cursor.h>
-#include <DataFile.h>
-#include <FileMgr.h>
-#include <Magnify.h>
-#include <MagnifyWindow.h>
-#include <MagnifyCanvas.h>
-#include <MainCanvas.h>
+#include "DataFile.h"
+#include "FileMgr.h"
+#include "Magnify.h"
+#include "MagnifyWindow.h"
+#include "MagnifyCanvas.h"
+#include "MainCanvas.h"
+#include "UserConfig.h"
 #include <raf/Printer.h>
 #include <raf/XFonts.h>
 #include <raf/XPen.h>
@@ -50,6 +51,7 @@ Magnify		*mag;
 MagnifyWindow	*magWindow;
 MagnifyCanvas	*magPlot = NULL;
 MainCanvas	*mainPlot = NULL;
+UserConfig	userConfig;
 XCursor		cursor;
 Printer		*printerSetup;
 Colors		*color;
@@ -130,7 +132,7 @@ static void ProcessArgs(char **argv)
     else
       {
       if (access(*argv, R_OK) == 0)
-        fileMgr.NewFile(*argv);
+        fileMgr.NewFile(*argv, userConfig);
       }
 
 }	/* END PROCESSARGS */

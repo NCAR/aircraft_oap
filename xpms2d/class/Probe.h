@@ -52,6 +52,8 @@ COPYRIGHT:	University Corporation for Atmospheric Research, 1997-2018
 #define SPEC2DSV        0x5356
 
 
+class UserConfig;
+
 /* -------------------------------------------------------------------- */
 class Probe {
 
@@ -112,16 +114,16 @@ protected:
    * Probe conctructor for ADS2 header.  This will only ever have 32 diode
    * PMS2D probes an HVPS once.
    */
-  Probe(ProbeType type, Header *hdr, const Pms2 *p, int cnt, size_t ndiodes);
+  Probe(ProbeType type, UserConfig *cfg, Header *hdr, const Pms2 *p, int cnt, size_t ndiodes);
   /**
    * Probe constructor for new PMS2D data files.  New means starting
    * in 2007 with PACDEX project.  These files follow the OAPfiles standard.
    */
-  Probe(ProbeType type, const char xml_string[], int recSize, size_t ndiodes);
+  Probe(ProbeType type, UserConfig *cfg, const char xml_string[], int recSize, size_t ndiodes);
   /**
    * Probe constructor for no file header.  Univ Wyoming.
    */
-  Probe(ProbeType type, const char hdr[], size_t ndiodes);
+  Probe(ProbeType type, UserConfig *cfg, const char hdr[], size_t ndiodes);
 
   /// Common initialization for all constructors.
   void init();
@@ -132,6 +134,9 @@ protected:
   size_t height(const unsigned char *p);
   void computeDerived(double sv[], size_t nBins, double liveTime);
   size_t checkRejectionCriteria(Particle * cp, recStats & stats);
+
+  /// Keep a copy of user config.
+  const UserConfig	*_userConfig;
 
   std::string	_name;
   std::string	_serialNumber;

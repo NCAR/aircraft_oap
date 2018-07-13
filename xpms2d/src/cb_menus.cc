@@ -53,6 +53,7 @@ extern XmFile		*fileSel;
 extern size_t nBuffs;
 extern P2d_rec pgFbuff[];
 
+extern UserConfig userConfig;
 
 /* -------------------------------------------------------------------- */
 void GetDataFileName(Widget w, XtPointer client, XtPointer call)
@@ -69,7 +70,7 @@ void NewDataFile(Widget w, XtPointer client, XtPointer call)
   fileSel->ExtractFileName(
          ((XmFileSelectionBoxCallbackStruct *)call)->value, &dataFile);
  
-  fileMgr.NewFile(dataFile);
+  fileMgr.NewFile(dataFile, userConfig);
   controlWindow->SetFileNames();
   controlWindow->SetProbes();
   controlWindow->PositionTime(True);
@@ -92,7 +93,7 @@ void AddDataFile(Widget w, XtPointer client, XtPointer call)
   fileSel->ExtractFileName(
          ((XmFileSelectionBoxCallbackStruct *)call)->value, &dataFile);
  
-  fileMgr.AddFile(dataFile);
+  fileMgr.AddFile(dataFile, userConfig);
   controlWindow->SetFileNames();
   cursor.PointerCursor(mainPlot->Wdgt());
 

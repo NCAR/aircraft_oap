@@ -34,7 +34,10 @@ static const int	LEFT_MARGIN = 5;
 // RAF HVPS, 40 pixels masked at each end of diode array.
 static const int	HVPS_MASKED = 40;
 
-std::map<int16_t, P2d_rec> prevRec;
+/* used to determine if thisRecord is a duplicate of previousRecord.
+ * Could be stored elsewhere, e.g. recStats.
+ */
+static std::map<int16_t, P2d_rec> prevRec;
 
 static bool part1[512][64];
 static int part1slice = 0, part2slice = 0;

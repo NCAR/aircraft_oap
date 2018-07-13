@@ -11,7 +11,7 @@ COPYRIGHT:	University Corporation for Atmospheric Research, 1997-2018
 */
 
 #include "HVPS.h"
-#include "ControlWindow.h"
+#include "UserConfig.h"
 
 static const float	TAS_COMPENSATE = 1.0;
 
@@ -20,7 +20,7 @@ const size_t HVPS::upperMask = 40;	// HVPS masks.
 
 
 /* -------------------------------------------------------------------- */
-HVPS::HVPS(const char xml_entry[], int recSize) : Probe(Probe::HVPS, xml_entry, recSize, 256)
+HVPS::HVPS(UserConfig *cfg, const char xml_entry[], int recSize) : Probe(Probe::HVPS, cfg, xml_entry, recSize, 256)
 {
   std::string XMLgetAttributeValue(const char s[], const char target[]);
 
@@ -40,7 +40,7 @@ printf("HVPS::OAP id=%s, name=%s, resolution=%zu, armWidth=%f, eaw=%f\n", _code,
 }
 
 /* -------------------------------------------------------------------- */
-HVPS::HVPS(const char name[]) : Probe(Probe::HVPS, name, 256)
+HVPS::HVPS(UserConfig *cfg, const char name[]) : Probe(Probe::HVPS, cfg, name, 256)
 {
   _resolution = 200;
 
@@ -50,7 +50,7 @@ printf("HVPS::NoHdr id=%s, name=%s, resolution=%zu, armWidth=%f, eaw=%f\n", _cod
 }
 
 /* -------------------------------------------------------------------- */
-HVPS::HVPS(Header * hdr, const Pms2 * p, int cnt) : Probe(Probe::HVPS, hdr, p, cnt, 256)
+HVPS::HVPS(UserConfig *cfg, Header * hdr, const Pms2 * p, int cnt) : Probe(Probe::HVPS, cfg, hdr, p, cnt, 256)
 {
   hvps_init();
 
@@ -64,7 +64,6 @@ void HVPS::hvps_init()
   SetSampleArea();
 }
 
-extern ControlWindow	*controlWindow;
 
 /* -------------------------------------------------------------------- */
 bool HVPS::isSyncWord(const unsigned char *p)
@@ -143,7 +142,7 @@ printf("\n");
 
   totalLiveTime = 0.0;
 
-  switch (controlWindow->GetConcentration()) {
+  switch (_userConfig->GetConcentration()) {
     case CENTER_IN:		nBins = 512; break;
     default:			nBins = nDiodes();
     }
@@ -328,7 +327,7 @@ printf("\n");
 //  stats.concentration = stats.nTimeBars / (stats.SampleVolume / 1000.0);
 
   z /= 1000;
-  stats.lwc *= M_PI / 6.0 * 1.0e-6 * controlWindow->GetDensity();
+  stats.lwc *= M_PI / 6.0 * 1.0e-6 * _userConfig->GetDensity();
 
   if (z > 0.0)
     stats.dbz = 10.0 * log10(z * 1.0e6);

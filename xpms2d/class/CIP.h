@@ -23,13 +23,13 @@ public:
    * Probe constructor for new PMS2D data files.  New means starting
    * in 2007 with PACDEX project.
    */
-  CIP(const char xml_string[], int recSize);
+  CIP(UserConfig *cfg, const char xml_string[], int recSize);
 
   /**
    * Probe constructor for no file header.  Would like to make this open 
    * a PADS file in the future.
    */
-  CIP(const char name[]);
+  CIP(UserConfig *cfg, const char name[]);
 
 
   struct recStats ProcessRecord(const P2d_rec * record, float version);

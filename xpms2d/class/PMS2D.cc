@@ -18,7 +18,7 @@ const uint32_t PMS2D::SyncWordMask = 0xff000000;
 
 
 /* -------------------------------------------------------------------- */
-PMS2D::PMS2D(const char xml_entry[], int recSize) : Probe(Probe::PMS2D, xml_entry, recSize, 32)
+PMS2D::PMS2D(UserConfig *cfg, const char xml_entry[], int recSize) : Probe(Probe::PMS2D, cfg, xml_entry, recSize, 32)
 {
   std::string XMLgetAttributeValue(const char s[], const char target[]);
 
@@ -38,7 +38,7 @@ printf("PMS2D::OAP id=%s, name=%s, resolution=%zu, armWidth=%f, eaw=%f\n", _code
 }
 
 /* -------------------------------------------------------------------- */
-PMS2D::PMS2D(const char name[]) : Probe(Probe::PMS2D, name, 32)
+PMS2D::PMS2D(UserConfig *cfg, const char name[]) : Probe(Probe::PMS2D, cfg, name, 32)
 {
   pms2d_init();
 
@@ -46,7 +46,7 @@ printf("PMS2D::NoHdr id=%s, name=%s, resolution=%zu, armWidth=%f, eaw=%f\n", _co
 }
 
 /* -------------------------------------------------------------------- */
-PMS2D::PMS2D(Header * hdr, const Pms2 * p, int cnt) : Probe(Probe::PMS2D, hdr, p, cnt, 32)
+PMS2D::PMS2D(UserConfig *cfg, Header * hdr, const Pms2 * p, int cnt) : Probe(Probe::PMS2D, cfg, hdr, p, cnt, 32)
 {
   pms2d_init();
 
@@ -64,7 +64,6 @@ void PMS2D::pms2d_init()
   SetSampleArea();
 }
 
-extern ControlWindow	*controlWindow;
 
 /* -------------------------------------------------------------------- */
 bool PMS2D::isSyncWord(const unsigned char *p)
@@ -114,7 +113,7 @@ struct recStats PMS2D::ProcessRecord(const P2d_rec *record, float version)
 
   totalLiveTime = 0.0;
 
-  switch (controlWindow->GetConcentration()) {
+  switch (_userConfig->GetConcentration()) {
     case CENTER_IN:		nBins = 64; break;
     case RECONSTRUCTION:	nBins = 128; break;
     default:			nBins = nDiodes();
@@ -191,7 +190,7 @@ struct recStats PMS2D::ProcessRecord(const P2d_rec *record, float version)
 
 
       // This will not get caught in checkRejectionCriteria(), so do it here.
-      if (controlWindow->RejectZeroAreaImage() && cp->w == 1 && cp->h == 1)
+      if (_userConfig->RejectZeroAreaImage() && cp->w == 1 && cp->h == 1)
         cp->reject = true;
 
       totalLiveTime += checkRejectionCriteria(cp, stats);

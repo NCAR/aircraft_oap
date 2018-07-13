@@ -37,12 +37,14 @@ COPYRIGHT:	University Corporation for Atmospheric Research, 1994-2018
 #include <FileMgr.h>
 #include <raf/XPen.h>
 #include <MainCanvas.h>
+#include <UserConfig.h>
 
 extern Enchilada	*enchiladaWin;
 extern Histogram	*histogramWin;
 extern FileManager	fileMgr;
 extern ControlWindow	*controlWindow;
 extern MainCanvas	*mainPlot;
+extern UserConfig	userConfig;
 extern XCursor		cursor;
 extern Colors		*color;
 extern XPen		*pen;
@@ -58,7 +60,6 @@ void ApplyTimeChange(Widget w, XtPointer client, XtPointer call)
 {
   int		h, m, s;
   char		*p;
-  float		version;
 
   if (fileMgr.CurrentFile() == NULL ||
       fileMgr.CurrentFile()->Probes().size() == 0)
@@ -66,7 +67,6 @@ void ApplyTimeChange(Widget w, XtPointer client, XtPointer call)
 
 
   cursor.WaitCursor(mainPlot->Wdgt());
-  version = atof(fileMgr.CurrentFile()->HeaderVersion());
   p = XmTextFieldGetString(controlWindow->StartTime());
 
   if (strlen(p) == 0) {
@@ -235,7 +235,7 @@ void SetDensity(Widget w, XtPointer client, XtPointer call)
   // skip the unset of other button.
   if (((XmToggleButtonCallbackStruct *)call)->set)
     {
-    controlWindow->SetWaterDensity((long)client);
+    userConfig.SetWaterDensity(controlWindow->GetWaterDensity((long)client));
     PageCurrent();
     }
 }
@@ -245,7 +245,7 @@ void SetAreaRatioRej(Widget w, XtPointer client, XtPointer call)
 {
   if (((XmToggleButtonCallbackStruct *)call)->set)
     {
-    controlWindow->SetAreaRatioReject((long)client);
+    userConfig.SetAreaRatioReject(controlWindow->GetAreaRatioReject((long)client));
     PageCurrent();
     }
 }
@@ -257,7 +257,7 @@ void SetConcentration(Widget w, XtPointer client, XtPointer call)
   if (((XmToggleButtonCallbackStruct *)call)->set == false)
     return;
 
-  controlWindow->SetConcentrationCalc((long)client);
+  userConfig.SetSizingAlgo(controlWindow->GetSizingAlgo((long)client));
 
   const ProbeList & probes = fileMgr.CurrentFile()->Probes();
   ProbeList::const_iterator iter;

@@ -18,7 +18,7 @@ const unsigned char Fast2D::OverldString[] = { 0x55, 0x55, 0xaa };
 
 
 /* -------------------------------------------------------------------- */
-Fast2D::Fast2D(const char xml_entry[], int recSize) : Probe(Probe::FAST2D, xml_entry, recSize, 64), _clockMhz(12)
+Fast2D::Fast2D(UserConfig *cfg, const char xml_entry[], int recSize) : Probe(Probe::FAST2D, cfg, xml_entry, recSize, 64), _clockMhz(12)
 {
   std::string XMLgetAttributeValue(const char s[], const char target[]);
 
@@ -52,8 +52,6 @@ void Fast2D::f2d_init()
   SetSampleArea();
 }
 
-
-extern ControlWindow	*controlWindow;
 
 /* -------------------------------------------------------------------- */
 unsigned long long Fast2D::TimeWord_Microseconds(const unsigned char *p)
@@ -101,7 +99,7 @@ struct recStats Fast2D::ProcessRecord(const P2d_rec *record, float version)
 
   totalLiveTime = 0.0;
 
-  switch (controlWindow->GetConcentration()) {
+  switch (_userConfig->GetConcentration()) {
     case CENTER_IN:             nBins = 128; break;
     case RECONSTRUCTION:        nBins = 256; break;
     default:                    nBins = nDiodes();

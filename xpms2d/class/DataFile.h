@@ -34,6 +34,9 @@ COPYRIGHT:	University Corporation for Atmospheric Research, 1997-2018
 #define PMS2_SIZE	4116
 #define PMS2_RECSIZE	(0x8000 / PMS2_SIZE) * PMS2_SIZE
 
+class UserConfig;
+
+
 /**
  * Probe mapping uses the 2 byte key/id in every data record.  Once
  * you have a record, you can get the Probe info from the ProbeList.
@@ -45,7 +48,7 @@ typedef std::map<uint16_t, Probe *> ProbeList;
 class ADS_DataFile {
 
 public:
-  ADS_DataFile(const char fName[]);
+  ADS_DataFile(const char fName[], UserConfig &cfg);
   ~ADS_DataFile();
 
   const std::string &
@@ -98,23 +101,23 @@ protected:
 
   typedef struct { long long index; int16_t time[4]; } Index;
 
-  void	initADS2();
-  void	initADS3(const char *hdrString);
+  void	initADS2(UserConfig *cfg);
+  void	initADS3(const char *hdrString, UserConfig *cfg);
 
   /* Add probe based on id word in old ADS2 header.  These are really
    * old files, or from University of Wyoming
    */
-  void	AddToProbeList(const char *id);
+  void	AddToProbeList(const char *id, UserConfig *cfg);
   /* Add probe based on the XML entry in an OAP file.
    */
-  void	AddToProbeListFromXML(const char *id);
+  void	AddToProbeListFromXML(const char *id, UserConfig *cfg);
 
   long long	posOfPhysicalRecord(size_t i) {
 	if (i > nIndices) fprintf(stderr, "currPhys exceeds nIndices\n");
 	return indices[i].index;
 	}
 
-  void	buildIndices(), sort_the_table(int, int), SortIndices(int);
+  void	buildIndices(UserConfig *cfg), sort_the_table(int, int), SortIndices(int);
   void	SwapPMS2D(P2d_rec *);
   void	check_rico_half_buff(P2d_rec *buff, size_t start, size_t end);
 
