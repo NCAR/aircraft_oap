@@ -302,7 +302,7 @@ void MainCanvas::drawPMS2D(P2d_rec *record, Probe *probe, float version, int pro
   int		nextColor, cntr = 0;
   uint32_t	*p, syncWord;
   bool		colorIsBlack = false;
-  Particle	*cp;
+  Particle	*cp = 0;
   char		buffer[256];
 
   static uint32_t	prevSlice;
@@ -432,7 +432,7 @@ for (size_t i = 0; i < probe->nSlices(); ++i)
 /* -------------------------------------------------------------------- */
 void MainCanvas::drawFast2D(P2d_rec *record, Probe *probe, float version, int probeNum, PostScript *ps)
 {
-  Particle	*cp;
+  Particle	*cp = 0;
   int		nextColor, cntr = 0;
   bool		colorIsBlack = false;
   unsigned char *p;
@@ -459,7 +459,8 @@ void MainCanvas::drawFast2D(P2d_rec *record, Probe *probe, float version, int pr
 
 
   p = record->data;
-  cp = probe->stats.particles[0];
+  if (probe->stats.particles.size() > 0)
+    cp = probe->stats.particles[0];
 
   for (size_t i = 0; i < probe->nSlices(); )
   {
@@ -648,7 +649,7 @@ size_t MainCanvas::uncompressCIP(unsigned char *dest, const unsigned char src[],
 /* -------------------------------------------------------------------- */
 void MainCanvas::drawCIP(P2d_rec *record, Probe *probe, float version, int probeNum, PostScript *ps)
 {
-  Particle	*cp;
+  Particle	*cp = 0;
   int		nextColor, cntr = 0;
   bool		colorIsBlack = false;
   unsigned long long *p;
@@ -664,7 +665,9 @@ void MainCanvas::drawCIP(P2d_rec *record, Probe *probe, float version, int probe
 
 
   p = (unsigned long long *)image;
-  cp = probe->stats.particles[0];
+  if (probe->stats.particles.size() > 0)
+    cp = probe->stats.particles[0];
+
   for (size_t i = 0; i < nSlices; )
   {
     if (cp == 0 || cp->reject)
@@ -735,7 +738,7 @@ void MainCanvas::drawHVPS(P2d_rec *record, Probe *probe, float version, int prob
 {
   size_t	y1 = 0, cntr = 0, shaded, unshaded, line = LEFT_MARGIN;
   unsigned short	*sp = (unsigned short *)record->data;
-  Particle	*cp;
+  Particle	*cp = 0;
 
   if (memcmp((void *)record, (void *)&prevRec[record->id], sizeof(P2d_rec)) == 0)
     probe->stats.duplicate = true;
