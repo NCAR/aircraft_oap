@@ -132,7 +132,7 @@ struct recStats Fast2D::ProcessRecord(const P2d_rec *record, float version)
         // Leave zero, they are less than a milli-second anyways.
         overload = 0;
 
-        printf(">>> Fast2D overload @ %02d:%02d:%02d.%-3d. <<<\n",
+        printf(">>> %s overload @ %02d:%02d:%02d.%-3d. <<<\n", Name().c_str(),
 		record->hour, record->minute, record->second, record->msec);
 
         if (cp)
