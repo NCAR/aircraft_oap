@@ -63,9 +63,8 @@ bool TwoDS::isOverloadWord(const unsigned char *p)
 struct recStats TwoDS::ProcessRecord(const P2d_rec *record, float version)
 {
   int		startTime, overload = 0;
-  size_t	nBins;
   unsigned long startMilliSec;
-  double	sampleVolume[(nDiodes()<<2)+1], totalLiveTime;
+  double	sampleVolume[(nDiodes()<<1)+1], totalLiveTime;
 
   unsigned long long    firstTimeWord = 0;
 
@@ -87,12 +86,12 @@ struct recStats TwoDS::ProcessRecord(const P2d_rec *record, float version)
   totalLiveTime = 0.0;
 
   switch (_userConfig->GetConcentration()) {
-    case CENTER_IN:		nBins = 256; break;
-    case RECONSTRUCTION:	nBins = 512; break;
-    default:			nBins = nDiodes();
+    case CENTER_IN:
+    case RECONSTRUCTION:	_numBins = 256; break;
+    default:			_numBins = nDiodes();
     }
 
-  for (size_t i = 0; i < nBins; ++i)
+  for (size_t i = 0; i < NumberBins(); ++i)
     sampleVolume[i] = stats.tas * sampleArea[i] * 0.001;
 
 
@@ -184,7 +183,7 @@ struct recStats TwoDS::ProcessRecord(const P2d_rec *record, float version)
   // Compute "science" data.
   totalLiveTime /= 1000000;     // convert to seconds
 
-  computeDerived(sampleVolume, nBins, totalLiveTime);
+  computeDerived(sampleVolume, totalLiveTime);
 
   // Save time for next round.
   _prevTime = stats.thisTime;

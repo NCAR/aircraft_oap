@@ -75,7 +75,7 @@ bool HVPS::isSyncWord(const unsigned char *p)
 struct recStats HVPS::ProcessRecord(const P2d_rec *record, float version)
 {
   int		startTime;
-  size_t	nBins, shaded, unshaded;
+  size_t	shaded, unshaded;
   unsigned short	*p, slice, ppSlice, pSlice;
   uint32_t	startMilliSec;
   bool		overloadAdded = false;
@@ -143,8 +143,8 @@ printf("\n");
   totalLiveTime = 0.0;
 
   switch (_userConfig->GetConcentration()) {
-    case CENTER_IN:		nBins = 512; break;
-    default:			nBins = nDiodes();
+    case CENTER_IN:		_numBins = 512; break;
+    default:			_numBins = nDiodes();
     }
 
 
@@ -305,7 +305,7 @@ printf("\n");
   totalLiveTime /= 1000000;	// convert to seconds
   stats.concentration = stats.lwc = stats.dbz = z = 0.0;
 
-  for (size_t i = 1; i < nBins; ++i)
+  for (size_t i = 1; i < NumberBins(); ++i)
     {
     if (stats.SampleVolume > 0.0)
       conc = stats.accum[i] / (stats.SampleVolume / 1000.0);

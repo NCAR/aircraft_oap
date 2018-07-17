@@ -72,6 +72,7 @@ public:
   /// @returns Probe resolution per diode.
   size_t nDiodes() const	{ return _nDiodes; }
   size_t nSlices() const	{ return _nSlices; }
+  size_t NumberBins() const	{ return _numBins; }
 
   bool Display() const		{ return _displayed; }
   void setDisplay(bool b)	{ _displayed = b; }
@@ -132,7 +133,7 @@ protected:
   void checkEdgeDiodes(Particle * cp, const unsigned char *p);
   size_t area(const unsigned char *p);
   size_t height(const unsigned char *p);
-  void computeDerived(double sv[], size_t nBins, double liveTime);
+  void computeDerived(double sv[], double liveTime);
   size_t checkRejectionCriteria(Particle * cp, recStats & stats);
 
   /// Keep a copy of user config.
@@ -152,6 +153,12 @@ protected:
 
   /// Number of diodes in the array
   size_t	_nDiodes;
+
+  /**
+   * Number of bins being output for size-distribution. Values are nDiodes for
+   * entire-in, and nDiodes times two for center-in and reconstruction.
+   */
+  size_t	_numBins;
 
   /// Physical distance between the two probe arms in mm.
   float		_armWidth;

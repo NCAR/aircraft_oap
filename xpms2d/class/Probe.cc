@@ -84,6 +84,7 @@ Probe::Probe(ProbeType type, UserConfig *cfg, Header * hdr, const Pms2 * p, int 
 void Probe::init()
 {
   sampleArea = 0;
+  _numBins = _nDiodes;
   _nSlices = P2D_DATA / _nDiodes * 8;
   _eaw = nDiodes() * Resolution() * 0.001;
   _dof_const = 2.37;	// Default for PMS probes.
@@ -234,7 +235,7 @@ size_t Probe::checkRejectionCriteria(Particle * cp, recStats & stats)
       break;
     }
 
-  if (!cp->reject && bin < (nDiodes()<<2))
+  if (!cp->reject && bin < NumberBins())
   {
     stats.accum[bin]++;
     stats.area += cp->area;
@@ -245,12 +246,12 @@ size_t Probe::checkRejectionCriteria(Particle * cp, recStats & stats)
 }
 
 /* -------------------------------------------------------------------- */
-void Probe::computeDerived(double sampleVolume[], size_t nBins, double totalLiveTime)
+void Probe::computeDerived(double sampleVolume[], double totalLiveTime)
 {
   double	diameter, z, conc;
   stats.concentration = stats.lwc = stats.dbz = z = 0.0;
 
-  for (size_t i = 1; i < nBins; ++i)
+  for (size_t i = 1; i < NumberBins(); ++i)
     {
     if (sampleVolume[i] > 0.0)
       conc = stats.accum[i] / (sampleVolume[i] * totalLiveTime);
@@ -285,7 +286,7 @@ void Probe::SetSampleArea()
   	_sampleArea = _armWidth * _eaw;
 
   if (sampleArea == 0)
-    sampleArea = new float[(nDiodes() << 2)];
+    sampleArea = new float[NumberBins()];
 
 //printf("SetSampleArea: %s: mag=%f _eaw=%f %d\n", _name.c_str(), mag, _eaw, _userConfig->GetConcentration());
   switch (_userConfig->GetConcentration())
@@ -308,7 +309,7 @@ void Probe::SetSampleArea()
       break;
 
     case CENTER_IN:
-      for (size_t i = 1; i < nDiodes()<<1; ++i)
+      for (size_t i = 1; i < NumberBins(); ++i)
         {
         diam = i * Resolution();
         DoF = std::min((_dof_const * diam*diam), prht) * 0.001;
@@ -319,7 +320,7 @@ void Probe::SetSampleArea()
       break;
 
     case RECONSTRUCTION:
-      for (size_t i = 1; i < nDiodes()<<2; ++i)
+      for (size_t i = 1; i < NumberBins(); ++i)
         {
         diam = (float)i * Resolution();
         _eaw = ((nDiodes() * Resolution()) + (2 * (diam / 2 - diam / 7.2414))) * 0.001;

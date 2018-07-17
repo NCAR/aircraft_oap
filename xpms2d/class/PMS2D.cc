@@ -75,10 +75,9 @@ bool PMS2D::isSyncWord(const unsigned char *p)
 struct recStats PMS2D::ProcessRecord(const P2d_rec *record, float version)
 {
   int		startTime, overload;
-  size_t	nBins;
   uint32_t	*p, pSlice, syncWord, startMilliSec;
   bool		overloadAdded = false;
-  double	sampleVolume[(nDiodes()<<2)+1], totalLiveTime;
+  double	sampleVolume[(nDiodes()<<1)+1], totalLiveTime;
 
   ClearStats(record);
   stats.DASelapsedTime = stats.thisTime - _prevTime;
@@ -114,16 +113,16 @@ struct recStats PMS2D::ProcessRecord(const P2d_rec *record, float version)
   totalLiveTime = 0.0;
 
   switch (_userConfig->GetConcentration()) {
-    case CENTER_IN:		nBins = 64; break;
-    case RECONSTRUCTION:	nBins = 128; break;
-    default:			nBins = nDiodes();
+    case CENTER_IN:
+    case RECONSTRUCTION:	_numBins = 64; break;
+    default:			_numBins = nDiodes();
     }
 
 
   // Compute frequency, which is used to convert timing words from TAS clock
   // pulses to milliseconds.  Most of sample volume is here, time comes in
   // later.
-  for (size_t i = 0; i < nBins; ++i)
+  for (size_t i = 0; i < NumberBins(); ++i)
     sampleVolume[i] = stats.tas * sampleArea[i] * 0.001;
 
   // Scan record, compute tBarElapsedtime and stats.
@@ -224,7 +223,7 @@ stats.tBarElapsedtime += (uint32_t)(nSlices() * stats.frequency);
   // Compute "science" data.
   totalLiveTime /= 1000000;	// convert to seconds
 
-  computeDerived(sampleVolume, nBins, totalLiveTime);
+  computeDerived(sampleVolume, totalLiveTime);
 
   // Save time for next round.
   _prevTime = stats.thisTime;
