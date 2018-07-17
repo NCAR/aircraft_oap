@@ -114,7 +114,7 @@ protected:
 
   long long	posOfPhysicalRecord(size_t i) {
 	if (i > nIndices) fprintf(stderr, "currPhys exceeds nIndices\n");
-	return indices[i].index;
+	return _indices[i].index;
 	}
 
   void	buildIndices(UserConfig *cfg), sort_the_table(int, int), SortIndices(int);
@@ -148,7 +148,7 @@ protected:
    */
   char		_version[16];
 
-  Index		*indices;
+  Index		*_indices;
   int		currPhys;
   int		currLR;
   size_t	nIndices;
