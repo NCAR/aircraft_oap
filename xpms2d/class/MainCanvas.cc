@@ -267,9 +267,9 @@ memset(part1, 0, sizeof(part1));
     case RAW_RECORD:
     case NORMAL:
       sprintf(buffer,
-	"sv: act = %.2lfL, used = %.3lfL, area = %.2fmm2, conc = %.3lfN/L, lw = %.3lfg/M3, z = %.3lfdb",
-	probe->stats.SampleVolume / 1000, probe->stats.DOFsampleVolume / 1000,
-	res2 * probe->stats.area, probe->stats.concentration, probe->stats.lwc, probe->stats.dbz);
+	"sv = %.2lfL, used = %.3lfL, area = %.2fmm2, conc = %.3lfN/L, lw = %.3lfg/M3, z = %.3lfdb",
+	probe->stats.SampleVolume / 1000, res2 * probe->stats.area,
+	probe->stats.concentration, probe->stats.lwc, probe->stats.dbz);
 
       if (ps) { ps->MoveTo(315, 750-(y+62)); ps->ShowStr(buffer); }
       else pen->DrawText(Surface(), 315, y+62, buffer);

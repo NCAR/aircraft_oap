@@ -48,7 +48,7 @@ struct recStats
   int	nonRejectParticles;	// n Particles not rejected.
   uint32_t minBar, maxBar, meanBar;
 
-  double	SampleVolume, DOFsampleVolume;
+  double	SampleVolume;	// Basic total sample volume: eaw * dof * tas * time.
   double	tas, concentration, lwc, dbz;
   float		frequency;              // TAS clock.
   int		area;

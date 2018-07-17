@@ -108,7 +108,6 @@ void Probe::ClearStats(const P2d_rec *record)
   stats.minBar = 10000000;
   stats.maxBar = 0;
   stats.area = 0;
-  stats.DOFsampleVolume = 0.0;
   stats.duplicate = false;
   stats.particles.clear();
   stats.tas = (float)record->tas;
@@ -254,10 +253,7 @@ void Probe::computeDerived(double sampleVolume[], size_t nBins, double totalLive
   for (size_t i = 1; i < nBins; ++i)
     {
     if (sampleVolume[i] > 0.0)
-      {
       conc = stats.accum[i] / (sampleVolume[i] * totalLiveTime);
-      stats.DOFsampleVolume += (sampleVolume[i] * totalLiveTime);
-      }
     else
       conc = 0.0;
 

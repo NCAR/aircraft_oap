@@ -308,10 +308,7 @@ printf("\n");
   for (size_t i = 1; i < nBins; ++i)
     {
     if (stats.SampleVolume > 0.0)
-      {
       conc = stats.accum[i] / (stats.SampleVolume / 1000.0);
-//      stats.DOFsampleVolume += (stats.SampleVolume * totalLiveTime);
-      }
     else
       conc = 0.0;
 
