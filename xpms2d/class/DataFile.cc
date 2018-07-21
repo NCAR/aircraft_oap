@@ -592,6 +592,16 @@ int ADS_DataFile::NextPhysicalRecord(char buff[])
 }	/* END NEXTPHYSICALRECORD */
 
 /* -------------------------------------------------------------------- */
+time_t ADS_DataFile::getFileModifyTime(const char *path)
+{
+  struct stat attr;
+  if (stat(path, &attr) == 0)
+    return attr.st_mtime;
+
+  return 0;
+}
+
+/* -------------------------------------------------------------------- */
 void ADS_DataFile::buildIndices()
 {
   size_t cnt = 0;
@@ -609,7 +619,8 @@ void ADS_DataFile::buildIndices()
 
 
   // Check for indices file....
-  if ( (fpI = fopen(tmpFile, "rb")) )
+  if (getFileModifyTime(_fileName.c_str()) < getFileModifyTime(tmpFile) &&
+      (fpI = fopen(tmpFile, "rb")) )
     {
     long	len;
 

@@ -131,6 +131,7 @@ protected:
 	}
 
   void		buildIndices(), sort_the_table(int, int), SortIndices(int);
+  time_t	getFileModifyTime(const char *path);
   void		SwapPMS2D(P2d_rec *);
   void		check_rico_half_buff(P2d_rec *buff, size_t start, size_t end);
 
