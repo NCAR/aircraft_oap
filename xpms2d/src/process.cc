@@ -42,7 +42,7 @@ static size_t nDiodes = 32;
 static const float	TAS_COMPENSATE = 1.0;
 static const size_t	lower_mask = 215, upper_mask = 40;	// HVPS masks.
 
-static float	sampleAreaC[maxDiodes], sampleAreaP[maxDiodes];
+static float	sampleAreaC[maxDiodes+1], sampleAreaP[maxDiodes+1];
 
 static struct recStats	output;
 
@@ -134,12 +134,12 @@ struct recStats &ProcessRecord(P2d_rec *record, float version)
     if (probeID[1] == '8')	// PIP
       {
       output.resolution = 100;
-      output.SampleVolume = 400.0 * (output.resolution * nDiodes / 1000);
+      output.SampleVolume = 400.0 * output.resolution * nDiodes * 0.001;
       }
     else
       {
       output.resolution = 200;
-      output.SampleVolume = 261.0 * (output.resolution * nDiodes / 1000);
+      output.SampleVolume = 261.0 * output.resolution * nDiodes * 0.001;
       }
     }
   else
@@ -152,9 +152,9 @@ struct recStats &ProcessRecord(P2d_rec *record, float version)
 if (probeID[1] == '8')	// CIP
   output.tas = 125;
     if (probeID[1] == '8')	// CIP
-      output.SampleVolume = 100.0 * (output.resolution * nDiodes / 1000);
+      output.SampleVolume = 100.0 * output.resolution * nDiodes * 0.001;
     else
-      output.SampleVolume = 61.0 * (output.resolution * nDiodes / 1000);
+      output.SampleVolume = 61.0 * output.resolution * nDiodes * 0.001;
     }
 
   if (ProbeType(record) == TWODS)
@@ -169,9 +169,10 @@ if (probeID[1] == '8')	// CIP
     output.resolution = 200;
   }
 
+  SetSampleArea();
   output.frequency = output.resolution / output.tas;
-  output.SampleVolume *= output.tas *
-                        (output.DASelapsedTime - record->overld) * 0.001;
+//  output.SampleVolume *= output.tas *
+//                        (output.DASelapsedTime - record->overld) * 0.001;
 
 
   if (ProbeType(record) == FAST2D)
@@ -374,6 +375,9 @@ if (debug)
 
     pSlice = p[i-1];
     }
+
+  output.SampleVolume *= output.tas *
+                        (output.DASelapsedTime - record->overld) * 0.001;
 
 output.tBarElapsedtime += (uint32_t)(nSlices_32bit * output.frequency);
 
@@ -1205,35 +1209,46 @@ static float	diodeDiameter = 0.2;
 
 void SetSampleArea()
 {
-  float	dia, eaw, dof;
+  int dofIdx;
+  float	dia, eaw = output.resolution * nDiodes * 0.001;
 
   switch (controlWindow->GetConcentration())
     {
     case BASIC:
       for (size_t i = 1; i < maxDiodes; ++i)
         {
-        sampleAreaC[i] = 61.0 * 0.8;
-        sampleAreaP[i] = 261.0 * 6.4;
+        sampleAreaC[i] = 61.0 * eaw;
+        sampleAreaP[i] = 261.0 * eaw;
         }
 
       break;
 
     case ENTIRE_IN:
-      for (size_t i = 1; i <= nDiodes; ++i)
+      for (size_t i = 1; i <= maxDiodes; ++i)
         {
-        sampleAreaC[i] = DOF2dC[i] * diodeDiameter * (nDiodes - i - 1) / 8.0;
-        sampleAreaP[i] = DOF2dP[i] * diodeDiameter * (nDiodes - i - 1) / 1.0;
+        if (i < 60)	// 60 is random, just something near end
+          dofIdx = i;
+        else
+          dofIdx = 60;
+
+        sampleAreaC[i] = DOF2dC[dofIdx] * diodeDiameter * (nDiodes - i - 1) / 8.0;
+        sampleAreaP[i] = DOF2dP[dofIdx] * diodeDiameter * (nDiodes - i - 1) / 1.0;
 //printf("%d %f %f %e %e\n", i, (float)i*25, (float)i*200, sampleAreaC[i], sampleAreaP[i]);
         }
 
       break;
 
     case CENTER_IN:
-      for (size_t i = 1; i <= nDiodes<<1; ++i)
+      for (size_t i = 1; i <= maxDiodes; ++i)
         {
-        sampleAreaC[i] = DOF2dC[i] * 0.8;
-        sampleAreaP[i] = DOF2dP[i] * 6.4;
-//printf("%e %e\n", sampleAreaC[i], sampleAreaP[i]);
+        if (i < 60)	// 60 is random, just something near end
+          dofIdx = i;
+        else
+          dofIdx = 60;
+
+        sampleAreaC[i] = DOF2dC[dofIdx] * eaw;
+        sampleAreaP[i] = DOF2dP[dofIdx] * eaw;
+//printf("%d : %e %e\n", i, sampleAreaC[i], sampleAreaP[i]);
         }
 
       break;
@@ -1241,26 +1256,15 @@ void SetSampleArea()
     case RECONSTRUCTION:
       for (size_t i = 1; i <= maxDiodes; ++i)
         {
-        dia = (float)i * 25;
-        eaw = ((nDiodes * 25) + (2 * (dia / 2 - dia / 7.2414))) * 0.001;
-
         if (i < 60)
-          dof = DOF2dC[i];
+          dofIdx = i;
         else
-          dof = DOF2dC[60];
+          dofIdx = 60;
 
-        sampleAreaC[i] = dof * eaw;
-
-
-        dia = (float)i * 200;
-        eaw = ((nDiodes * 200) + (2 * (dia / 2 - dia / 7.2414))) * 0.001;
-
-        if (i < 60)
-          dof = DOF2dP[i];
-        else
-          dof = DOF2dP[60];
-
-        sampleAreaP[i] = dof * eaw;
+        dia = (float)i * output.resolution;
+        eaw = ((nDiodes * output.resolution) + (2 * (dia / 2 - dia / 7.2414))) * 0.001;
+        sampleAreaC[i] = DOF2dC[dofIdx] * eaw;
+        sampleAreaP[i] = DOF2dP[dofIdx] * eaw;
 //printf("%d %f %f %e %e %e %e\n", i, (float)i * 25, dia, DOF2dC[i] * 0.8, sampleAreaC[i], DOF2dP[i] * 6.4, sampleAreaP[i]);
         }
 
