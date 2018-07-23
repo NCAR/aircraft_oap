@@ -20,8 +20,8 @@ class CIP : public Probe
 
 public:
   /**
-   * Probe constructor for new PMS2D data files.  New means starting
-   * in 2007 with PACDEX project.
+   * Probe constructor for OAP files.  For CIP/PIP, this means the data has
+   * been run through the pads2oap converter.
    */
   CIP(UserConfig *cfg, const char xml_string[], int recSize);
 
@@ -38,6 +38,11 @@ public:
 
   /// DMT CIP/PIP probes are run length encoded.  Decode here.
   size_t uncompress(unsigned char *dest, const unsigned char src[], int nbytes);
+
+  /**
+   * Swap data to big endian after being uncompressed.
+   */
+  static void SwapBytes(unsigned char *cp, size_t nSlices);
 
   static const unsigned long long SyncWord;
 

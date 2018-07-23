@@ -85,9 +85,9 @@ struct recStats CIP::ProcessRecord(const P2d_rec *record, float version)
     return(stats);
   }
 
-//#ifdef DEBUG
-  printf("C8 %02d:%02d:%02d.%d - \n", record->hour, record->minute, record->second, record->msec);
-//#endif
+#ifdef DEBUG
+  printf("%c%c %02d:%02d:%02d.%d - \n", ((char *)record)[0], ((char *)record)[1], record->hour, record->minute, record->second, record->msec);
+#endif
 
   totalLiveTime = 0.0;
 
@@ -117,16 +117,15 @@ for (int j = 0; j < 512; ++j, ++o)
   startMilliSec = _prevHdr.msec;
 
   // Loop through all slices in record.
-  for (size_t i = 0; i < nSlices; ++i, ++sp)
+  for (size_t i = 0; i < nSlices; ++i, ++sp, p += sizeof(long long))
   {
     slice = *sp;
-printf("%llx\n", slice);
+
     /* Have particle, will travel.
      */
     if (isSyncWord(p))
     {
-printf("CIP sync in process\n");
-      ++sp;
+      ++sp; p += 8;
       slice = *sp;
       unsigned long long thisTimeWord = TimeWord_Microseconds(slice);
 
@@ -267,16 +266,16 @@ size_t CIP::uncompress(unsigned char *dest, const unsigned char src[], int nbyte
   // Align data.  Find a sync word and put record on mod 8.
   for (i = 0; i < d_idx; ++i)
   {
-     if (memcmp(&dest[i], &SyncWord, 8) == 0)
-     {
-       int n = (&dest[i] - dest) % 8;
-       if (n > 0)
-       {
-         memmove(dest, &dest[n], d_idx);
-         d_idx -= n;
-       }
-       break;
-     }
+    if ( isSyncWord(&dest[i]) )
+    {
+      int n = (&dest[i] - dest) % 8;
+      if (n > 0)
+      {
+        memmove(dest, &dest[n], d_idx);
+        d_idx -= n;
+      }
+      break;
+    }
   }
 
   if (d_idx % 8)
@@ -286,7 +285,25 @@ size_t CIP::uncompress(unsigned char *dest, const unsigned char src[], int nbyte
     memcpy(residualBytes, &dest[idx], nResidualBytes);
   }
 
+  SwapBytes(dest, d_idx / 8);	// Return number of slices.
   return d_idx / 8;     // return number of slices.
+}
+
+void CIP::SwapBytes(unsigned char *cp, size_t nSlices)
+{
+  unsigned char tmp[16];
+  for (size_t i = 0; i < nSlices; ++i, cp += sizeof(long long))
+  {
+    // Don't swap sync or timing words.
+    if (memcmp(cp, (unsigned char *)&SyncWord, 8) == 0)
+    {
+      i++; cp += sizeof(long long);
+      continue;
+    }
+    for (size_t j = 0; j < 8; ++j)
+      tmp[j] = cp[7-j];
+    memcpy(cp, tmp, 8);
+  }
 }
 
 // END CIP.CC

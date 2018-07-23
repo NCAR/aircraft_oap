@@ -624,16 +624,16 @@ size_t MainCanvas::uncompressCIP(unsigned char *dest, const unsigned char src[],
   // Align data.  Find a sync word and put record on mod 8.
   for (i = 0; i < d_idx; ++i)
   {
-     if (memcmp(&dest[i], &CIP::SyncWord, 8) == 0)
-     {
-       int n = (&dest[i] - dest) % 8;
-       if (n > 0)
-       {
-         memmove(dest, &dest[n], d_idx);
-         d_idx -= n;
-       }
-       break;
-     }
+    if (memcmp(&dest[i], &CIP::SyncWord, 8) == 0)
+    {
+      int n = (&dest[i] - dest) % 8;
+      if (n > 0)
+      {
+        memmove(dest, &dest[n], d_idx);
+        d_idx -= n;
+      }
+      break;
+    }
   }
 
   if (d_idx % 8)
@@ -643,7 +643,8 @@ size_t MainCanvas::uncompressCIP(unsigned char *dest, const unsigned char src[],
     memcpy(residualBytes, &dest[idx], nResidualBytes);
   }
 
-  return d_idx / 8;     // return number of slices.
+  CIP::SwapBytes(dest, d_idx / 8);
+  return d_idx / 8;	// return number of slices.
 }
 
 /* -------------------------------------------------------------------- */
@@ -652,7 +653,7 @@ void MainCanvas::drawCIP(P2d_rec *record, Probe *probe, float version, int probe
   Particle	*cp = 0;
   int		nextColor, cntr = 0;
   bool		colorIsBlack = false;
-  unsigned long long *p;
+  unsigned char	*p;
 
   if (memcmp((void *)record, (void *)&prevRec[record->id], sizeof(P2d_rec)) == 0)
     probe->stats.duplicate = true;
@@ -661,10 +662,10 @@ void MainCanvas::drawCIP(P2d_rec *record, Probe *probe, float version, int probe
   size_t nSlices = uncompressCIP(image, record->data, 4096);
 
   if (_displayMode == RAW_RECORD || probe->stats.particles.size() == 0)
-    drawRawRecord((const unsigned char *)record->data, probe, ps);
+    drawRawRecord(image, probe, ps);
 
 
-  p = (unsigned long long *)image;
+  p = image;
   if (probe->stats.particles.size() > 0)
     cp = probe->stats.particles[0];
 
@@ -675,7 +676,7 @@ void MainCanvas::drawCIP(P2d_rec *record, Probe *probe, float version, int probe
     else
       nextColor = probeNum;
 
-    if (probe->isSyncWord((const unsigned char *)p))
+    if (probe->isSyncWord(p))
     {
       /**
        * Color code timing words:
@@ -698,8 +699,8 @@ void MainCanvas::drawCIP(P2d_rec *record, Probe *probe, float version, int probe
       }
 
       if (_showTimingWords)
-        drawSlice(ps, i, *p);
-      ++i; ++p;
+        drawSlice(ps, i, p, probe);
+      ++i; p += 8;
 
       // Get next particle.
       delete cp;
@@ -716,8 +717,8 @@ void MainCanvas::drawCIP(P2d_rec *record, Probe *probe, float version, int probe
       else
         colorIsBlack = false;
 
-      for (; i < nSlices && !probe->isSyncWord((const unsigned char *)p); ++p)
-        drawSlice(ps, i++, *p);
+      for (; i < nSlices && !probe->isSyncWord(p); p += 8)
+        drawSlice(ps, i++, p, probe);
 
       if (enchiladaWin)
         enchiladaWin->AddLineItem(cntr++, cp);
@@ -727,7 +728,7 @@ void MainCanvas::drawCIP(P2d_rec *record, Probe *probe, float version, int probe
   if (_displayMode == DIAGNOSTIC)
     drawDiodeHistogram(record, probe);
   else
-    drawAccumHistogram(probe->stats, 700);
+    drawAccumHistogram(probe->stats, 900);
 
   y += 32;
   prevRec[record->id] = *record;
