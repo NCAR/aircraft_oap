@@ -15,6 +15,10 @@
 // for byte swapping routines ntohs() & htons()
 #include <arpa/inet.h>
 
+enum ProbeType { CIP, PIP };
+
+ProbeType pType = CIP;	// Default to CIP
+
 
 void ProcessArgs(char *argv[], OAPfile& oap, std::string& pfn, std::string& ofn);
 void ConvertPADStoOAP(const PADS_rec&, OAP_rec&, uint16_t);
@@ -22,7 +26,7 @@ std::string DateStamp(const PADS_rec&), TimeStamp(const PADS_rec&);
 
 
 /* ----------------------------------------------------------------------- */
-void defineProbes(OAPfile& oap)
+void defineProbes(OAPfile& oap, ProbeType type)
 {
   // Need a way to pass in probe list on command line....
 
@@ -30,8 +34,11 @@ void defineProbes(OAPfile& oap)
 //  oap.AddProbe(PMS2D_P4, 100, 64, "2DP100", "_RWI");
 
 
-//  oap.AddProbe(PMS2D_C8, 25, 64, "CIP001", "_CIP");
-  oap.AddProbe(PMS2D_P8, 100, 64, "PIP001", "_PIP");
+  if (type == CIP)
+    oap.AddProbe(PMS2D_C8, 25, 64, "CIP001", "_CIP");
+  else
+  if (type == PIP)
+    oap.AddProbe(PMS2D_P8, 100, 64, "PIP001", "_PIP");
 
   // NCAR RAL - processing workshop.
 //  oap.AddProbe(PMS2D_C8, 25, 64, "CIP001", "_RWI");
@@ -46,6 +53,7 @@ void defineProbes(OAPfile& oap)
 void usage()
 {
   std::cerr << "pads2oap [-flight num] [-project name] [-platform name] -i pads_file -o oap_file\n";
+  std::cerr << "  -cip | -pip : Set probe type to CIP or PIP.  Default is CIP\n";
   std::cerr << "  -project : is for project name.  e.g. TORERO\n";
   std::cerr << "  -platform : is for platform name.  e.g. GV_N677F or P3_N43RF\n";
   std::cerr << "  -flight : is for flight number, this is a string, not necessarily a number.  e.g. rf03\n";
@@ -74,7 +82,7 @@ int main(int argc, char *argv[])
   }
 
   oap.open(oap_filename);
-  defineProbes(oap);
+  defineProbes(oap, pType);
 
 
   int cnt = 0;
@@ -222,6 +230,9 @@ void OAPfile::AddProbe(uint16_t id, int resolution, int nDiodes, std::string ser
   p.suffix = suffix;
 
   _probelist.push_back(p);
+
+printf("Adding probe; %c%c res=%d\n", ((char *)&id)[1], ((char *)&id)[0], resolution);
+printf("  Use editor to adjust ASCII header of output as needed.\n");
 }
 
 /* ----------------------------------------------------------------------- */
@@ -229,6 +240,16 @@ void ProcessArgs(char *argv[], OAPfile& oap, std::string& pfn, std::string& ofn)
 {
   while (*++argv)
   {
+    if (strcmp(*argv, "-cip") == 0)
+    {
+      ;
+    }
+    else
+    if (strcmp(*argv, "-pip") == 0)
+    {
+      pType = PIP;
+    }
+    else
     if (strcmp(*argv, "-project") == 0)
     {
       oap.SetProject(*++argv);
