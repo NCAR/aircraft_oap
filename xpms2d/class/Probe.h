@@ -95,6 +95,12 @@ public:
    */
   void SetSampleArea();
 
+  /**
+   * Probes with compressed data do not have a fixed number of slices (once
+   * uncompressed).  Offer the ability to adjust on the fly, per record.
+   */
+  void Set_nSlices(size_t nSlices)	{ _nSlices = nSlices; }
+
   /// Crude sample area based on armWidth, nDiodes, and resolution.
   float SampleArea() const	{ return _sampleArea; }
 
