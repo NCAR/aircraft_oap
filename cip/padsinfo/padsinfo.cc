@@ -37,7 +37,7 @@ struct pads_rec {
 typedef struct pads_rec pads_rec;
 
 
-static const unsigned char syncWord[] = { 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA };
+static const unsigned char syncStr[] = { 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA };
 static const size_t nSyncB = 8;
 
 
@@ -48,9 +48,10 @@ unsigned char buffer[50000];
 class Config
 {
 public:
-  Config() : fullHex(false), histo(false) { }
+  Config() : fullHex(false), particleHeaders(false), histo(false) { }
 
   bool	fullHex;
+  bool	particleHeaders;
   bool	histo;
 
   string sourceFile;
@@ -62,8 +63,9 @@ void ParticleCount(pads_rec *p2d, size_t nDiodes);
 
 void Usage()
 {
-  cerr << "Usage: padsinfo [-h] [-x] [-c] file.2d" << endl;
+  cerr << "Usage: padsinfo [-x] [-p] [-c] file.2d" << endl;
   cerr << "  -x: Full hex dump of each record." << endl;
+  cerr << "  -p: Output particle header (pNum, nSlices, dof)." << endl;
   cerr << "  -c: histogram count totals, per record and per second." << endl;
   exit(1);
 }
@@ -80,6 +82,9 @@ void processArgs(int argc, char *argv[])
     {
       if (strcmp(argv[aCnt], "-x") == 0)
         cfg.fullHex = true;
+      else
+      if (strcmp(argv[aCnt], "-p") == 0)
+        cfg.particleHeaders = true;
       else
       if (strcmp(argv[aCnt], "-c") == 0)
         cfg.histo = true;
@@ -188,7 +193,7 @@ printf("uncompressCIP: going past 4096.\n");
   // Align data.  Find a sync word and put record on mod 8.
   for (i = 0; i < d_idx; ++i)
   {
-     if (memcmp(&dest[i], syncWord, 8) == 0)
+     if (memcmp(&dest[i], syncStr, 8) == 0)
      {
        int n = (&dest[i] - dest) % 8;
        if (n > 0)
@@ -226,7 +231,7 @@ long long CIPTimeWord_Microseconds(unsigned char *p)
   output += msec * 1000;
   output += usec / 8;	// 8 MHz clock or 125nS
 
-//printf("%02d:%02d:%02d.%03d - (%lld)\n", hour, minute, second, msec, output);
+  printf("%02d:%02d:%02d.%03d - (%lld)", hour, minute, second, msec, output);
 
   return output;
 }
@@ -251,10 +256,32 @@ void Output(const unsigned char buff[])
     cout << '.' << setfill('0') << setw(3) << (p2d->msec) << endl;
   }
 
+  if (cfg.particleHeaders)
+  {
+    static unsigned cnt = 0;
+    unsigned char image[15000], *p;
+
+    size_t nSlices = uncompress(image, p2d->data, 4096);
+
+    p = image;
+    for (size_t i = 0; i < nSlices; ++i, p += 8)
+    {
+      if (memcmp(p, syncStr, 8) == 0)
+      {
+        p += 8;
+        unsigned short *sp = (unsigned short *)p;
+
+        printf("%5d: ", ++cnt);
+        CIPTimeWord_Microseconds(&p[2]);
+        printf(" pCnt=%u, deltaCnt=%d,  nSlices=%u, dof=%d\n", sp[0], sp[0]-cnt, (sp[3] & 0xfe00) >> 9, (sp[3] & 0x0100) >> 8);
+      }
+    }
+  }
+
   if (cfg.fullHex)
   {
     int bytesPerSlice = nDiodes / 8;
-    unsigned char image[60000];
+    unsigned char image[15000];
 
     size_t nSlices = uncompress(image, p2d->data, 4096);
 
@@ -317,12 +344,12 @@ void ParticleCount(pads_rec *p2d, size_t nDiodes)
   }
 
   int bytesPerSlice = nDiodes / 8;
-  unsigned char image[60000];
+  unsigned char image[15000];
   size_t nSlices = uncompress(image, p2d->data, 4096);
 
   for (size_t i = 0; i < nSlices; ++i)
   {
-    if (memcmp(&image[i*bytesPerSlice], syncWord, nSyncB) == 0 && sizeCounter > 0)
+    if (memcmp(&image[i*bytesPerSlice], syncStr, nSyncB) == 0 && sizeCounter > 0)
     {
       if (sizeCounter > 511) sizeCounter = 511;
       ++perSecondCounts[sizeCounter-1];	// -1 to compensate for seperate timing word.
