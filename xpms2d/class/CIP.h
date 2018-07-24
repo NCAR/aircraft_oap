@@ -51,7 +51,7 @@ protected:
 
   void dmt_init();
 
-  long long TimeWord_Microseconds(unsigned long long slice);
+  long long TimeWord_Microseconds(const unsigned char *p) const;
 
 
 };

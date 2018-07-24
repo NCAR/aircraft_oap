@@ -68,7 +68,6 @@ struct recStats CIP::ProcessRecord(const P2d_rec *record, float version)
 {
   int		startTime, overload = 0;
   const unsigned char	*p;
-  unsigned long long	*sp, slice;
   unsigned long		startMilliSec;
   double	sampleVolume[(nDiodes()<<1)+1], totalLiveTime;
 
@@ -110,24 +109,20 @@ for (int j = 0; j < 512; ++j, ++o)
   _nSlices = uncompress(image, record->data, 4096);
 
   // Scan record, compute tBarElapsedtime and stats.
-  sp = (unsigned long long *)image;
   p = (unsigned char *)image;
 
   startTime = _prevTime / 1000;
   startMilliSec = _prevHdr.msec;
 
   // Loop through all slices in record.
-  for (size_t i = 0; i < nSlices(); ++i, ++sp, p += sizeof(long long))
+  for (size_t i = 0; i < nSlices(); ++i, p += sizeof(long long))
   {
-    slice = *sp;
-
     /* Have particle, will travel.
      */
     if (isSyncWord(p))
     {
-      ++sp; p += 8;
-      slice = *sp;
-      unsigned long long thisTimeWord = TimeWord_Microseconds(slice);
+      p += 8;
+      unsigned long long thisTimeWord = TimeWord_Microseconds(&p[2]);
 
       if (firstTimeWord == 0)
         firstTimeWord = thisTimeWord;
@@ -198,19 +193,24 @@ for (int j = 0; j < 512; ++j, ++o)
 }	// END PROCESSCIP
 
 /* -------------------------------------------------------------------- */
-long long CIP::TimeWord_Microseconds(unsigned long long slice)
+long long CIP::TimeWord_Microseconds(const unsigned char *p) const
 {
+  long long t = *(long long *)p & 0x000000FFFFFFFFFFLL;
   long long output;
 
-  int hour = (slice >> 35) & 0x001F;
-  int minute = (slice >> 29) & 0x003F;
-  int second = (slice >> 23) & 0x003F;
-  int msec = (slice >> 13) & 0x03FF;
-  int usec = slice & 0x1FFF;
+  int hour = (t >> 35) & 0x001F;
+  int minute = (t >> 29) & 0x003F;
+  int second = (t >> 23) & 0x003F;
+  int msec = (t >> 13) & 0x03FF;
+  int usec = t & 0x1FFF;
   output = (hour * 3600 + minute * 60 + second);
   output *= 1000000;
   output += msec * 1000;
   output += usec / 8;   // 8 MHz clock or 125nS
+
+#ifdef DEBUG
+  printf("%02d:%02d:%02d.%03d - (%lld)\n", hour, minute, second, msec, output);
+#endif
 
   return output;
 }
