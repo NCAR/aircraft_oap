@@ -607,7 +607,7 @@ size_t MainCanvas::uncompressCIP(unsigned char *dest, const unsigned char src[],
       d_idx += nBytes;
       i += nBytes;
     }
-
+    else
     if ((b & 0x80))
     {
       memset(&dest[d_idx], 0, nBytes);
@@ -659,6 +659,7 @@ void MainCanvas::drawCIP(P2d_rec *record, Probe *probe, float version, int probe
     probe->stats.duplicate = true;
 
   unsigned char image[16000];
+  memset(image, 0, 16000);
   probe->Set_nSlices(uncompressCIP(image, record->data, 4096));
 
   if (_displayMode == RAW_RECORD || probe->stats.particles.size() == 0)

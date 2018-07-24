@@ -106,6 +106,7 @@ for (int j = 0; j < 512; ++j, ++o)
 #endif
 
   unsigned char image[16000];
+  memset(image, 0, 16000);
   _nSlices = uncompress(image, record->data, 4096);
 
   // Scan record, compute tBarElapsedtime and stats.
@@ -124,8 +125,8 @@ for (int j = 0; j < 512; ++j, ++o)
       p += 8;
       unsigned long long thisTimeWord = TimeWord_Microseconds(&p[2]);
 
-      if (firstTimeWord == 0)
-        firstTimeWord = thisTimeWord;
+      if ((p[7] >> 1) == 0)  // If CIP particle header says no slices, bail.
+        continue;
 
       // Close out particle.  Timeword belongs to previous particle.
       if (cp)
@@ -243,13 +244,13 @@ size_t CIP::uncompress(unsigned char *dest, const unsigned char src[], int nbyte
       continue;
     }
 
-    if ((b & 0xE0) == 0)
+    if ((b & 0xE0) == 0)	// Unencoded data, copy it verbatim
     {
       memcpy(&dest[d_idx], &src[i+1], nBytes);
       d_idx += nBytes;
       i += nBytes;
     }
-
+    else
     if ((b & 0x80))
     {
       memset(&dest[d_idx], 0, nBytes);
