@@ -107,7 +107,7 @@ for (int j = 0; j < 512; ++j, ++o)
 #endif
 
   unsigned char image[16000];
-  size_t nSlices = uncompress(image, record->data, 4096);
+  _nSlices = uncompress(image, record->data, 4096);
 
   // Scan record, compute tBarElapsedtime and stats.
   sp = (unsigned long long *)image;
@@ -117,7 +117,7 @@ for (int j = 0; j < 512; ++j, ++o)
   startMilliSec = _prevHdr.msec;
 
   // Loop through all slices in record.
-  for (size_t i = 0; i < nSlices; ++i, ++sp, p += sizeof(long long))
+  for (size_t i = 0; i < nSlices(); ++i, ++sp, p += sizeof(long long))
   {
     slice = *sp;
 

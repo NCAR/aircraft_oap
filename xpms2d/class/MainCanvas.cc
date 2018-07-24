@@ -416,7 +416,7 @@ void MainCanvas::drawPMS2D(P2d_rec *record, Probe *probe, float version, int pro
     }
 
   if (_displayMode == DIAGNOSTIC)
-    drawDiodeHistogram(record, probe, syncWord);
+    drawDiodeHistogram(record->data, probe, syncWord);
   else
     drawAccumHistogram(probe->stats, 1050);
 /*
@@ -529,7 +529,7 @@ void MainCanvas::drawFast2D(P2d_rec *record, Probe *probe, float version, int pr
 
 
   if (_displayMode == DIAGNOSTIC)
-    drawDiodeHistogram(record, probe);
+    drawDiodeHistogram(record->data, probe);
   else
     drawAccumHistogram(probe->stats, 700);
 
@@ -565,7 +565,7 @@ void MainCanvas::draw2DS(P2d_rec *record, Probe *probe, float version, int probe
 
 
   if (_displayMode == DIAGNOSTIC)
-    drawDiodeHistogram(record, probe);
+    drawDiodeHistogram(record->data, probe);
   else
     drawAccumHistogram(probe->stats, 700);
 
@@ -659,7 +659,7 @@ void MainCanvas::drawCIP(P2d_rec *record, Probe *probe, float version, int probe
     probe->stats.duplicate = true;
 
   unsigned char image[16000];
-  size_t nSlices = uncompressCIP(image, record->data, 4096);
+  probe->Set_nSlices(uncompressCIP(image, record->data, 4096));
 
   if (_displayMode == RAW_RECORD || probe->stats.particles.size() == 0)
     drawRawRecord(image, probe, ps);
@@ -669,7 +669,7 @@ void MainCanvas::drawCIP(P2d_rec *record, Probe *probe, float version, int probe
   if (probe->stats.particles.size() > 0)
     cp = probe->stats.particles[0];
 
-  for (size_t i = 0; i < nSlices; )
+  for (size_t i = 0; i < probe->nSlices(); )
   {
     if (cp == 0 || cp->reject)
       nextColor = 0;	// black.
@@ -717,7 +717,7 @@ void MainCanvas::drawCIP(P2d_rec *record, Probe *probe, float version, int probe
       else
         colorIsBlack = false;
 
-      for (; i < nSlices && !probe->isSyncWord(p); p += 8)
+      for (; i < probe->nSlices() && !probe->isSyncWord(p); p += 8)
         drawSlice(ps, i++, p, probe);
 
       if (enchiladaWin)
@@ -726,7 +726,7 @@ void MainCanvas::drawCIP(P2d_rec *record, Probe *probe, float version, int probe
   }
 
   if (_displayMode == DIAGNOSTIC)
-    drawDiodeHistogram(record, probe);
+    drawDiodeHistogram(image, probe);
   else
     drawAccumHistogram(probe->stats, 900);
 
@@ -944,13 +944,13 @@ void MainCanvas::drawAccumHistogram(struct recStats &stats, size_t xOffset)
 }
 
 /* -------------------------------------------------------------------- */
-void MainCanvas::drawDiodeHistogram(P2d_rec *record, Probe *probe, uint32_t syncWord)
+void MainCanvas::drawDiodeHistogram(const unsigned char *buffer, Probe *probe, uint32_t syncWord)
 {
   size_t histo[32];
   uint32_t slice;
   memset(histo, 0, sizeof(histo));
 
-  uint32_t *p = (uint32_t *)record->data;
+  uint32_t *p = (uint32_t *)buffer;
   for (size_t i = 0; i < probe->nSlices(); ++i)			/* 2DC and/or 2DP       */
   {
     slice = ntohl(p[i]);
@@ -972,18 +972,22 @@ void MainCanvas::drawDiodeHistogram(P2d_rec *record, Probe *probe, uint32_t sync
 }
 
 /* -------------------------------------------------------------------- */
-void MainCanvas::drawDiodeHistogram(P2d_rec *record, Probe *probe)
+void MainCanvas::drawDiodeHistogram(const unsigned char *p, Probe *probe)
 {
   size_t nBytes = probe->nDiodes() / 8;
 
   size_t histo[256];
   memset(histo, 0, sizeof(histo));
 
-  unsigned char *p = record->data;
   for (size_t i = 0; i < probe->nSlices(); ++i, p += nBytes)	/* 2DC and/or 2DP       */
   {
     if (probe->isSyncWord(p) || probe->isOverloadWord(p))
+    {
+      if (probe->Type() == Probe::CIP)  // Also skip DMT time word.
+        p += nBytes;
+
       continue;
+    }
 
     for (size_t j = 0; j < nBytes; ++j)
       for (size_t k = 0; k < 8; ++k)
@@ -996,7 +1000,7 @@ void MainCanvas::drawDiodeHistogram(P2d_rec *record, Probe *probe)
   for (size_t i = 0; i < probe->nDiodes(); ++i)
   {
     if (histo[i] > 0)
-      pen->DrawLine(Surface(), 800, y+i, 800+histo[i], y+i);
+      pen->DrawLine(Surface(), 900, y+i, 900+histo[i], y+i);
   }
 }
 

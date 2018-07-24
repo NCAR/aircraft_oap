@@ -66,9 +66,10 @@ protected:
 
   /**
    * Count all shadowed diodes across the flight track and display histogram.
+   * Routine needs to skip any sync and/or timing words.
    */
-  void drawDiodeHistogram(P2d_rec *record, Probe *probe);
-  void drawDiodeHistogram(P2d_rec *record, Probe *probe, uint32_t sync);
+  void drawDiodeHistogram(const unsigned char *data, Probe *probe);
+  void drawDiodeHistogram(const unsigned char *data, Probe *probe, uint32_t sync);
 
   void drawAccumHistogram(struct recStats &stats, size_t xOffset);
 
