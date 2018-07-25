@@ -501,6 +501,9 @@ void MainCanvas::drawFast2D(P2d_rec *record, Probe *probe, float version, int pr
         drawSlice(ps, i, p, probe);
       ++i; p += bytesPerSlice;
 
+      if (enchiladaWin)
+        enchiladaWin->AddLineItem(cntr++, cp);
+
       // Get next particle.
       delete cp;
       probe->stats.particles.erase(probe->stats.particles.begin() + 0);
@@ -521,9 +524,6 @@ void MainCanvas::drawFast2D(P2d_rec *record, Probe *probe, float version, int pr
       for (; i < probe->nSlices() && !probe->isSyncWord(p) && !probe->isOverloadWord(p)
 		; p += bytesPerSlice)
         drawSlice(ps, i++, p, probe);
-
-      if (enchiladaWin)
-        enchiladaWin->AddLineItem(cntr++, cp);
     }
   }
 
@@ -706,6 +706,9 @@ void MainCanvas::drawCIP(P2d_rec *record, Probe *probe, float version, int probe
       // Get next particle.
       if (probe->stats.particles.size())	// can be 0 if last slice is sync
       {
+        if (enchiladaWin)
+          enchiladaWin->AddLineItem(cntr++, cp);
+
         delete cp; cp = 0;
         probe->stats.particles.erase(probe->stats.particles.begin() + 0);
         cp = probe->stats.particles[0];
@@ -724,8 +727,6 @@ void MainCanvas::drawCIP(P2d_rec *record, Probe *probe, float version, int probe
       for (; i < probe->nSlices() && !probe->isSyncWord(p); p += 8)
         drawSlice(ps, i++, p, probe);
 
-      if (enchiladaWin)
-        enchiladaWin->AddLineItem(cntr++, cp);
     }
   }
 
