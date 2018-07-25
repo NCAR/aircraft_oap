@@ -32,8 +32,7 @@ public:
 
   ushort        x1, x2;	// for particles that touch both edges.
 
-// Is this timeWord size sufficient for the Fast2D???
-  uint64_t      timeWord;
+  uint64_t      timeWord;	// Currently milliseconds.
   uint32_t      deltaTime;	// Amount of time between prev & this particle
   uint32_t      liveTime;	// Amount of time consumed by particle
 };

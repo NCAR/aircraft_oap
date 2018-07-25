@@ -7,7 +7,7 @@ FULL NAME:	PADS CIP File Info
 DESCRIPTION:	Display information from a DMT PADS CIP/PIP file, including
 		indivdual record headers.
 
-COPYRIGHT:	University Corporation for Atmospheric Research, 2014
+COPYRIGHT:	University Corporation for Atmospheric Research, 2014-2018
 -------------------------------------------------------------------------
 */
 
@@ -168,7 +168,7 @@ printf("uncompressCIP: going past 4096.\n");
       continue;
     }
 
-    if ((b & 0xE0) == 0)
+    if ((b & 0xE0) == 0)	// Uncompressed nBytes
     {
       if (i + nBytes > nbytes)
       {
@@ -180,13 +180,13 @@ printf("uncompressCIP: going past 4096.\n");
       i += nBytes;
     }
     else
-    if ((b & 0x80))
+    if ((b & 0x80))		// All zeroes
     {
       memset(&dest[d_idx], 0, nBytes);
       d_idx += nBytes;
     }
     else
-    if ((b & 0x40))
+    if ((b & 0x40))		// All ones
     {
       memset(&dest[d_idx], 0xFF, nBytes);
       d_idx += nBytes;
@@ -262,6 +262,7 @@ void Output(const unsigned char buff[])
   if (cfg.particleHeaders)
   {
     static unsigned cnt = 0;
+    static bool carryOver = false;
     unsigned char image[15000], *p;
 
     size_t nSlices = uncompress(image, p2d->data, 4096);
@@ -270,15 +271,23 @@ void Output(const unsigned char buff[])
     p = image;
     for (size_t i = 0; i < nSlices; ++i, p += 8)
     {
-      if (memcmp(p, syncStr, 8) == 0)
+      if (memcmp(p, syncStr, 8) == 0 || carryOver)
       {
-        p += 8;
+        if ((i+1) >= nSlices)
+        {
+          carryOver = true;
+          continue;
+        }
+        if (!carryOver)
+          { p += 8; ++i; }
+
+        carryOver = false;
         unsigned short *sp = (unsigned short *)p;
 
         printf("%5d: ", ++cnt);
         CIPTimeWord_Microseconds(&p[2]);
-        sliceTotal += (sp[3] & 0xfe00) >> 9;
-        printf(" pCnt=%u, deltaCnt=%d,  nSlices=%u, dof=%d, slices=%lu/%lu\n", sp[0], sp[0]-cnt, (sp[3] & 0xfe00) >> 9, (sp[3] & 0x0100) >> 8, sliceTotal, nSlices);
+        sliceTotal += ((sp[3] & 0xfe00) >> 9) + 2;
+        printf(" pCnt=%u, nSlices=%3u, dof=%d, slices=%lu/%lu\n", sp[0], (sp[3] & 0xfe00) >> 9, (sp[3] & 0x0100) >> 8, sliceTotal, nSlices);
       }
     }
   }

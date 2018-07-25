@@ -704,9 +704,12 @@ void MainCanvas::drawCIP(P2d_rec *record, Probe *probe, float version, int probe
       ++i; p += 8;
 
       // Get next particle.
-      delete cp;
-      probe->stats.particles.erase(probe->stats.particles.begin() + 0);
-      cp = probe->stats.particles[0];
+      if (probe->stats.particles.size())	// can be 0 if last slice is sync
+      {
+        delete cp; cp = 0;
+        probe->stats.particles.erase(probe->stats.particles.begin() + 0);
+        cp = probe->stats.particles[0];
+      }
     }
     else
     {
