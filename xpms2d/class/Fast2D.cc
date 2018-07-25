@@ -18,7 +18,7 @@ const unsigned char Fast2D::OverldString[] = { 0x55, 0x55, 0xaa };
 
 
 /* -------------------------------------------------------------------- */
-Fast2D::Fast2D(UserConfig *cfg, const char xml_entry[], int recSize) : Probe(Probe::FAST2D, cfg, xml_entry, recSize, 64), _clockMhz(12)
+Fast2D::Fast2D(UserConfig *cfg, const char xml_entry[], int recSize) : Probe(Probe::FAST2D, cfg, xml_entry, recSize, 64)
 {
   std::string XMLgetAttributeValue(const char s[], const char target[]);
 
@@ -46,6 +46,7 @@ void Fast2D::f2d_init()
     _armWidth = 261.0;
 
   // Version two of the Fast2D uses a 33Mhz clock.
+  _clockMhz = 12;
   if (_name.find("v2") != std::string::npos)
     _clockMhz = 33;
 

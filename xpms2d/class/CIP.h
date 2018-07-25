@@ -57,7 +57,7 @@ protected:
    * These are for the decompress algorithm.  Bytes to be carried over to next
    * decompress call.  These are already uncompressed.
    */
-  size_t	_nResidualBytes = 0;
+  size_t	_nResidualBytes;
   unsigned char	residualBytes[16];
 
   /**

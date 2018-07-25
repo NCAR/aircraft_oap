@@ -47,6 +47,7 @@ printf("CIP::PADS id=%s, name=%s, resolution=%zu, armWidth=%f, eaw=%f\n", _code,
 
 void CIP::dmt_init()
 {
+  _clockMhz = 8;
   _nResidualBytes = 0;
   _carryOver = false;
 
@@ -138,6 +139,9 @@ for (int j = 0; j < 512; ++j, ++o)
 
       unsigned long long thisTimeWord = TimeWord_Microseconds(&p[2]);
 
+      if (firstTimeWord == 0)
+        firstTimeWord = thisTimeWord;
+
       // Close out particle.  Timeword belongs to previous particle.
       if (cp)
       {
@@ -217,7 +221,7 @@ long long CIP::TimeWord_Microseconds(const unsigned char *p) const
   output = (hour * 3600 + minute * 60 + second);
   output *= 1000000;
   output += msec * 1000;
-  output += usec / 8;   // 8 MHz clock or 125nS
+  output += usec / _clockMhz;
 
 #ifdef DEBUG
   printf("%02d:%02d:%02d.%03d - (%lld)\n", hour, minute, second, msec, output);

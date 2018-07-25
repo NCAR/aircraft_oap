@@ -161,6 +161,12 @@ protected:
   size_t	_nDiodes;
 
   /**
+   * Clock speed of the probe.  Not used by original PMS2D, but used by most modern
+   * probes to decode the timing word.
+   */
+  unsigned int	_clockMhz;
+
+  /**
    * Number of bins being output for size-distribution. Values are nDiodes for
    * entire-in, and nDiodes times two for center-in and reconstruction.
    */

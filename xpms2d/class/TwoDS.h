@@ -40,11 +40,6 @@ protected:
   unsigned long long
   TimeWord_Microseconds(const unsigned char *p);
 
-  /**
-   * Clock speed of the probe.
-   */
-  unsigned int	_clockMhz;
-
 };
 
 #endif
