@@ -47,6 +47,9 @@ printf("CIP::PADS id=%s, name=%s, resolution=%zu, armWidth=%f, eaw=%f\n", _code,
 
 void CIP::dmt_init()
 {
+  _nResidualBytes = 0;
+  _carryOver = false;
+
   if (_code[0] == 'C')  // CIP
     _armWidth = 100.0;
 
@@ -120,13 +123,20 @@ for (int j = 0; j < 512; ++j, ++o)
   {
     /* Have particle, will travel.
      */
-    if (isSyncWord(p))
+    if (isSyncWord(p) || _carryOver)
     {
-      p += 8;
-      unsigned long long thisTimeWord = TimeWord_Microseconds(&p[2]);
-
-      if ((p[7] >> 1) == 0)  // If CIP particle header says no slices, bail.
+      if (++i >= nSlices())	// Last slice is a timeWord
+      {
+        _carryOver = true;
         continue;
+      }
+      if (!_carryOver)
+        p += 8;
+
+      _carryOver = false;
+
+
+      unsigned long long thisTimeWord = TimeWord_Microseconds(&p[2]);
 
       // Close out particle.  Timeword belongs to previous particle.
       if (cp)
@@ -136,7 +146,7 @@ for (int j = 0; j < 512; ++j, ++o)
         cp->time = startTime + (msec / 1000);
         cp->msec = msec % 1000;
         cp->deltaTime = cp->timeWord - _prevTimeWord;
-        cp->timeWord /= 1000;	// Store as millseconds for this probe, since this is not a 48 bit word
+        cp->timeWord /= 1000;	// Store as millseconds... can move to microseconds...
         totalLiveTime += checkRejectionCriteria(cp, stats);
         stats.particles.push_back(cp);
         cp = new Particle();
@@ -223,14 +233,11 @@ size_t CIP::uncompress(unsigned char *dest, const unsigned char src[], int nbyte
 {
   int d_idx = 0, i = 0;
 
-  static size_t nResidualBytes = 0;
-  static unsigned char residualBytes[16];
-
-  if (nResidualBytes)
+  if (_nResidualBytes)
   {
-    memcpy(dest, residualBytes, nResidualBytes);
-    d_idx = nResidualBytes;
-    nResidualBytes = 0;
+    memcpy(dest, residualBytes, _nResidualBytes);
+    d_idx = _nResidualBytes;
+    _nResidualBytes = 0;
   }
 
   for (; i < nbytes; ++i)
@@ -282,8 +289,8 @@ size_t CIP::uncompress(unsigned char *dest, const unsigned char src[], int nbyte
   if (d_idx % 8)
   {
     size_t idx = d_idx / 8 * 8;
-    nResidualBytes = d_idx % 8;
-    memcpy(residualBytes, &dest[idx], nResidualBytes);
+    _nResidualBytes = d_idx % 8;
+    memcpy(residualBytes, &dest[idx], _nResidualBytes);
   }
 
   SwapBytes(dest, d_idx / 8);	// Return number of slices.

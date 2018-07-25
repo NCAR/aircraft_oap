@@ -53,6 +53,20 @@ protected:
 
   long long TimeWord_Microseconds(const unsigned char *p) const;
 
+  /**
+   * These are for the decompress algorithm.  Bytes to be carried over to next
+   * decompress call.  These are already uncompressed.
+   */
+  size_t	_nResidualBytes = 0;
+  unsigned char	residualBytes[16];
+
+  /**
+   * Used for when sync word is last word of a buffer, and timing word will
+   * be first slice in the next buffer.
+   */
+  bool	_carryOver;
+
+
 
 };
 
