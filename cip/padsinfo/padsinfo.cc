@@ -43,7 +43,7 @@ static const size_t nSyncB = 8;
 
 using namespace std;
 
-unsigned char buffer[50000];
+unsigned char buffer[20000];
 
 class Config
 {
@@ -132,6 +132,9 @@ int uncompress(unsigned char *dest, const unsigned char src[], int nbytes)
   static size_t nResidualBytes = 0;
   static unsigned char residualBytes[16];
 
+  // Clear dest buffer.
+  memset(dest, 0, 15000);
+
   if (nResidualBytes > 0 && nNextCopyBytes > 0)
   {
 printf("uncompressCIP: invalid, both nResidualBytes & nNextCopyBytes greater than zero!\n");
@@ -176,7 +179,7 @@ printf("uncompressCIP: going past 4096.\n");
       d_idx += nBytes;
       i += nBytes;
     }
-
+    else
     if ((b & 0x80))
     {
       memset(&dest[d_idx], 0, nBytes);
@@ -262,6 +265,7 @@ void Output(const unsigned char buff[])
     unsigned char image[15000], *p;
 
     size_t nSlices = uncompress(image, p2d->data, 4096);
+    size_t sliceTotal = 0;
 
     p = image;
     for (size_t i = 0; i < nSlices; ++i, p += 8)
@@ -273,7 +277,8 @@ void Output(const unsigned char buff[])
 
         printf("%5d: ", ++cnt);
         CIPTimeWord_Microseconds(&p[2]);
-        printf(" pCnt=%u, deltaCnt=%d,  nSlices=%u, dof=%d\n", sp[0], sp[0]-cnt, (sp[3] & 0xfe00) >> 9, (sp[3] & 0x0100) >> 8);
+        sliceTotal += (sp[3] & 0xfe00) >> 9;
+        printf(" pCnt=%u, deltaCnt=%d,  nSlices=%u, dof=%d, slices=%lu/%lu\n", sp[0], sp[0]-cnt, (sp[3] & 0xfe00) >> 9, (sp[3] & 0x0100) >> 8, sliceTotal, nSlices);
       }
     }
   }
