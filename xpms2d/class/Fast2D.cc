@@ -41,6 +41,7 @@ void Fast2D::f2d_init()
 {
   // Default for original version of probe.
   _dofMask = 0x01;
+  _timingMask = 0x000000ffffffffffLL;
 
   if (_code[0] == 'C')  // 2DC
     _armWidth = 61.0;
@@ -54,6 +55,7 @@ void Fast2D::f2d_init()
   {
     _clockMhz = 33;
     _dofMask = 0x10;
+    _timingMask = 0x000003ffffffffffLL;
   }
 
   SetSampleArea();
@@ -64,7 +66,7 @@ void Fast2D::f2d_init()
 unsigned long long Fast2D::TimeWord_Microseconds(const unsigned char *p)
 {
   // Fast2D uses 40 bit timing word; v2 uses 42 bits.
-  return (ntohll((long long *)p) & 0x000000ffffffffffLL) / _clockMhz;
+  return (ntohll((long long *)p) & _timingMask) / _clockMhz;
 }
 
 /* -------------------------------------------------------------------- */
