@@ -178,6 +178,8 @@ size_t Probe::height(const unsigned char *p)
 /* -------------------------------------------------------------------- */
 size_t Probe::checkRejectionCriteria(Particle * cp, recStats & stats)
 {
+  cp->reject = cp->dofReject;
+
   if (_userConfig->RejectZeroAreaImage() && cp->w == 0 && cp->h == 0)
     cp->reject = true;
 

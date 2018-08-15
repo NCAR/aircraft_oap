@@ -39,6 +39,9 @@ printf("Fast2D::OAP id=%s, name=%s, resolution=%zu, armWidth=%f, eaw=%f\n", _cod
 
 void Fast2D::f2d_init()
 {
+  // Default for original version of probe.
+  _dofMask = 0x01;
+
   if (_code[0] == 'C')  // 2DC
     _armWidth = 61.0;
 
@@ -48,7 +51,10 @@ void Fast2D::f2d_init()
   // Version two of the Fast2D uses a 33Mhz clock.
   _clockMhz = 12;
   if (_name.find("v2") != std::string::npos)
+  {
     _clockMhz = 33;
+    _dofMask = 0x10;
+  }
 
   SetSampleArea();
 }
@@ -149,6 +155,9 @@ struct recStats Fast2D::ProcessRecord(const P2d_rec *record, float version)
         cp->deltaTime = cp->timeWord - _prevTimeWord;
         cp->timeWord /= 1000;	// Store as millseconds for this probe, since this is not a 48 bit word
         totalLiveTime += checkRejectionCriteria(cp, stats);
+        if ((p[2] & _dofMask))
+          cp->dofReject = cp->reject = true;
+
         stats.particles.push_back(cp);
         cp = new Particle();
       }

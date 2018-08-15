@@ -27,7 +27,7 @@ void Enchilada::AddLineItem(int cnt, Particle *cp)
 
   if (cnt == 0) // Print title.
   {
-    Append(" #     Time       timeWord  rj  iy  ix  ia    dt  ");
+    Append(" #     Time       timeWord  iy  ix  ia    dt  rj dofRej");
     switch (userConfig.GetConcentration())
     {
       case BASIC:
@@ -55,9 +55,9 @@ void Enchilada::AddLineItem(int cnt, Particle *cp)
   s = cp->time - (h*3600) - (m*60);
 
   // Particle #, time stamp, timeword, reject, h, w, a
-  sprintf(buffer, "%03d %02d:%02d:%02d.%03ld  %8lu %2d %3zu %3zu %3zu %6u\n",
-        cnt, h, m, s, cp->msec, cp->timeWord, cp->reject, cp->h, cp->w,
-        cp->area, cp->deltaTime);
+  sprintf(buffer, "%03d %02d:%02d:%02d.%03ld  %8lu %3zu %3zu %3zu %6u %2d %2d\n",
+        cnt, h, m, s, cp->msec, cp->timeWord, cp->h, cp->w, cp->area,
+	cp->deltaTime, cp->reject, cp->dofReject);
 
   Append(buffer);
 

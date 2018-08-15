@@ -103,12 +103,6 @@ struct recStats CIP::ProcessRecord(const P2d_rec *record, float version)
   for (size_t i = 0; i < NumberBins(); ++i)
     sampleVolume[i] = stats.tas * sampleArea[i] * 0.001;
 
-#ifdef DEBUG
-unsigned long long *o = (unsigned long long *)record->data;
-for (int j = 0; j < 512; ++j, ++o)
-  printf("%llx\n",  *o);
-#endif
-
   unsigned char image[16000];
   memset(image, 0, 16000);
   _nSlices = uncompress(image, record->data, 4096);
@@ -142,19 +136,18 @@ for (int j = 0; j < 512; ++j, ++o)
       if (firstTimeWord == 0)
         firstTimeWord = thisTimeWord;
 
-      // Close out particle.  Timeword belongs to previous particle.
-      if (cp)
-      {
-        cp->timeWord = thisTimeWord;
-        unsigned long msec = startMilliSec + ((thisTimeWord - firstTimeWord) / 1000);
-        cp->time = startTime + (msec / 1000);
-        cp->msec = msec % 1000;
-        cp->deltaTime = cp->timeWord - _prevTimeWord;
-        cp->timeWord /= 1000;	// Store as millseconds... can move to microseconds...
-        totalLiveTime += checkRejectionCriteria(cp, stats);
-        stats.particles.push_back(cp);
-        cp = new Particle();
-      }
+      // Start a particle.
+      cp = new Particle();
+      cp->timeWord = thisTimeWord;
+      unsigned long msec = startMilliSec + ((thisTimeWord - firstTimeWord) / 1000);
+      cp->time = startTime + (msec / 1000);
+      cp->msec = msec % 1000;
+      cp->deltaTime = cp->timeWord - _prevTimeWord;
+      cp->timeWord /= 1000;	// Store as millseconds... can move to microseconds...
+      totalLiveTime += checkRejectionCriteria(cp, stats);
+      if ((p[7] & 0x01) == 0)
+        cp->dofReject = true;
+      stats.particles.push_back(cp);
 
       _prevTimeWord = thisTimeWord;
 
@@ -165,7 +158,7 @@ for (int j = 0; j < 512; ++j, ++o)
     }
 
 
-    if (isBlankSlice(p))
+    if (!cp || isBlankSlice(p))
       continue;
 
     ++cp->w;

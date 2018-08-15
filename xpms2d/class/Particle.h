@@ -27,6 +27,7 @@ public:
   bool  vert_gap;	// Was there a blank slice (i.e. multiple parts)
   bool  horiz_gap;	//   and in the hozizontal dir?
   bool  reject;
+  bool  dofReject;
   unsigned char edge;	// particle touched either edge
   bool  timeReject;	// Nimbus will reject (because of bad timing bar)
 
