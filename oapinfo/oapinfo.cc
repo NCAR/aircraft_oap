@@ -43,6 +43,18 @@ public:
   string sourceFile;
 } cfg;
 
+
+class Stats
+{
+public:
+  Stats() : totalRecords(0), totalParticles(0), dofRejected(0) { }
+
+  unsigned long totalRecords;
+  unsigned long totalParticles;
+  unsigned long dofRejected;
+} stats;
+
+
 void Output(char buff[]);
 void ParticleCount(P2d_rec *p2d, size_t nDiodes);
 
@@ -118,6 +130,13 @@ int main(int argc, char *argv[])
 
   fclose(fp);
 
+  cout << stats.totalRecords << " total records found.\n";
+  if (cfg.histo)
+  {
+    cout << stats.totalParticles << " total particles found.\n";
+    cout << stats.dofRejected << " particles DOF rejected.\n";
+  }
+
   return 0;
 
 }	/* END MAIN */
@@ -158,6 +177,8 @@ void Output(char buff[])
   if (cfg.probe != 0 && cfg.probe != ntohs(*(unsigned short *)buff))
     return;
 
+  ++stats.totalRecords;
+
   if (cfg.histo)
     ParticleCount(p2d, nDiodes);
   else
@@ -190,9 +211,9 @@ void OutputParticleCount(P2d_hdr *p, size_t counts[], size_t n, bool output_msec
 {
   int total = 0;
 
-  cout << setw(2) << setfill('0') << p->hour << ':';
-  cout << setw(2) << setfill('0') << p->minute << ':';
-  cout << setw(2) << setfill('0') << p->second;
+  cout << setw(2) << setfill('0') << ntohs(p->hour) << ':';
+  cout << setw(2) << setfill('0') << ntohs(p->minute) << ':';
+  cout << setw(2) << setfill('0') << ntohs(p->second);
 
   if (output_msec)
     cout << "." << setw(3) << setfill('0') << p->msec;
@@ -209,6 +230,7 @@ void OutputParticleCount(P2d_hdr *p, size_t counts[], size_t n, bool output_msec
 
 /* -------------------------------------------------------------------- */
 static const unsigned char syncWord[] = { 0xAA, 0xAA, 0xAA };
+static const unsigned char dofRejected[] = { 0xAA, 0xAA, 0xAB };
 static const size_t nSyncB = 3;
 
 
@@ -239,6 +261,16 @@ void ParticleCount(P2d_rec *p2d, size_t nDiodes)
   size_t nSlices = 4096 / bytesPerSlice;
   for (size_t i = 0; i < nSlices; ++i)
   {
+    if (memcmp(&p2d->data[i*bytesPerSlice+bytesPerSlice], syncWord, 2) == 0)
+    {
+      ++stats.totalParticles;
+    }
+    if (memcmp(&p2d->data[i*bytesPerSlice+bytesPerSlice], dofRejected, 3) == 0)
+    {
+      ++stats.dofRejected;
+    }
+
+
     // Check both little and big endian.
     if (memcmp(&p2d->data[i*bytesPerSlice+bytesPerSlice-3], syncWord, nSyncB) == 0 ||
         memcmp(&p2d->data[i*bytesPerSlice], syncWord, nSyncB) == 0)
