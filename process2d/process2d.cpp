@@ -39,11 +39,16 @@ const string markerline = "</OAP>";  // Marks end of XML header
 const unsigned char syncString[8] = { 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa };
 
 
-struct struct_particle {
+class Particle
+{
+public:
+   Particle() : time1hz(0), inttime(0.0), size(0.0), csize(0.0), xsize(0.0), ysize(0.0), area(0.0), holearea(0.0), circlearea(0.0), allin(false), wreject(false), ireject(false), dofReject(false)
+   { }
+
    long time1hz;
    double inttime; 	// Interarrival time (diff of surrounding time words).
    float size, csize, xsize, ysize, area, holearea, circlearea;
-   bool allin, wreject, ireject;
+   bool allin, wreject, ireject, dofReject;
 };
 
 // Standard RAF record format for 2D records.
@@ -288,7 +293,7 @@ double dpoisson_fit(float x[], float y[], double a[3], int n){
 
 
 // ----------------CIRCLE SIZE ROUTINE----------------
-struct_particle findsize(short *img[], int nslices, int nDiodes, float res){
+Particle findsize(short *img[], int nslices, int nDiodes, float res){
    // Based on http://tog.acm.org/resources/GraphicsGems/gems/BoundSphere.c 
    // Graphics Gems I, Article by Ritter
 
@@ -297,7 +302,7 @@ struct_particle findsize(short *img[], int nslices, int nDiodes, float res){
    struct Point2Struct {double x, y;} xmin,xmax,ymin,ymax,dia1,dia2,cen;
    short foreval=0;  //values that indicate background and foreground 
    vector<short> x,y;
-   struct_particle particle;
+   Particle particle;
    bool allin=1;
    float area=0, theta, phi;
    int mindiode=nDiodes, maxdiode=0, minslice=nslices, maxslice=0;
@@ -331,7 +336,7 @@ struct_particle findsize(short *img[], int nslices, int nDiodes, float res){
    //FIRST PASS: find 6 minima/maxima points 
    xmin.x=ymin.y= 1000; // initialize for min/max compare 
    xmax.x=ymax.y= -1000;
-   for (size_t i=0;i<x.size();i++){
+   for (size_t i = 0; i < x.size(); i++){
       if (x[i]<xmin.x) {xmin.x=x[i]; xmin.y=y[i];} // New xminimum point 
       if (x[i]>xmax.x) {xmax.x=x[i]; xmax.y=y[i];}
       if (y[i]<ymin.y) {ymin.x=x[i]; ymin.y=y[i];}
@@ -506,14 +511,14 @@ float poisson_spot_correction(float area_img, float area_hole, bool allin){
 }
 
 // ----------------PARTICLE REJECTION ---------------------------
-void reject_particle(struct_particle& x, float cutoff, float nextinttime, float pixel_res, 
+void reject_particle(Particle& x, float cutoff, float nextinttime, float pixel_res, 
                     float smallbin, float largebin, float wc, bool recon){
    //Decides on the rejection of a particle.
    //Ice rejects will return value of 2 or higher
    //Water rejects will return value of 1 or higher                 
    float ar;
    ar=(x.area+x.holearea)/x.circlearea;
-   x.wreject=0; x.ireject=0;
+   x.wreject = x.ireject = x.dofReject;	// start off with dofReject as answer
 
    //Any conditions
    if ((x.inttime < cutoff) || (nextinttime < cutoff)) {x.wreject=1; x.ireject=1;}
@@ -581,7 +586,7 @@ time_t TwoDtime(const P2d_rec *rec)
 
 
 //----------------Display particle properties to screen--------
-void showparticle(struct_particle& x)
+void showparticle(Particle& x)
 {
    float ar;
    char tbuff[32];
@@ -602,6 +607,7 @@ void showparticle(struct_particle& x)
 		" AI=" << x.allin <<
 		" IR=" << x.ireject <<
 		" WR=" << x.wreject <<
+		" DOFREJ=" << x.dofReject <<
 		endl;
 } 
 
@@ -653,8 +659,8 @@ int process2d(Config & cfg, netCDF & ncfile, ProbeInfo & probe)
   bool firsttimeflag = true;
   float wc;
   long last_time1hz=0, itime=0, isize, wsize, iit;
-  struct_particle particle;
-  vector<struct_particle> particle_stack;
+  Particle particle;
+  vector<Particle> particle_stack;
   char probetype = probe.id[0];  
   char probenumber = probe.id[1];
 
@@ -731,7 +737,6 @@ int process2d(Config & cfg, netCDF & ncfile, ProbeInfo & probe)
 
   int buffcount;
   unsigned char *image_buff = new unsigned char[50000];
-  double timeline_divisor = 12.0e+06;	// Default to Fast2D value.
 
   for (buffcount = 0; !input_file.eof(); ++buffcount)
   {
@@ -791,6 +796,7 @@ int process2d(Config & cfg, netCDF & ncfile, ProbeInfo & probe)
      for (int islice = 0; islice < nSlices; islice++)
      {
         bool syncWord = false;
+        bool dofReject = false;
 
         if (probetype == '3' || probetype == 'S')		// 3V-CPI / 2D-S
         {
@@ -798,8 +804,7 @@ int process2d(Config & cfg, netCDF & ncfile, ProbeInfo & probe)
 
            // Stored little-endian, check far side of 16 bytes.
            if (memcmp(&image_buff[(islice*bytesPerSlice)+bytesPerSlice-3], syncString, 3) == 0) {
-              timeline = slice & 0x0000ffffffffffffULL;
-              timeline_divisor = 2.0e+07;
+              timeline = slice & probe.timingMask;
               syncWord = true;
            }
         }
@@ -815,7 +820,7 @@ int process2d(Config & cfg, netCDF & ncfile, ProbeInfo & probe)
               ++islice;
               slice = *(unsigned long long *)&image_buff[islice*bytesPerSlice];
               timeline = CIPTimeWord_Microseconds(slice);
-              timeline_divisor = 1.0e+06;	// already in microseconds
+              dofReject = (image_buff[islice*8+7] & probe.dofMask);
            }
         }
         else					// Fast2D C/P
@@ -823,10 +828,10 @@ int process2d(Config & cfg, netCDF & ncfile, ProbeInfo & probe)
            slice = endianswap_ull(((unsigned long long *)image_buff)[islice]);
 
            // Stored big-endian, check near side of 8 bytes.
-           if (memcmp(&image_buff[islice*bytesPerSlice], syncString, 3) == 0) {
+           if (memcmp(&image_buff[islice*bytesPerSlice], syncString, 2) == 0) {
               syncWord = true;
-              timeline = slice & 0x000000ffffffffffULL;
-              timeline_divisor = 12.0e+06;	// 12Mhz clock
+              timeline = slice & probe.timingMask;
+              dofReject = (image_buff[islice*8+2] & probe.dofMask);
            }
         }
 
@@ -841,13 +846,14 @@ int process2d(Config & cfg, netCDF & ncfile, ProbeInfo & probe)
            else difftimeline=timeline-firsttimeline;
 
            // Process the roi
-           long time1hz = min((long)(lastbuffertime+difftimeline / (timeline_divisor)), (long)buffertime);
+           long time1hz = min((long)(lastbuffertime+difftimeline / (probe.clockMhz)), (long)buffertime);
 
            if (time1hz >= cfg.starttime) {
               particle=findsize(roi, slice_count, probe.nDiodes, probe.resolution);
               particle.holearea=fillholes2(roi, slice_count, probe.nDiodes);           
-              particle.inttime=(timeline - lasttimeline) / timeline_divisor;
+              particle.inttime=(timeline - lasttimeline) / probe.clockMhz;
               particle.time1hz=time1hz;
+              particle.dofReject = dofReject;
 
 
               // Decide which size to use
@@ -1247,7 +1253,8 @@ void ParseHeader(ifstream & input_file, Config & cfg, vector<ProbeInfo> & probe_
     {
       int ndiodes = atoi(extractAttribute(line, "nDiodes").c_str());
 
-      ProbeInfo thisProbe(	extractAttribute(line, "probe id"),
+      ProbeInfo thisProbe(	extractAttribute(line, "type"),
+      				extractAttribute(line, "probe id"),
       				extractAttribute(line, "serialnumber"),
 				ndiodes,
 				atof(extractAttribute(line, "resolution").c_str()),
