@@ -3,9 +3,6 @@
  - pgFbuff needs one pre-record or something with first time stamp.  Printing &
    pg bkwd get bogus time stamp.
 
- - Convert to Qt.
+ - Convert to Qt or merge into aeros
 
- - move view & options menu to context menu.
- - probe selection to context menu.
- - change density and processing methods to context menus.
  - add options for 'size cutoff' and ' area ration' rejection.
