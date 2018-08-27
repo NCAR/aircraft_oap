@@ -69,17 +69,17 @@ namespace sp
 			timeinfo.tm_year = time_stamp.wYear - 1900;
 			timeinfo.tm_mon = time_stamp.wMonth -1;
 			timeinfo.tm_mday = time_stamp.wDay;
-			timeinfo.tm_hour = time_stamp.wHour + _options.TimeOffset;
-			// Offset is in hours, so read min/sec into tm struct, but don't have 
-			// to read them back out below since they don't change.
+			timeinfo.tm_hour = time_stamp.wHour;
 			timeinfo.tm_min = time_stamp.wMinute;
-			timeinfo.tm_sec = time_stamp.wSecond;
+			timeinfo.tm_sec = time_stamp.wSecond + _options.TimeOffset;
 
 			// Let struct tm do it's magic (propogate offset to day/month/year as needed)
 			time_t t = mktime(&timeinfo); // mktime returns the time as localtime...
 			struct tm *tout = localtime(&t);// so use localtime to convert it back.
 
 			// Put the adjusted time back into the 2D time struct
+			time_stamp.wSecond = tout->tm_sec;
+			time_stamp.wMinute = tout->tm_min;
 			time_stamp.wHour = tout->tm_hour;
 			time_stamp.wDay = tout->tm_mday;
 			time_stamp.wMonth = tout->tm_mon + 1;
