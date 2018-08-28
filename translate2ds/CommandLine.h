@@ -216,6 +216,7 @@ namespace sp
 				}break;
 			case TIME_OFFSET:{
 				_options.TimeOffset = atoi(op.c_str());
+				g_Log << "Applying a time offset of: " << _options.TimeOffset << " seconds\n";
 				}break;
 			case SERIALNUMBER:{
 				_options.SerialNumber = op;
@@ -257,7 +258,7 @@ namespace sp
 			 "Process Directory:  <-d> <directory name> <...>\n" <<
 			 "Start Time:  <-start_time> <year> <month> <day> <hour> <minute> <millisecond>\n" <<
 			  "End Time:  <-end_time> <year> <month> <day> <hour> <minute> <millisecond>\n" <<
-			  "Time Offset: <-offset> <hours>\n" <<
+			  "Time Offset: <-offset> <seconds>\n" <<
 			  "Set Output Directory:  <-o> <directory name>\n" <<
 			  "Set Project: <-project> <name>\n" <<
 			  "Set Platform: <-platform> <name>\n"<<
