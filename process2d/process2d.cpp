@@ -512,7 +512,8 @@ float poisson_spot_correction(float area_img, float area_hole, bool allin){
 
 // ----------------PARTICLE REJECTION ---------------------------
 void reject_particle(Particle& x, float cutoff, float nextinttime, float pixel_res, 
-                    float smallbin, float largebin, float wc, bool recon){
+                    float smallbin, float largebin, float wc, bool recon)
+{
    //Decides on the rejection of a particle.
    //Ice rejects will return value of 2 or higher
    //Water rejects will return value of 1 or higher                 
@@ -767,8 +768,9 @@ int process2d(Config & cfg, netCDF & ncfile, ProbeInfo & probe)
      double newbuffertime = TwoDtime(&buffer) + ((double)ntohs(buffer.msec) / 1000);
      if (newbuffertime != buffertime)
      {
-       buffertime = newbuffertime;
+       firsttimeflag = true;
        lastbuffertime = buffertime;
+       buffertime = newbuffertime;
      }
      }
 
@@ -785,8 +787,6 @@ int process2d(Config & cfg, netCDF & ncfile, ProbeInfo & probe)
        break;
      }
 
-     if (buffertime != lastbuffertime)
-       firsttimeflag = true;
 
      if (cfg.debug)
        cout << "New buffer : " << fixed << buffertime << " msec=" << ntohs(buffer.msec) << endl;
@@ -846,7 +846,7 @@ int process2d(Config & cfg, netCDF & ncfile, ProbeInfo & probe)
            else difftimeline=timeline-firsttimeline;
 
            // Process the roi
-           long time1hz = min((long)(lastbuffertime+difftimeline / (probe.clockMhz)), (long)buffertime);
+           long time1hz = min((long)(lastbuffertime + (difftimeline / probe.clockMhz)), (long)buffertime);
 
            if (time1hz >= cfg.starttime) {
               particle=findsize(roi, slice_count, probe.nDiodes, probe.resolution);
