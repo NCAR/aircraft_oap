@@ -97,6 +97,7 @@ void MainCanvas::setTitle(ADS_DataFile *file, P2d_rec *rec)
     else
       title << file->FlightDate();
 
+    ClearArea(0, 0, 1200, 64);
     pen->SetFont(fonts->Font(0));
     pen->DrawText(Surface(), 300, 25, title.str().c_str());
     }
