@@ -684,26 +684,26 @@ int process2d(Config & cfg, netCDF & ncfile, ProbeInfo & probe)
   float *count_round[numtimes], *conc_round[numtimes];
 
   // Allocate contiguos data block.
-  count_all[0] = new float[numtimes*(probe.numBins+binoffset)];
-  count_round[0] = new float[numtimes*(probe.numBins+binoffset)];
-  conc_all[0] = new float[numtimes*(probe.numBins+binoffset)];
-  conc_round[0] = new float[numtimes*(probe.numBins+binoffset)];
+  size_t N = numtimes * (probe.numBins+binoffset);
+  count_all[0] = new float[N];
+  count_round[0] = new float[N];
+  conc_all[0] = new float[N];
+  conc_round[0] = new float[N];
 
   //Initialize all these to zero
-  for (int i = 0; i < numtimes; i++) {
-    if (i > 0) {	// Set up pointers into contiguous data block.
-      int offset = i * (probe.numBins+binoffset);
+  memset((void *)count_all[0], 0, sizeof(float) * N);
+  memset((void *)count_round[0], 0, sizeof(float) * N);
+  memset((void *)conc_all[0], 0, sizeof(float) * N);
+  memset((void *)conc_round[0], 0, sizeof(float) * N);
 
-      count_all[i] = count_all[0] + offset;
-      count_round[i] = count_round[0] + offset;
-      conc_all[i] = conc_all[0] + offset;
-      conc_round[i] = conc_round[0] + offset;
-    }
+  // Set up pointers into contiguous data block.
+  for (int i = 1; i < numtimes; i++) {
+    int offset = i * (probe.numBins+binoffset);
 
-    for (int j = 0; j < (probe.numBins+binoffset); j++) {
-      count_all[i][j]=0; conc_all[i][j]=0; 
-      count_round[i][j]=0; conc_round[i][j]=0;
-    }
+    count_all[i] = count_all[0] + offset;
+    count_round[i] = count_round[0] + offset;
+    conc_all[i] = conc_all[0] + offset;
+    conc_round[i] = conc_round[0] + offset;
   }
 
   ProbeData data(numtimes);
@@ -715,10 +715,11 @@ int process2d(Config & cfg, netCDF & ncfile, ProbeInfo & probe)
   double itq[nitq]={1};
 
   int *count_it[numtimes];
-  for (int i = 0; i < numtimes; i++)
+  count_it[0] = new int [numtimes*(cfg.nInterarrivalBins+binoffset)];
+  memset((void *)count_it[0], 0, sizeof(int)*numtimes*(cfg.nInterarrivalBins+binoffset));
+  for (int i = 1; i < numtimes; i++)
   {
-    count_it[i] = new int [cfg.nInterarrivalBins+binoffset];
-    memset((void *)count_it[i], 0, sizeof(int)*(cfg.nInterarrivalBins+binoffset));
+    count_it[i] = count_it[0] + (i * (cfg.nInterarrivalBins+binoffset));
   }
 
   float it_endpoints[cfg.nInterarrivalBins+1], it_midpoints[cfg.nInterarrivalBins], fitspec[cfg.nInterarrivalBins];
@@ -1180,6 +1181,7 @@ int process2d(Config & cfg, netCDF & ncfile, ProbeInfo & probe)
   delete [] count_round[0];
   delete [] conc_all[0];
   delete [] conc_round[0];
+  delete [] count_it[0];
 
   return ncfile.WriteData(probe, data);
 }
