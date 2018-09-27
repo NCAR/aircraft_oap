@@ -2,7 +2,7 @@
 -------------------------------------------------------------------------
 OBJECT NAME:	CanvasWindow.cc
 
-COPYRIGHT:	University Corporation for Atmospheric Research, 1997-2009
+COPYRIGHT:	University Corporation for Atmospheric Research, 1997-2018
 -------------------------------------------------------------------------
 */
 

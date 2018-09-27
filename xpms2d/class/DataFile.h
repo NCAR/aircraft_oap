@@ -4,7 +4,7 @@ OBJECT NAME:	DataFile.h
 
 FULL NAME:	Data File Class
 
-COPYRIGHT:	University Corporation for Atmospheric Research, 1997
+COPYRIGHT:	University Corporation for Atmospheric Research, 1997-2018
 -------------------------------------------------------------------------
 */
 
@@ -17,64 +17,38 @@ COPYRIGHT:	University Corporation for Atmospheric Research, 1997
 
 #include <define.h>
 
-#include "Probe.h"
-#include <raf/hdrAPI.h>
+#include "PMS2D.h"
+#include "Fast2D.h"
+#include "TwoDS.h"
+#include "CIP.h"
+#include "HVPS.h"
 
-#include <vector>
+#include <map>
 
-/* ADS image record types */
+// ADS image record types
 #define ADS_WORD	0x4144
 #define HDR_WORD	0x5448
 #define SDI_WORD	0x8681
 #define AVAPS_WORD	0x4156
 
-/* ID values for the id field in each record header.
- */
-// Traditional 32 diode PMS2D probes.
-#define PMS2DC1		0x4331
-#define PMS2DC2		0x4332
-#define PMS2DP1		0x5031
-#define PMS2DP2		0x5032
-
-// 64 diode Fast 2DC, 25um.
-#define PMS2DC4		0x4334
-#define PMS2DC5		0x4335
-// 64 diode Fast 2DC, 10um.
-#define PMS2DC6		0x4336
-// 64 diode Fast 2DP, 200um.
-#define PMS2DP4		0x5034
-
-// 64 diode DMT CIP, 25um.
-#define PMS2DC8		0x4338
-// 64 diode DMT PIP, 100um.
-#define PMS2DP8		0x5038
-
-// Greyscale which we never flew.
-#define PMS2DG1		0x4731
-#define PMS2DG2		0x4732
-
-// SPEC HVPS
-#define HVPS1		0x4831
-#define HVPS2		0x4832
-// SPEC 3V-CPI
-#define SPEC2D3H	0x3348
-#define SPEC2D3V	0x3356
-// SPEC 2DS
-#define SPEC2DSH	0x5348
-#define SPEC2DSV	0x5356
- 
-
 #define PMS2_SIZE	4116
 #define PMS2_RECSIZE	(0x8000 / PMS2_SIZE) * PMS2_SIZE
 
-typedef std::vector<Probe *> ProbeList;
+class UserConfig;
+
+
+/**
+ * Probe mapping uses the 2 byte key/id in every data record.  Once
+ * you have a record, you can get the Probe info from the ProbeList.
+ */
+typedef std::map<uint16_t, Probe *> ProbeList;
 
 
 /* -------------------------------------------------------------------- */
 class ADS_DataFile {
 
 public:
-  ADS_DataFile(const char fName[]);
+  ADS_DataFile(const char fName[], UserConfig &cfg);
   ~ADS_DataFile();
 
   const std::string &
@@ -108,32 +82,46 @@ public:
   bool	NextPMS2dRecord(P2d_rec *buff);
   bool	PrevPMS2dRecord(P2d_rec *buff);
 
-  int	NextPhysicalRecord(char buff[]);
+  int	NextPhysicalRecord(unsigned char buff[]);
 
   void	ToggleSyntheticData();
 
-  bool	isValidProbe(const char *pr) const;
+  static Probe::ProbeType ProbeType(const unsigned char *id);
+
+  bool	isValidProbe(const unsigned char *pr) const;
+
+  Probe *ProbeP(uint32_t id)	{ return _probeList[id]; }
 
   const ProbeList&
   Probes() const { return _probeList; }
+
 
 protected:
   enum HeaderType { NoHeader, ADS2, OAP };
 
   typedef struct { long long index; int16_t time[4]; } Index;
 
-  void		initADS2();
-  void		initADS3(char *hdrString);
+  void	initADS2(UserConfig *cfg);
+  void	initADS3(const char *hdrString, UserConfig *cfg);
+
+  /* Add probe based on id word in old ADS2 header.  These are really
+   * old files, or from University of Wyoming
+   */
+  void	AddToProbeList(const char *id, UserConfig *cfg);
+  /* Add probe based on the XML entry in an OAP file.
+   */
+  void	AddToProbeListFromXML(const char *id, UserConfig *cfg);
 
   long long	posOfPhysicalRecord(size_t i) {
-	if (i > nIndices) fprintf(stderr, "currPhys exceeds nInices\n");
-	return indices[i].index;
+	if (i > nIndices) fprintf(stderr, "currPhys exceeds nIndices\n");
+	return _indices[i].index;
 	}
 
-  void		buildIndices(), sort_the_table(int, int), SortIndices(int);
-  time_t	getFileModifyTime(const char *path);
-  void		SwapPMS2D(P2d_rec *);
-  void		check_rico_half_buff(P2d_rec *buff, size_t start, size_t end);
+  void	buildIndices(UserConfig *cfg), sort_the_table(int, int), SortIndices(int);
+  time_t getFileModifyTime(const char *path);
+
+  void	SwapPMS2D(P2d_rec *);
+  void	check_rico_half_buff(P2d_rec *buff, size_t start, size_t end);
 
   std::string	_fileName;
 
@@ -162,7 +150,7 @@ protected:
    */
   char		_version[16];
 
-  Index		*indices;
+  Index		*_indices;
   int		currPhys;
   int		currLR;
   size_t	nIndices;

@@ -4,7 +4,7 @@ OBJECT NAME:	MainCanvas.h
 
 FULL NAME:	Main canvas
 
-COPYRIGHT:	University Corporation for Atmospheric Research, 1997-2014
+COPYRIGHT:	University Corporation for Atmospheric Research, 1997-2018
 -------------------------------------------------------------------------
 */
 
@@ -18,9 +18,6 @@ COPYRIGHT:	University Corporation for Atmospheric Research, 1997-2014
 #include <DataFile.h>
 #include <raf/PostScript.h>
 
-#include <sys/types.h>
-#include <netinet/in.h>
-
 
 /* -------------------------------------------------------------------- */
 class MainCanvas : public Canvas {
@@ -29,12 +26,12 @@ public:
 	MainCanvas(Widget w);
 
   void	SetDisplayMode(int mode);
-  void	SetWrapDisplay()	{ wrap = 1 - wrap; }
-  void	SetTimingWords()	{ timingWord = 1 - timingWord; }
+  void	SetWrapDisplay()	{ _wrap = 1 - _wrap; }
+  void	SetTimingWords()	{ _showTimingWords = 1 - _showTimingWords; }
 
-  void	reset(ADS_DataFile *file);
-  void	draw(P2d_rec *record, struct recStats &stats, float hdrVer, int probeNum, PostScript *ps);
-  size_t maxRecords() const	{ return(maxRecs); }
+  void	reset(ADS_DataFile *file, P2d_rec *rec);
+  void	draw(P2d_rec *record, Probe *probe, float hdrVer, int probeNum, PostScript *ps);
+  size_t maxRecords() const	{ return(_maxRecs); }
   int	SpaceAvailable() const	{ return(Height() - y); }
 
   /**
@@ -46,15 +43,16 @@ public:
 
 
 protected:
-  void	drawPMS2D(P2d_rec *record, struct recStats &stats, float hdrVer, int probeNum, PostScript *ps);
-  void	drawFast2D(P2d_rec *record, struct recStats &stats, float hdrVer, int probeNum, PostScript *ps);
-  void	draw2DS(P2d_rec *record, struct recStats &stats, float hdrVer, int probeNum, PostScript *ps);
-  void	drawHVPS(P2d_rec *record, struct recStats &stats, float hdrVer, int probeNum, PostScript *ps);
-  void	drawCIP(P2d_rec *record, struct recStats &stats, float hdrVer, int probeNum, PostScript *ps);
+  void  setTitle(ADS_DataFile *file, P2d_rec *rec);
 
-  void	drawSlice(PostScript *ps, int i, const unsigned char *slice, size_t nDiodes);
+  void	drawPMS2D(P2d_rec *record, Probe *probe, float hdrVer, int probeNum, PostScript *ps);
+  void	drawFast2D(P2d_rec *record, Probe *probe, float hdrVer, int probeNum, PostScript *ps);
+  void	draw2DS(P2d_rec *record, Probe *probe, float hdrVer, int probeNum, PostScript *ps);
+  void	drawHVPS(P2d_rec *record, Probe *probe, float hdrVer, int probeNum, PostScript *ps);
+  void	drawCIP(P2d_rec *record, Probe *probe, float hdrVer, int probeNum, PostScript *ps);
+
+  void	drawSlice(PostScript *ps, int i, const unsigned char *slice, Probe *probe);
   void	drawSlice(PostScript *ps, int i, uint32_t slice);
-  void	enchiladaLineItem(PostScript *ps, int i, int cnt, Particle *cp);
 
   /**
    * Degrade a 25um Fast2DC probe to a 200um 2DP looking data.  Done byr
@@ -64,22 +62,28 @@ protected:
    */
   void draw_2DC_as_2DP(P2d_rec *record);
 
+  void drawRawRecord(const unsigned char *p, Probe *probe, PostScript *ps);
+
   /**
    * Count all shadowed diodes across the flight track and display histogram.
+   * Routine needs to skip any sync and/or timing words.
    */
-  void drawDiodeHistogram(P2d_rec *record, size_t nDiodes);
-  void drawDiodeHistogram(P2d_rec *record, size_t nDiodes, uint32_t sync);
+  void drawDiodeHistogram(const unsigned char *data, Probe *probe);
+  void drawDiodeHistogram(const unsigned char *data, Probe *probe, uint32_t sync);
 
   void drawAccumHistogram(struct recStats &stats, size_t xOffset);
 
   size_t uncompressCIP(unsigned char *dest, const unsigned char src[], int nbytes);
 
-  int	y, maxRecs;
-  int	displayMode;
-  int	PIX_PER_Y;
+  int	y, _maxRecs;
+  int	_displayMode;
+  /// Number of pixels per row, nDiodes+38 for text.
+  int	_pixelsPerY;
 
-  bool	wrap,		// Wrap display around (HVPS mostly)
-	timingWord;	// Toggle timing words on/off.
+  /// Wrap display around (HVPS mostly)
+  bool	_wrap;
+  /// Display timing words or not.
+  bool  _showTimingWords;
 
 };	/* END MAINCANVAS.H */
 

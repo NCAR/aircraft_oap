@@ -4,7 +4,7 @@ OBJECT NAME:	Hex.h
 
 FULL NAME:	View Hex
 
-COPYRIGHT:	University Corporation for Atmospheric Research, 2000
+COPYRIGHT:	University Corporation for Atmospheric Research, 2000-2018
 -------------------------------------------------------------------------
 */
 

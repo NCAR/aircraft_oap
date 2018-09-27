@@ -21,7 +21,7 @@ DESCRIPTION:
 
 MODIFIES:	CurrentDataFile, CurrentPanelNumber, NumberOfPanels
 
-COPYRIGHT:	University Corporation for Atmospheric Research, 1997-2001
+COPYRIGHT:	University Corporation for Atmospheric Research, 1997-2018
 -------------------------------------------------------------------------
 */
 
@@ -46,9 +46,6 @@ ControlWindow::ControlWindow(Widget parent) : WinForm(parent, "control", RowColu
   size_t	i, n;
 
   delay = 0;
-  densIdx = 0;
-  concIdx = 0;
-  ratioIdx = 0;
 
   /* Did anyone every mention that C++'s ability to have pre-initialized
    * stuff in a class sucks the big one.
@@ -176,8 +173,6 @@ trc = XmCreateRowColumn(Window(), (char *)"trc", args, 0);
     {
     n = 0;
     probeB[i] = XmCreateToggleButton(RC[1], (char *)"none       ", NULL, 0);
-    XtAddCallback(probeB[i], XmNvalueChangedCallback,
-                  (XtCallbackProc)SetProbe, (XtPointer)i);
     }
 
   XtManageChildren(probeB, MAX_PROBES);
@@ -187,15 +182,17 @@ trc = XmCreateRowColumn(Window(), (char *)"trc", args, 0);
    */
   for (i = 0; i < 4; ++i)
     {
+    char name[256];
+
     n = 0;
-    sprintf(buffer, "conc%zu", i);
-    cncB[i] = XmCreateToggleButton(RC[2], buffer, NULL, 0);
+    sprintf(name, "conc%zu", i);
+    cncB[i] = XmCreateToggleButton(RC[2], name, NULL, 0);
     XtAddCallback(cncB[i], XmNvalueChangedCallback,
                   (XtCallbackProc)SetConcentration, (XtPointer)i);
     }
 
   XtManageChildren(cncB, i);
-  XmToggleButtonSetState(cncB[concIdx], True, False);
+  XmToggleButtonSetState(cncB[0], True, False);
 
   /* Water density
    */
@@ -208,7 +205,7 @@ trc = XmCreateRowColumn(Window(), (char *)"trc", args, 0);
     }
 
   XtManageChildren(densB, i);
-  XmToggleButtonSetState(densB[densIdx], True, False);
+  XmToggleButtonSetState(densB[0], True, False);
 
   /* Area ratio reject
    */
@@ -221,7 +218,7 @@ trc = XmCreateRowColumn(Window(), (char *)"trc", args, 0);
     }
 
   XtManageChildren(ratioB, i);
-  XmToggleButtonSetState(ratioB[ratioIdx], True, False);
+  XmToggleButtonSetState(ratioB[0], True, False);
 
 }	/* END CONTROLWINDOW */
 
@@ -280,16 +277,22 @@ void ControlWindow::SetProbes()
   if (fileMgr.CurrentFile())
     {
     const ProbeList & probes = fileMgr.CurrentFile()->Probes();
-    for (i = 0; i < probes.size(); ++i)
+    ProbeList::const_iterator iter;
+    for (iter = probes.begin(); iter != probes.end(); ++iter, ++i)
       {
+      uint16_t prb_id = *(uint16_t *)iter->second->Code();
+
       XtSetSensitive(probeB[i], True);
 
-      label = XmStringCreate((char *)probes[i]->Name().c_str(),
+      label = XmStringCreate((char *)iter->second->Name().c_str(),
                              XmFONTLIST_DEFAULT_TAG);
       XtSetArg(args[0], XmNlabelString, label);
       XtSetValues(probeB[i], args, 1);
       XmStringFree(label);
 
+      XtRemoveAllCallbacks(probeB[i], XmNvalueChangedCallback);
+      XtAddCallback(probeB[i], XmNvalueChangedCallback,
+                  (XtCallbackProc)SetProbe, (XtPointer)prb_id);
       XmToggleButtonSetState(probeB[i], False, False);
       }
     }

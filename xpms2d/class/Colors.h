@@ -30,8 +30,6 @@ COPYRIGHT:	University Corporation for Atmospheric Research, 1997-2000
 #include <X11/Xutil.h>
 #include <X11/Xos.h>
 
-#include <stdint.h>
-
 #ifdef PNG
 #include <png.h>
 #endif

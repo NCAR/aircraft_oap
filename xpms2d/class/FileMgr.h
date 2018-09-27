@@ -4,7 +4,7 @@ OBJECT NAME:	FileMgr.h
 
 FULL NAME:	Data File Manager
 
-COPYRIGHT:	University Corporation for Atmospheric Research, 1997
+COPYRIGHT:	University Corporation for Atmospheric Research, 1997-2018
 -------------------------------------------------------------------------
 */
 
@@ -15,6 +15,7 @@ COPYRIGHT:	University Corporation for Atmospheric Research, 1997
 
 #include <DataFile.h>
 
+class UserConfig;
 
 /* -------------------------------------------------------------------- */
 class FileManager {
@@ -22,8 +23,8 @@ class FileManager {
 public:
 	FileManager();
 
-  void		NewFile(char fileName[]);
-  void		AddFile(char fileName[]);
+  void		NewFile(char fileName[], UserConfig &cfg);
+  void		AddFile(char fileName[], UserConfig &cfg);
 
   void		SetCurrentFile(int newFile)	{ currentFile = newFile; }
 

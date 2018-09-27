@@ -11,7 +11,7 @@ ENTRY POINTS:	ViewHex()
 
 DESCRIPTION:	SaveText2()
 
-COPYRIGHT:	University Corporation for Atmospheric Research, 1997-8
+COPYRIGHT:	University Corporation for Atmospheric Research, 1997-2018
 -------------------------------------------------------------------------
 */
 
@@ -125,6 +125,7 @@ void SaveText2(Widget w, XtPointer client, XtPointer call)
 
   if ((fp = fopen(dataFile, "w")) == NULL)
     {
+    char buffer[256];
     sprintf(buffer, "SaveText: can't open %s.", dataFile);
     ErrorMsg(buffer);
     return;

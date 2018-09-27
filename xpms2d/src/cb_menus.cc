@@ -18,7 +18,7 @@ STATIC FNS:	PrintPS()
 
 DESCRIPTION:	
 
-COPYRIGHT:	University Corporation for Atmospheric Research, 1997-2001
+COPYRIGHT:	University Corporation for Atmospheric Research, 1997-2018
 -------------------------------------------------------------------------
 */
 
@@ -49,12 +49,11 @@ extern MainCanvas	*mainPlot;
 extern Printer		*printerSetup;
 extern XmFile		*fileSel;
 
-struct recStats &ProcessRecord(P2d_rec *, float);
-
 /* Contains current N 2d records (for re-use by things like ViewHex */
 extern size_t nBuffs;
 extern P2d_rec pgFbuff[];
 
+extern UserConfig userConfig;
 
 /* -------------------------------------------------------------------- */
 void GetDataFileName(Widget w, XtPointer client, XtPointer call)
@@ -71,7 +70,7 @@ void NewDataFile(Widget w, XtPointer client, XtPointer call)
   fileSel->ExtractFileName(
          ((XmFileSelectionBoxCallbackStruct *)call)->value, &dataFile);
  
-  fileMgr.NewFile(dataFile);
+  fileMgr.NewFile(dataFile, userConfig);
   controlWindow->SetFileNames();
   controlWindow->SetProbes();
   controlWindow->PositionTime(True);
@@ -94,7 +93,7 @@ void AddDataFile(Widget w, XtPointer client, XtPointer call)
   fileSel->ExtractFileName(
          ((XmFileSelectionBoxCallbackStruct *)call)->value, &dataFile);
  
-  fileMgr.AddFile(dataFile);
+  fileMgr.AddFile(dataFile, userConfig);
   controlWindow->SetFileNames();
   cursor.PointerCursor(mainPlot->Wdgt());
 
@@ -105,18 +104,20 @@ static void PrintPS(Widget w, XtPointer client, XtPointer call)
 {
   bool          displayProbes = false;
   float         version;
+  char		buffer[256];
   ADS_DataFile	*file = fileMgr.CurrentFile();
 
   const ProbeList& probes = fileMgr.CurrentFile()->Probes();
-  for (size_t j = 0; j < probes.size(); ++j)
-    if (probes[j]->Display())
+  ProbeList::const_iterator iter;
+  for (iter = probes.begin(); iter != probes.end(); ++iter)
+    if (iter->second->Display())
       displayProbes = true;
 
   if (!displayProbes)
     return;
 
   cursor.WaitCursor(mainPlot->Wdgt());
-  mainPlot->reset(NULL);
+  mainPlot->reset(0, 0);
   version = atof(file->HeaderVersion());
  
   std::stringstream title;
@@ -132,11 +133,14 @@ static void PrintPS(Widget w, XtPointer client, XtPointer call)
   pen.SetFont(16);
 
   for (size_t i = 0; i < nBuffs; ++i)
-    for (size_t j = 0; j < probes.size(); ++j)
+    {
+    iter = probes.begin();
+    for (size_t j = 0; iter != probes.end(); ++iter, ++j)
       {
-      if (!strncmp(probes[j]->Code(), (char*)&pgFbuff[i], 2) && probes[j]->Display())
-        mainPlot->draw(&pgFbuff[i], ProcessRecord(&pgFbuff[i], version), version, j+1, &pen);
+      if (!strncmp(iter->second->Code(), (char*)&pgFbuff[i], 2) && iter->second->Display())
+        mainPlot->draw(&pgFbuff[i], iter->second, version, j+1, &pen);
       }
+    }
 
   cursor.PointerCursor(mainPlot->Wdgt());
 
@@ -145,7 +149,7 @@ static void PrintPS(Widget w, XtPointer client, XtPointer call)
 /* -------------------------------------------------------------------- */
 static void SavePS(Widget w, XtPointer client, XtPointer call)
 {
-  char	*p;
+  char	*p, buffer[256];
 
   fileSel->ExtractFileName(
          ((XmFileSelectionBoxCallbackStruct *)call)->value, &PSoutFile);
@@ -201,7 +205,7 @@ void SavePNG_OK(Widget w, XtPointer client, XtPointer call)
 /* -------------------------------------------------------------------- */
 void confirmPNG(Widget w, XtPointer client, XtPointer call)
 {
-  char	*p;
+  char	*p, buffer[256];
 
   fileSel->ExtractFileName(((XmFileSelectionBoxCallbackStruct *)call)->value, &pngOutFile);
 

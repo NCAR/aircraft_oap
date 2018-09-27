@@ -22,7 +22,7 @@ STATIC FNS:
 
 DESCRIPTION:	
 
-COPYRIGHT:	University Corporation for Atmospheric Research, 1994-2006
+COPYRIGHT:	University Corporation for Atmospheric Research, 1994-2018
 -------------------------------------------------------------------------
 */
 
@@ -37,17 +37,18 @@ COPYRIGHT:	University Corporation for Atmospheric Research, 1994-2006
 #include <FileMgr.h>
 #include <raf/XPen.h>
 #include <MainCanvas.h>
+#include <UserConfig.h>
 
 extern Enchilada	*enchiladaWin;
 extern Histogram	*histogramWin;
 extern FileManager	fileMgr;
 extern ControlWindow	*controlWindow;
 extern MainCanvas	*mainPlot;
+extern UserConfig	userConfig;
 extern XCursor		cursor;
 extern Colors		*color;
 extern XPen		*pen;
 
-struct recStats &ProcessRecord(P2d_rec *, float);
 
 /* Contains current N 2d records (for re-use by things like ViewHex */
 size_t	nBuffs = 0;
@@ -59,7 +60,6 @@ void ApplyTimeChange(Widget w, XtPointer client, XtPointer call)
 {
   int		h, m, s;
   char		*p;
-  float		version;
 
   if (fileMgr.CurrentFile() == NULL ||
       fileMgr.CurrentFile()->Probes().size() == 0)
@@ -67,7 +67,6 @@ void ApplyTimeChange(Widget w, XtPointer client, XtPointer call)
 
 
   cursor.WaitCursor(mainPlot->Wdgt());
-  version = atof(fileMgr.CurrentFile()->HeaderVersion());
   p = XmTextFieldGetString(controlWindow->StartTime());
 
   if (strlen(p) == 0) {
@@ -104,8 +103,9 @@ void PageForward(Widget w, XtPointer client, XtPointer call)
     return;
 
   const ProbeList& probes = fileMgr.CurrentFile()->Probes();
-  for (size_t j = 0; j < probes.size(); ++j)
-    if (probes[j]->Display())
+  ProbeList::const_iterator iter;
+  for (iter = probes.begin(); iter != probes.end(); ++iter)
+    if (iter->second->Display())
       displayProbes = true;
 
   if (!displayProbes)
@@ -114,7 +114,7 @@ void PageForward(Widget w, XtPointer client, XtPointer call)
   cursor.WaitCursor(mainPlot->Wdgt());
 
   mainPlot->Clear();
-  mainPlot->reset(fileMgr.CurrentFile());
+  mainPlot->reset(fileMgr.CurrentFile(), 0);
   version = atof(fileMgr.CurrentFile()->HeaderVersion());
 
   if (enchiladaWin)
@@ -133,15 +133,18 @@ void PageForward(Widget w, XtPointer client, XtPointer call)
       break;
 
     if (nBuffs == 0)
-      controlWindow->UpdateStartTime(&pgFbuff[nBuffs]);
-
-    for (size_t j = 0; j < probes.size(); ++j)
       {
-      if (!strncmp(probes[j]->Code(), buff_p, 2) && probes[j]->Display())
+      controlWindow->UpdateStartTime(&pgFbuff[0]);
+      mainPlot->reset(fileMgr.CurrentFile(), &pgFbuff[0]);
+      }
+
+    iter = probes.begin();
+    for (int j = 0; iter != probes.end(); ++j, ++iter)
+      {
+      if (!memcmp(iter->second->Code(), buff_p, 2) && iter->second->Display())
         {
         pen->SetColor(color->GetColor(j+1));
-        mainPlot->draw(&pgFbuff[nBuffs],
-		ProcessRecord(&pgFbuff[nBuffs], version), version, j+1, NULL);
+        mainPlot->draw(&pgFbuff[nBuffs], iter->second, version, j+1, NULL);
         pen->SetColor(color->GetColor(0));
         if (++nBuffs >= 20)
           {
@@ -162,26 +165,25 @@ void PageForward(Widget w, XtPointer client, XtPointer call)
 /* -------------------------------------------------------------------- */
 void PageCurrent()
 {
-  P2d_rec	pgBbuff;
+  size_t	i;
+  P2d_rec	pgBuff;
 
   if (fileMgr.NumberOfFiles() == 0)
     return;
 
+  const ProbeList& probes = fileMgr.CurrentFile()->Probes();
   cursor.WaitCursor(mainPlot->Wdgt());
 
-  for (size_t i = 0; i < mainPlot->maxRecords() &&
-              fileMgr.CurrentFile()->PrevPMS2dRecord(&pgBbuff); )
+  // Loop back and find the record prior to first record to display
+  for (i = 0; i < mainPlot->maxRecords() &&
+              fileMgr.CurrentFile()->PrevPMS2dRecord(&pgBuff); )
     {
-    const ProbeList& probes = fileMgr.CurrentFile()->Probes();
-    for (size_t j = 0; j < probes.size(); ++j)
-      if (!strncmp(probes[j]->Code(), (char *)&pgBbuff, 2)
-          && probes[j]->Display())
-        {
-        ++i;
-        }
+    if (probes.find(*(uint16_t *)&pgBuff)->second->Display())
+      ++i;
     }
 
-  ProcessRecord(&pgBbuff, -1);
+  // and process it so stats on the first displayed records work.
+  if (i > 0) probes.find(*(uint16_t *)&pgBuff)->second->ProcessRecord(&pgBuff, -1);
   cursor.PointerCursor(mainPlot->Wdgt());
   PageForward(NULL, NULL, NULL);
 
@@ -190,26 +192,23 @@ void PageCurrent()
 /* -------------------------------------------------------------------- */
 void PageBackward(Widget w, XtPointer client, XtPointer call)
 {
+  size_t	i;
   P2d_rec	pgBbuff;
 
   if (fileMgr.NumberOfFiles() == 0)
     return;
 
+  const ProbeList& probes = fileMgr.CurrentFile()->Probes();
   cursor.WaitCursor(mainPlot->Wdgt());
 
-  for (size_t i = 0; i < (mainPlot->maxRecords() << 1) &&
+  for (i = 0; i < (mainPlot->maxRecords() << 1) &&
               fileMgr.CurrentFile()->PrevPMS2dRecord(&pgBbuff); )
     {
-    const ProbeList& probes = fileMgr.CurrentFile()->Probes();
-    for (size_t j = 0; j < probes.size(); ++j)
-      if (!strncmp(probes[j]->Code(), (char *)&pgBbuff, 2)
-          && probes[j]->Display())
-        {
-        ++i;
-        }
+    if (probes.find(*(uint16_t *)&pgBbuff)->second->Display())
+      ++i;
     }
 
-  ProcessRecord(&pgBbuff, -1);
+  if (i > 0) probes.find(*(uint16_t *)&pgBbuff)->second->ProcessRecord(&pgBbuff, -1);
   cursor.PointerCursor(mainPlot->Wdgt());
   PageForward(NULL, NULL, NULL);
   controlWindow->UpdateTimeScale();
@@ -225,29 +224,46 @@ void SetCurrentFile(Widget w, XtPointer client, XtPointer call)
 /* -------------------------------------------------------------------- */
 void SetProbe(Widget w, XtPointer client, XtPointer call)
 {
-  fileMgr.CurrentFile()->Probes()[(long)client]->setDisplay(((XmToggleButtonCallbackStruct *)call)->set);
+  long probeNum = (long)client;
+  fileMgr.CurrentFile()->Probes().find((uint16_t)probeNum)->second->setDisplay(((XmToggleButtonCallbackStruct *)call)->set);
   PageCurrent();
 }
 
 /* -------------------------------------------------------------------- */
 void SetDensity(Widget w, XtPointer client, XtPointer call)
 {
-  controlWindow->SetWaterDensity((long)client);
-  PageCurrent();
+  // skip the unset of other button.
+  if (((XmToggleButtonCallbackStruct *)call)->set)
+    {
+    userConfig.SetWaterDensity(controlWindow->GetWaterDensity((long)client));
+    PageCurrent();
+    }
 }
 
 /* -------------------------------------------------------------------- */
 void SetAreaRatioRej(Widget w, XtPointer client, XtPointer call)
 {
-  controlWindow->SetAreaRatioReject((long)client);
-  PageCurrent();
+  if (((XmToggleButtonCallbackStruct *)call)->set)
+    {
+    userConfig.SetAreaRatioReject(controlWindow->GetAreaRatioReject((long)client));
+    PageCurrent();
+    }
 }
 
 /* -------------------------------------------------------------------- */
 void SetConcentration(Widget w, XtPointer client, XtPointer call)
 {
-  controlWindow->SetConcentrationCalc((long)client);
-  SetSampleArea();
+  // skip the unset of other button.
+  if (((XmToggleButtonCallbackStruct *)call)->set == false)
+    return;
+
+  userConfig.SetSizingAlgo(controlWindow->GetSizingAlgo((long)client));
+
+  const ProbeList & probes = fileMgr.CurrentFile()->Probes();
+  ProbeList::const_iterator iter;
+  for (iter = probes.begin(); iter != probes.end(); ++iter)
+    iter->second->SetSampleArea();
+
   PageCurrent();
 }
 

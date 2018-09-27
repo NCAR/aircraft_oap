@@ -4,7 +4,7 @@ OBJECT NAME:	MagnifyCanvas.h
 
 FULL NAME:	Magnify canvas
 
-COPYRIGHT:	University Corporation for Atmospheric Research, 1997
+COPYRIGHT:	University Corporation for Atmospheric Research, 1997-2018
 -------------------------------------------------------------------------
 */
 

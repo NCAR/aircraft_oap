@@ -15,116 +15,59 @@ FULL NAME:	Include File to Include the Include Files
 #include <cstring>
 #include <string>
 #include <stdint.h>
+#include <vector>
 #include <iostream>
 
 #include <Xm/Xm.h>
 
-#include <raf/Queue.h>
-
 #undef ntohll
 #undef htonll
 
-#ifndef ERR
-#define OK		(0)
-#define ERR		(-1)
-#endif
- 
 #define COMMENT		'#'	/* Comment character for textfiles  */
  
 #define SecondsSinceMidnite(t)	(t[0] * 3600 + t[1] * 60 + t[2])
 
 
 #define BUFFSIZE	4096
-#define PATH_LEN	256
-#define NAMELEN		16
-
-#define	SPACE		' '
+#define PATH_LEN	1024
 
 const size_t MAX_DATAFILES = 2;
-const size_t MAX_DATASETS = 4;
-const size_t MAX_PANELS = 4;
 const size_t MAX_PROBES = 4;
 
-const uint32_t StandardSyncWord = 0x55000000;
-const uint32_t SyncWordMask = 0xff000000;
 
-const unsigned long long CIP_Sync = 0xAAAAAAAAAAAAAAAALL;
-
-const unsigned char BlankSlice[] = { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
-const unsigned char Fast2D_SyncString[] = { 0xaa, 0xaa, 0xaa };
-const unsigned char Fast2D_OverldString[] = { 0x55, 0x55, 0xaa };
-
-const size_t nSlices_32bit = 1024;
-const size_t nSlices_64bit = 512;
-const size_t nSlices_128bit = 256;
-
-#define TITLESIZE	80
-
-#define ALL_SETS	(-1)
-
-
-class Particle
-  {
-public:
-  Particle();	// in process.cc
-
-  long time;           // Seconds since mid-night
-  long msec;
-
-  size_t w, h;
-  size_t area;
-  bool	vert_gap;		// Was there a blank slice (i.e. multiple parts)
-  bool	horiz_gap;		//   and in the hozizontal dir?
-  bool	reject;
-  unsigned char	edge;		// particle touched either edge
-  bool	timeReject;		// Nimbus will reject (because of bad timing bar)
-
-  ushort	x1, x2;		// for particles that touch both edges.
-  uint32_t	timeWord;
-  uint32_t	deltaTime;	// Amount of time between prev & this particle
-  uint32_t	liveTime;	// Amount of time consumed by particle
-  };
-
+#include "Particle.h"
 
 struct recStats
-  {
-  uint32_t thisTime;		// Time of this record in secs since midnight.
-  uint32_t DASelapsedTime;	// milliseconds.
-  uint32_t tBarElapsedtime;	// milliseconds.
+{
+  unsigned long	thisTime;	// Time of this record in secs since midnight.
+  int	DASelapsedTime;		// milliseconds.
+  int	tBarElapsedtime;	// milliseconds.
 
   int	nTimeBars;		// n Particles.
   int	accum[1024];
   int	nonRejectParticles;	// n Particles not rejected.
   uint32_t minBar, maxBar, meanBar;
 
-  double	SampleVolume, DOFsampleVolume;
+  double	SampleVolume;	// Basic total sample volume: eaw * dof * tas * time.
   double	tas, concentration, lwc, dbz;
   float		frequency;              // TAS clock.
-  int		resolution, area;
+  int		area;
 
-  Queue		particles;
+  std::vector<Particle *>	particles;
 
   // Return values in/for MainCanvas::draw()
   bool		duplicate;
   unsigned long	prevTime;
-  };
+};
 
-
-/* Values for rejection/concentration stuff*/
-enum { BASIC, ENTIRE_IN, CENTER_IN, RECONSTRUCTION };
 
 /* Values for "displayLevel"		*/
-enum { NORMAL, DIAGNOSTIC, ENCHILADA, RAW_RECORD };
+enum { NORMAL, DIAGNOSTIC, RAW_RECORD };
 
 /* Values for "HandleError"		*/
 enum { RETURN, EXIT, IRET };
 
-enum ProbeType { UNKNOWN, PMS2D, HVPS, GREYSCALE, FAST2D, TWODS, CIP };
-
-/* Values for "HandleError"		*/
-enum Endian { LITTLE, BIG };
-
-extern char buffer[], *outFile, DataPath[], *timeSeg, pngPath[], psPath[];
+extern char *outFile, DataPath[], *timeSeg, pngPath[], psPath[];
 
 extern bool	Interactive, DataChanged, UTCseconds;
 
@@ -152,7 +95,7 @@ void	ApplyTimeChange(Widget, XtPointer, XtPointer),
 	PageBackward(Widget, XtPointer, XtPointer),
 	ToggleWrap(Widget, XtPointer, XtPointer),
 	ToggleTiming(Widget, XtPointer, XtPointer),
-	PageCurrent(), SetSampleArea(),
+	PageCurrent(),
 	SetCurrentFile(Widget, XtPointer, XtPointer),
 	ViewHex(Widget, XtPointer, XtPointer),
 	ViewEnchilada(Widget, XtPointer, XtPointer),

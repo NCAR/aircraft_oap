@@ -10,7 +10,7 @@ ENTRY POINTS:	EditPrintParms()
 
 DESCRIPTION:	none
 
-COPYRIGHT:	University Corporation for Atmospheric Research, 1997-8
+COPYRIGHT:	University Corporation for Atmospheric Research, 1997-2018
 -------------------------------------------------------------------------
 */
 
