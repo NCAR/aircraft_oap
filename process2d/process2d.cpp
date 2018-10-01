@@ -30,6 +30,7 @@
 #include "probe.h"
 #include "ProbeData.h"
 #include "netcdf.h"
+#include "Miniball.hpp"
 
 using namespace std;
    
@@ -47,7 +48,7 @@ public:
 
    long time1hz;
    double inttime; 	// Interarrival time (diff of surrounding time words).
-   float size, csize, xsize, ysize, area, holearea, circlearea;
+   float size, csize, xsize, ysize, area, holearea, circlearea, xcenter, ycenter;
    bool allin, wreject, ireject, dofReject;
 };
 
@@ -297,14 +298,12 @@ Particle findsize(short *img[], int nslices, int nDiodes, float res){
    // Based on http://tog.acm.org/resources/GraphicsGems/gems/BoundSphere.c 
    // Graphics Gems I, Article by Ritter
 
-   double dx,dy,rad,rad_sq,xspan,yspan,maxspan;
-   double old_to_p,old_to_p_sq,old_to_new;
-   struct Point2Struct {double x, y;} xmin,xmax,ymin,ymax,dia1,dia2,cen;
    short foreval=0;  //values that indicate background and foreground 
    vector<short> x,y;
    Particle particle;
    bool allin=1;
    float area=0, theta, phi;
+   double rad;
    int mindiode=nDiodes, maxdiode=0, minslice=nslices, maxslice=0;
    
    //Stuff x and y vectors, find x and y size, area, check for edge touching
@@ -333,6 +332,53 @@ Particle findsize(short *img[], int nslices, int nDiodes, float res){
       return particle;
    }
 
+   //Put coordinates in an array for compatibility with Miniball.hpp
+   typedef double coordtype;   // coordinate type
+   int ndims=2;            // number of dimensions
+   uint npoints=x.size();  // number of points
+   coordtype **coordpointer = new coordtype*[npoints];
+   for (size_t i=0; i<npoints; i++) {
+      coordtype *p = new coordtype[ndims];
+      p[0]=x[i];
+      p[1]=y[i];
+      coordpointer[i]=p;
+   }
+  
+   // define the types of iterators through the points and their coordinates
+   typedef coordtype* const* PointIterator; 
+   typedef const coordtype* CoordIterator;
+
+   // create an instance of Miniball
+   typedef Miniball::
+     Miniball <Miniball::CoordAccessor<PointIterator, CoordIterator> > MB;
+   MB ball (ndims, coordpointer, coordpointer+npoints);
+ 
+   // clean up point array
+   for (size_t i=0; i<npoints; ++i)
+     delete[] coordpointer[i];
+   delete[] coordpointer;
+
+   // assign properties
+   particle.xcenter = *ball.center();
+   particle.ycenter = *(ball.center()+1);  
+   rad = sqrt(ball.squared_radius()) + 0.5;
+
+   //Find area of enclosing circle (in the array)
+   theta = acos(min((particle.xcenter/rad),1.0));            //angle
+   phi = acos(min((nDiodes-1-particle.xcenter)/rad,1.0));
+   // find area= triangles(left) + triangles(right) + (remaining wedges)
+   particle.circlearea = (particle.xcenter*rad*sin(theta) + (nDiodes-1-particle.xcenter)*rad*sin(phi) + 
+                       3.14*rad*rad*((3.14-phi-theta)/3.14));
+   
+   particle.csize = (rad*2.0)*res; 
+
+   /*  
+   //------- OLD WAY (approximation) --------------------
+   cout << "New: " << particle.circlearea << " " << particle.csize << endl;
+   double dx,dy,rad,rad_sq,xspan,yspan,maxspan;
+   double old_to_p,old_to_p_sq,old_to_new;
+   struct Point2Struct {double x, y;} cen, xmin,xmax,ymin,ymax,dia1,dia2,cen;
+   
    //FIRST PASS: find 6 minima/maxima points 
    xmin.x=ymin.y= 1000; // initialize for min/max compare 
    xmax.x=ymax.y= -1000;
@@ -389,6 +435,7 @@ Particle findsize(short *img[], int nslices, int nDiodes, float res){
       }
    }
    rad=rad+0.5;            //adjust to true size for 50% shadow 
+      
    
    //Find area of enclosing circle (in the array)
    theta=acos(min((cen.x/rad),1.0));            //angle
@@ -397,7 +444,11 @@ Particle findsize(short *img[], int nslices, int nDiodes, float res){
    particle.circlearea=(cen.x*rad*sin(theta) + (nDiodes-1-cen.x)*rad*sin(phi) + 
                        3.14*rad*rad*((3.14-phi-theta)/3.14));
    particle.csize=(rad*2.0)*res; 
-
+   
+   cout << "Old: " << particle.circlearea << " " << particle.csize << endl;
+   cout << "-------" << endl;
+   */
+   
    return particle;
 }
 
@@ -601,9 +652,11 @@ void showparticle(Particle& x)
 		" X=" << setw(8) << x.xsize <<
 		" Y=" << setw(8) << x.ysize <<
 		" AR=" << setw(8) << ar <<
-		//     " A=" << setw(10)< < x.area <<
-		//     " HA=" << setw(10) << x.holearea <<
-		//     " CA=" << setw(10) << x.circlearea <<
+		" A=" << setw(10) << x.area <<
+		" HA=" << setw(10) << x.holearea <<
+		" CA=" << setw(10) << x.circlearea <<
+		" CenX=" << x.xcenter <<
+		" CenY=" << x.ycenter <<
 		" Int=" << scientific << x.inttime <<
 		" AI=" << x.allin <<
 		" IR=" << x.ireject <<
