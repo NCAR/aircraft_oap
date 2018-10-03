@@ -118,7 +118,7 @@ void netCDF::CreateNetCDFfile(const Config & cfg)
     sprintf(tmp, "%02d:%02d:%02d-%02d:%02d:%02d",
 	st.tm_hour, st.tm_min, st.tm_sec, et.tm_hour, et.tm_min, et.tm_sec);
     _file->add_att("TimeInterval", tmp);
-    _file->add_att("Reconstruction", cfg.recon);
+    _file->add_att("ReconstructionMethod", cfg.eawmethod);
     _file->add_att("SizeMethod", cfg.smethod);
     _file->add_att("Raw_2D_Data_File", cfg.inputFile.c_str());
   }

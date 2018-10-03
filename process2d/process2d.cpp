@@ -565,7 +565,7 @@ float poisson_spot_correction(float area_img, float area_hole, bool allin){
 
 // ----------------PARTICLE REJECTION ---------------------------
 void reject_particle(Particle& x, float cutoff, float nextinttime, float pixel_res, 
-                    float smallbin, float largebin, float wc, bool recon)
+                    float smallbin, float largebin, float wc, char eawmethod)
 {
    //Decides on the rejection of a particle.
    //Ice rejects will return value of 2 or higher
@@ -577,7 +577,8 @@ void reject_particle(Particle& x, float cutoff, float nextinttime, float pixel_r
    //Any conditions
    if ((x.inttime < cutoff) || (nextinttime < cutoff)) {x.wreject=1; x.ireject=1;}
    if (ar < 0.1) {x.wreject=1; x.ireject=1;}
-   if ((recon == 0) && (x.allin == 0)) {x.wreject=1; x.ireject=1;}
+   if ((eawmethod == 'a') && (x.allin == 0)) {x.wreject=1; x.ireject=1;}
+   if ((eawmethod == 'c') && (x.centerin == 0)) {x.wreject=1; x.ireject=1;}
   
    //Water conditions
    if ((ar < 0.4) || ((ar < 0.5) && (x.size > pixel_res*10.0))) x.wreject=1;
@@ -703,7 +704,7 @@ int process2d(Config & cfg, netCDF & ncfile, ProbeInfo & probe)
       probe2process:   Indicates which probenumber to process C4, C6, etc.
       pixel_res:       Probe resolution in microns
       armwidth:        Arm separation in cm
-      recon:           Turn on/off particle reconstruction
+      eawmethod:       Select effective array width method (reconstruction/all-in/center-in)
   */
 
   //-----------Various declarations-----------------------------------------------
@@ -728,7 +729,7 @@ int process2d(Config & cfg, netCDF & ncfile, ProbeInfo & probe)
   for (int i = 0; i < slicesPerRecord*3; ++i)
     roi[i] = new short[probe.nDiodes];
 
-  probe.ComputeSamplearea(cfg.recon);
+  probe.ComputeSamplearea(cfg.eawmethod);
 
   //Time setup
   int numtimes = cfg.stoptime - cfg.starttime + 1;
@@ -984,7 +985,7 @@ int process2d(Config & cfg, netCDF & ncfile, ProbeInfo & probe)
                     if(i==particle_stack.size()-1) nextit=particle.inttime;  //This particle is for next time period, but use its inttime
                     else nextit=particle_stack[i+1].inttime;
                     reject_particle(particle_stack[i], data.pcutoff[itime], nextit, probe.resolution,
-                                    probe.bin_endpoints[0], probe.bin_endpoints[probe.numBins],wc, cfg.recon);
+                                    probe.bin_endpoints[0], probe.bin_endpoints[probe.numBins],wc, cfg.eawmethod);
                     if (cfg.debug) showparticle(particle_stack[i]);                    
 
                     // Fill count arrays with accepted particles
@@ -1159,7 +1160,12 @@ int process2d(Config & cfg, netCDF & ncfile, ProbeInfo & probe)
 
   // Define the variables. 
   NcVar *timevar, *var;
-  string varname;
+  string varname, eawmethodname;
+
+  // Full name for the various effective array width choices
+  if (cfg.eawmethod == 'r') eawmethodname = "Reconstruction";
+  if (cfg.eawmethod == 'a') eawmethodname = "All-in";
+  if (cfg.eawmethod == 'c') eawmethodname = "Center-in";
 
   if ((timevar = ncfile.addTimeVariable(cfg, numtimes)) == 0)
     return netCDF::NC_ERR;
@@ -1180,7 +1186,7 @@ int process2d(Config & cfg, netCDF & ncfile, ProbeInfo & probe)
     if (!var->add_att("ArmDistance", probe.armWidth * 10)) return netCDF::NC_ERR;
     if (!var->add_att("Rejected", "Roundness below 0.1, interarrival time below 1/20th of distribution peak"))
       return netCDF::NC_ERR;
-    if (!var->add_att("ParticleAcceptMethod", "Reconstruction")) return netCDF::NC_ERR;
+    if (!var->add_att("ParticleAcceptMethod", eawmethodname.c_str())) return netCDF::NC_ERR;
   }
   var->put(&count_all[0][0], numtimes, 1, probe.numBins+binoffset);
 
@@ -1193,7 +1199,7 @@ int process2d(Config & cfg, netCDF & ncfile, ProbeInfo & probe)
     if (!var->add_att("ArmDistance", probe.armWidth * 10)) return netCDF::NC_ERR;
     if (!var->add_att("Rejected", "Roundness below 0.5, interarrival time below 1/20th of distribution peak"))
       return netCDF::NC_ERR;
-    if (!var->add_att("ParticleAcceptMethod", "Reconstruction")) return netCDF::NC_ERR;
+    if (!var->add_att("ParticleAcceptMethod", eawmethodname.c_str())) return netCDF::NC_ERR;
   }
   var->put(&count_round[0][0], numtimes, 1, probe.numBins+binoffset);
 
@@ -1352,7 +1358,9 @@ void processArgs(int argc, char *argv[], Config & config)
      if ((arg.find("-sto") == 0) && (i<(argc-1))) config.user_stoptime = argv[++i]; else
      if (arg.find("-fb") == 0) config.firstBin=atoi(argv[++i]); else
      if (arg.find("-n") == 0) config.shattercorrect=0; else
-     if (arg.find("-a") == 0) config.recon=0; else
+     if (arg.find("-a") == 0) config.eawmethod='a'; else
+     if (arg.find("-c") == 0) config.eawmethod='c'; else
+     if (arg.find("-r") == 0) config.eawmethod='r'; else
      if (arg.find("-x") == 0) config.smethod='x'; else
      if (arg.find("-y") == 0) config.smethod='y'; else
      if (arg.find("-v") == 0) config.verbose=1; else
@@ -1385,6 +1393,10 @@ int usage(const char* argv0)
   cerr << "         Use y-sizing (with the airflow)"<<endl;
   cerr << "   -allin"<<endl;
   cerr << "         Require particles to be fully imaged"<<endl;
+  cerr << "   -centerin"<<endl;
+  cerr << "         Require particle center to be within array"<<endl;
+  cerr << "   -reconstruction"<<endl;
+  cerr << "         Apply reconstruction for partially images particles"<<endl;
   cerr << "   -noshattercorrect"<<endl;
   cerr << "         Turn off shattering rejection and corrections"<<endl;
   cerr << "   -fb #"<<endl;
