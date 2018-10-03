@@ -43,13 +43,14 @@ const unsigned char syncString[8] = { 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 
 class Particle
 {
 public:
-   Particle() : time1hz(0), inttime(0.0), size(0.0), csize(0.0), xsize(0.0), ysize(0.0), area(0.0), holearea(0.0), circlearea(0.0), allin(false), wreject(false), ireject(false), dofReject(false)
+   Particle() : time1hz(0), inttime(0.0), size(0.0), csize(0.0), xsize(0.0), ysize(0.0), area(0.0), holearea(0.0), circlearea(0.0), 
+   allin(false), centerin(false), wreject(false), ireject(false), dofReject(false)
    { }
 
    long time1hz;
    double inttime; 	// Interarrival time (diff of surrounding time words).
    float size, csize, xsize, ysize, area, holearea, circlearea, xcenter, ycenter;
-   bool allin, wreject, ireject, dofReject;
+   bool allin, centerin, wreject, ireject, dofReject;
 };
 
 // Standard RAF record format for 2D records.
@@ -371,6 +372,7 @@ Particle findsize(short *img[], int nslices, int nDiodes, float res){
                        3.14*rad*rad*((3.14-phi-theta)/3.14));
    
    particle.csize = (rad*2.0)*res; 
+   if((particle.xcenter > 1 ) && (particle.xcenter < (nDiodes-2))) particle.centerin=true;
 
    /*  
    //------- OLD WAY (approximation) --------------------
@@ -659,6 +661,7 @@ void showparticle(Particle& x)
 		" CenY=" << x.ycenter <<
 		" Int=" << scientific << x.inttime <<
 		" AI=" << x.allin <<
+		" CI=" << x.centerin <<
 		" IR=" << x.ireject <<
 		" WR=" << x.wreject <<
 		" DOFREJ=" << x.dofReject <<
