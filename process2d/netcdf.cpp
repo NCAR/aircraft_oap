@@ -13,6 +13,9 @@
 
 using namespace std;
 
+const char *netCDF::ISO8601_Z = "%FT%T %z";
+
+
 netCDF::netCDF(Config & cfg) : _outputFile(cfg.outputFile), _file(0), _mode(NcFile::Write), _tas(0)
 {
   // No file to pre-open or file does not exist.  Bail out.
@@ -114,6 +117,7 @@ void netCDF::CreateNetCDFfile(const Config & cfg)
     _file->add_att("ProjectName", cfg.project.c_str());
     _file->add_att("FlightNumber", cfg.flightNumber.c_str());
     _file->add_att("FlightDate", cfg.flightDate.c_str());
+    _file->add_att("date_created", dateProcessed().c_str());
     char tmp[128];
     sprintf(tmp, "%02d:%02d:%02d-%02d:%02d:%02d",
 	st.tm_hour, st.tm_min, st.tm_sec, et.tm_hour, et.tm_min, et.tm_sec);
@@ -133,6 +137,20 @@ void netCDF::readTrueAirspeed(float tas[], size_t n)
     tas[i] = data->as_float(i);
 
   delete data;
+}
+
+
+std::string netCDF::dateProcessed()
+{
+  time_t        t;
+  struct tm     tm;
+  char buffer[64];
+
+  t = time(0);
+  tm = *localtime(&t);
+  strftime(buffer, 64, ISO8601_Z, &tm);
+
+  return(std::string(buffer));
 }
 
 
@@ -307,6 +325,8 @@ NcVar *netCDF::addHistogram(string& varname, string& serialNumber)
       var->add_att("DataQuality", "Good");
     }
   }
+  if (var) var->add_att("DateProcessed", dateProcessed().c_str());
+
   return var;
 }
 

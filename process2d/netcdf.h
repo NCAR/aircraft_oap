@@ -56,6 +56,8 @@ private:
 
   void readStartEndTime(Config & cfg);
 
+  std::string dateProcessed();
+
   std::string _outputFile;
 
   NcFile *_file;
@@ -64,4 +66,6 @@ private:
   NcDim *_timedim, *_spsdim, *_bindim, *_bindim_plusone, *_intbindim;
   NcVar *_timevar;
   NcVar *_tas;
+
+  static const char *ISO8601_Z;
 };
