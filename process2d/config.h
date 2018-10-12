@@ -10,7 +10,7 @@
 class Config
 {
 public:
-  Config() : nOutputBins(128), nInterarrivalBins(40), firstBin(0), shattercorrect(true), eawmethod('r'), smethod('c'), verbose(false), debug(false) {}
+  Config() : nOutputBins(128), nInterarrivalBins(40), firstBin(0), shattercorrect(true), eawmethod('c'), smethod('c'), verbose(false), debug(false) {}
 
   std::string inputFile;
   std::string outputFile;
