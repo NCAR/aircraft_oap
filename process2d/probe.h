@@ -46,9 +46,17 @@ public:
       armWidth = 26.1;
     }
 
-    if (id[0] == '3' || id[0] == 'S')		// 3V-CPI || 2DS
+    if (id[0] == '3')		// 3V-CPI
     {
       armWidth = 5.08;
+      dof_const = 5.13;
+      clockMhz = 20.0e+06;
+      timingMask = 0x0000ffffffffffffULL;
+    }
+
+    if (id[0] == 'S')		// 2DS
+    {
+      armWidth = 6.3;
       dof_const = 5.13;
       clockMhz = 20.0e+06;
       timingMask = 0x0000ffffffffffffULL;
