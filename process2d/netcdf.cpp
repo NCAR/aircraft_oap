@@ -339,7 +339,7 @@ NcVar *netCDF::addVariable(string& varname, string& serialNumber)
   if (strcmp(units, "Unk") == 0)
   {
     if (varname.compare(0, 4, "CONC") == 0) units = "#/L";
-    if (varname.compare(0, 4, "PLWC") == 0) units = "gram/m3";
+    if (varname.compare(0, 4, "PLWC") == 0) units = "g m-3";
     if (varname.compare(0, 4, "DBZ") == 0) units = "dBz";
     if (varname.compare(0, 4, "DBAR") == 0) units = "um";
   }
