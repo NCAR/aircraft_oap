@@ -43,13 +43,13 @@ const unsigned char syncString[8] = { 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 
 class Particle
 {
 public:
-   Particle() : time1hz(0), inttime(0.0), size(0.0), csize(0.0), xsize(0.0), ysize(0.0), area(0.0), holearea(0.0), circlearea(0.0), 
+   Particle() : time1hz(0), inttime(0.0), size(0.0), csize(0.0), xsize(0.0), ysize(0.0), eadsize(0.0), area(0.0), holearea(0.0), circlearea(0.0),
    allin(false), centerin(false), wreject(false), ireject(false), dofReject(false)
    { }
 
    long time1hz;
    double inttime; 	// Interarrival time (diff of surrounding time words).
-   float size, csize, xsize, ysize, area, holearea, circlearea, xcenter, ycenter;
+   float size, csize, xsize, ysize, eadsize, area, holearea, circlearea, xcenter, ycenter;
    bool allin, centerin, wreject, ireject, dofReject;
 };
 
@@ -326,6 +326,13 @@ Particle findsize(short *img[], int nslices, int nDiodes, float res){
    particle.xsize=(maxdiode-mindiode+1)*res;
    particle.ysize=(maxslice-minslice+1)*res;
    particle.area=area;
+
+   particle.allin	= allin;
+   particle.xsize	= (maxdiode-mindiode+1)*res;
+   particle.ysize	= (maxslice-minslice+1)*res;
+   // Equialent Area Diameter sizing.
+   particle.eadsize	= sqrt((area * res * res * 4) / M_PI);
+   particle.area	= area;
    
    //Check for empty roi
    if (x.size()==0) {
@@ -716,7 +723,7 @@ int process2d(Config & cfg, netCDF & ncfile, ProbeInfo & probe)
   double lastbuffertime, buffertime = 0, nextit = 0;
   bool firsttimeflag = true;
   float wc;
-  long last_time1hz=0, itime=0, isize, wsize, iit;
+  long last_time1hz=0, itime=0, iit;
   Particle particle;
   vector<Particle> particle_stack;
   char probetype = probe.id[0];  
@@ -990,17 +997,18 @@ int process2d(Config & cfg, netCDF & ncfile, ProbeInfo & probe)
 
                     // Fill count arrays with accepted particles
                     if (!particle_stack[i].ireject){
-                       isize=0; 
-                       while((particle_stack[i].size)>probe.bin_endpoints[isize+1]) isize++;
-                       count_all[itime][isize+binoffset]++;   //Add offset to isize for RAF convention
+                       int bin = 0;
+                       while((particle_stack[i].size)>probe.bin_endpoints[bin+1]) bin++;
+                       count_all[itime][bin+binoffset]++;   //Add offset to bin for RAF convention
                        data.all.accepted[itime]++;
                     } else data.all.rejected[itime]++;
                     if (!particle_stack[i].wreject){
-                       wsize=0; 
-                       while((particle_stack[i].size/wc)>probe.bin_endpoints[wsize+1]) wsize++;
-                       count_round[itime][wsize+binoffset]++;   //Add offset to wsize for RAF convention
+                       int bin = 0;
+                       while((particle_stack[i].size/wc)>probe.bin_endpoints[bin+1]) bin++;
+                       count_round[itime][bin+binoffset]++;   //Add offset to bin for RAF convention
                        data.round.accepted[itime]++;
-                    } else data.round.rejected[itime]++;
+                    } else
+                       data.round.rejected[itime]++;
                  } // End sorting through particle stack
               } // End of time check
 
