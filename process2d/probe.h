@@ -15,6 +15,9 @@
 #include <string>
 #include <vector>
 
+#include "config.h"
+
+
 /**
  * Probe information.
  */
@@ -82,7 +85,7 @@ public:
    * The sample area unit should be meter^2 for all probes.
    * @param reconstruct Are we doing particle reconstruction, or all-in.
    */
-  void ComputeSamplearea(char eawmethod);
+  void ComputeSamplearea(Config::Method eawmethod);
 
   std::string type;		// string probe name/type
   std::string id;		// Two byte ID at the front of the data-record.

@@ -1,6 +1,6 @@
 #include "probe.h"
 
-void ProbeInfo::ComputeSamplearea(char eawmethod)
+void ProbeInfo::ComputeSamplearea(Config::Method eawmethod)
 {
   for (int i = 0; i < numBins+1; ++i)
     bin_endpoints.push_back((i+0.5) * resolution);
@@ -15,11 +15,11 @@ void ProbeInfo::ComputeSamplearea(char eawmethod)
     DoF = std::min((dof_const * diam*diam), prht);  // in microns, limit on dof is physical distance between arms
 
     // Reconstruction, from eq 17 in Heymsfield & Parrish 1978
-    if (eawmethod=='r') eff_wid = resolution*nDiodes+0.72*diam;
+    if (eawmethod == Config::RECONSTRUCTION) eff_wid = resolution*nDiodes+0.72*diam;
     //All-in, from eq 6 in HP78
-    if (eawmethod=='a') eff_wid = std::max(resolution * (nDiodes-1)-diam, resolution);
+    if (eawmethod == Config::ENTIRE_IN) eff_wid = std::max(resolution * (nDiodes-1)-diam, resolution);
     //Center-in
-    if (eawmethod=='c') eff_wid = resolution*nDiodes;
+    if (eawmethod == Config::CENTER_IN) eff_wid = resolution*nDiodes;
 
     sa = DoF * eff_wid * 1e-12;  //compute sa and convert to m^2 
 
