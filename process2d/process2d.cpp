@@ -380,21 +380,21 @@ Particle findsize(	short *img[], int nslices, int nDiodes, float res,
    // Decide which size to use
    switch (sizeMethod)
    {
-     case Config::CIRCLE:
-       particle.size = particle.csize;  // Default
-       break;
-
      case Config::EQUIV_AREA_DIAM:
-       particle.size = particle.eadsize;  // Default
+       particle.size = particle.eadsize;
        break;
 
      case Config::X:
-       particle.size = particle.xsize;  // Default
+       particle.size = particle.xsize;
        break;
 
      case Config::Y:
-       particle.size = particle.ysize;  // Default
+       particle.size = particle.ysize;
        break;
+
+     case Config::CIRCLE:
+     default:
+       particle.size = particle.csize;  // Default
    }
 
    return particle;
