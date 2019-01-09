@@ -10,7 +10,18 @@
 class Config
 {
 public:
-  Config() : nOutputBins(128), nInterarrivalBins(40), firstBin(0), shattercorrect(true), eawmethod('c'), smethod('c'), verbose(false), debug(false) {}
+
+  /**
+   * Effective Area Width computation method, or rejection algorithm.
+   */
+  enum Method	{ ENTIRE_IN, CENTER_IN, RECONSTRUCTION };
+
+  /**
+   * Sizing method: along X, or Y axis, or perform circle fit (the default).
+   */
+  enum SizeMethod	{ CIRCLE, X, Y, EQUIV_AREA_DIAM };
+
+  Config() : nInterarrivalBins(40), firstBin(0), shattercorrect(true), eawmethod(CENTER_IN), smethod(CIRCLE), verbose(false), debug(false) {}
 
   std::string inputFile;
   std::string outputFile;
@@ -26,16 +37,16 @@ public:
   time_t starttime;
   time_t stoptime;
 
-  int nOutputBins;
-  int nInterarrivalBins;
+  int	nInterarrivalBins;
 
-  int firstBin;
+  int	firstBin;
 
-  bool shattercorrect;
-  char eawmethod;           // Particle reconstruction, all-in, center-in
-  char smethod;
-  bool verbose;
-  bool debug;
+  bool	shattercorrect;
+  Method	eawmethod;	// Particle reconstruction, all-in, center-in
+  SizeMethod	smethod;	// Sizing method.
+
+  bool	verbose;
+  bool	debug;
 };
 
 #endif
