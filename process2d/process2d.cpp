@@ -43,13 +43,13 @@ const unsigned char syncString[8] = { 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 
 class Particle
 {
 public:
-   Particle() : time1hz(0), inttime(0.0), size(0.0), csize(0.0), xsize(0.0), ysize(0.0), area(0.0), holearea(0.0), circlearea(0.0), 
+   Particle() : time1hz(0), inttime(0.0), size(0.0), csize(0.0), xsize(0.0), ysize(0.0), eadsize(0.0), area(0.0), holearea(0.0), circlearea(0.0),
    allin(false), centerin(false), wreject(false), ireject(false), dofReject(false)
    { }
 
    long time1hz;
    double inttime; 	// Interarrival time (diff of surrounding time words).
-   float size, csize, xsize, ysize, area, holearea, circlearea, xcenter, ycenter;
+   float size, csize, xsize, ysize, eadsize, area, holearea, circlearea, xcenter, ycenter;
    bool allin, centerin, wreject, ireject, dofReject;
 };
 
@@ -295,7 +295,9 @@ double dpoisson_fit(float x[], float y[], double a[3], int n){
 
 
 // ----------------CIRCLE SIZE ROUTINE----------------
-Particle findsize(short *img[], int nslices, int nDiodes, float res){
+Particle findsize(	short *img[], int nslices, int nDiodes, float res,
+			Config::SizeMethod sizeMethod)
+{
    // Based on http://tog.acm.org/resources/GraphicsGems/gems/BoundSphere.c 
    // Graphics Gems I, Article by Ritter
 
@@ -322,16 +324,16 @@ Particle findsize(short *img[], int nslices, int nDiodes, float res){
       }
    }
 
-   particle.allin=allin;
-   particle.xsize=(maxdiode-mindiode+1)*res;
-   particle.ysize=(maxslice-minslice+1)*res;
-   particle.area=area;
+   particle.allin	= allin;
+   particle.xsize	= (maxdiode-mindiode+1)*res;
+   particle.ysize	= (maxslice-minslice+1)*res;
+   // Equialent Area Diameter sizing.
+   particle.eadsize	= sqrt((area * res * res * 4) / M_PI);
+   particle.area	= area;
    
-   //Check for empty roi
-   if (x.size()==0) {
-      particle.csize=0.0; particle.xsize=0.0; particle.ysize=0; 
+   // Check for empty roi
+   if (x.size() == 0)
       return particle;
-   }
 
    //Put coordinates in an array for compatibility with Miniball.hpp
    typedef double coordtype;   // coordinate type
@@ -372,85 +374,29 @@ Particle findsize(short *img[], int nslices, int nDiodes, float res){
                        3.14*rad*rad*((3.14-phi-theta)/3.14));
    
    particle.csize = (rad*2.0)*res; 
-   if((particle.xcenter > 1 ) && (particle.xcenter < (nDiodes-2))) particle.centerin=true;
+   if ((particle.xcenter > 1) && (particle.xcenter < (nDiodes-2)))
+      particle.centerin = true;
 
-   /*  
-   //------- OLD WAY (approximation) --------------------
-   cout << "New: " << particle.circlearea << " " << particle.csize << endl;
-   double dx,dy,rad,rad_sq,xspan,yspan,maxspan;
-   double old_to_p,old_to_p_sq,old_to_new;
-   struct Point2Struct {double x, y;} cen, xmin,xmax,ymin,ymax,dia1,dia2,cen;
-   
-   //FIRST PASS: find 6 minima/maxima points 
-   xmin.x=ymin.y= 1000; // initialize for min/max compare 
-   xmax.x=ymax.y= -1000;
-   for (size_t i = 0; i < x.size(); i++){
-      if (x[i]<xmin.x) {xmin.x=x[i]; xmin.y=y[i];} // New xminimum point 
-      if (x[i]>xmax.x) {xmax.x=x[i]; xmax.y=y[i];}
-      if (y[i]<ymin.y) {ymin.x=x[i]; ymin.y=y[i];}
-      if (y[i]>ymax.y) {ymax.x=x[i]; ymax.y=y[i];}
+   // Decide which size to use
+   switch (sizeMethod)
+   {
+     case Config::EQUIV_AREA_DIAM:
+       particle.size = particle.eadsize;
+       break;
+
+     case Config::X:
+       particle.size = particle.xsize;
+       break;
+
+     case Config::Y:
+       particle.size = particle.ysize;
+       break;
+
+     case Config::CIRCLE:
+     default:
+       particle.size = particle.csize;  // Default
    }
 
-   // Set xspan = distance between the 2 points xmin & xmax (squared) 
-   dx = xmax.x - xmin.x;
-   dy = xmax.y - xmin.y;
-   xspan = dx*dx + dy*dy ;
-
-   // Same for y span 
-   dx = ymax.x - ymin.x;
-   dy = ymax.y - ymin.y;
-   yspan = dx*dx + dy*dy ;
-
-   // Set points dia1 & dia2 to the maximally separated pair 
-   dia1 = xmin; dia2 = xmax; // assume xspan biggest 
-   maxspan = xspan;
-   if (yspan>maxspan){
-      maxspan = yspan;
-      dia1 = ymin; dia2 = ymax;
-   }
-
-   // dia1,dia2 is a diameter of initial sphere 
-   // calc initial center 
-   cen.x = (dia1.x+dia2.x)/2.0;
-   cen.y = (dia1.y+dia2.y)/2.0;
-   // calculate initial radius**2 and radius 
-   dx = dia2.x-cen.x; // x component of radius vector 
-   dy = dia2.y-cen.y; // y component of radius vector 
-   rad_sq = dx*dx + dy*dy ;
-   rad = sqrt(rad_sq);
-
-   // SECOND PASS: increment current sphere 
-   for (size_t i=0;i<x.size();i++){
-      dx = x[i]-cen.x;
-      dy = y[i]-cen.y;
-      old_to_p_sq = dx*dx + dy*dy;
-      if (old_to_p_sq > rad_sq) 	// do r**2 test first 
-         { 	// this point is outside of current sphere 
-         old_to_p = sqrt(old_to_p_sq);
-         // calc radius of new sphere 
-         rad = (rad + old_to_p) / 2.0;
-         rad_sq = rad*rad; 	// for next r**2 compare 
-         old_to_new = old_to_p - rad;
-         // calc center of new sphere 
-         cen.x = (rad*cen.x + old_to_new*x[i]) / old_to_p;
-         cen.y = (rad*cen.y + old_to_new*y[i]) / old_to_p;
-      }
-   }
-   rad=rad+0.5;            //adjust to true size for 50% shadow 
-      
-   
-   //Find area of enclosing circle (in the array)
-   theta=acos(min((cen.x/rad),1.0));            //angle
-   phi=acos(min((nDiodes-1-cen.x)/rad,1.0));
-   // find area= triangles(left) + triangles(right) + (remaining wedges)
-   particle.circlearea=(cen.x*rad*sin(theta) + (nDiodes-1-cen.x)*rad*sin(phi) + 
-                       3.14*rad*rad*((3.14-phi-theta)/3.14));
-   particle.csize=(rad*2.0)*res; 
-   
-   cout << "Old: " << particle.circlearea << " " << particle.csize << endl;
-   cout << "-------" << endl;
-   */
-   
    return particle;
 }
 
@@ -565,7 +511,7 @@ float poisson_spot_correction(float area_img, float area_hole, bool allin){
 
 // ----------------PARTICLE REJECTION ---------------------------
 void reject_particle(Particle& x, float cutoff, float nextinttime, float pixel_res, 
-                    float smallbin, float largebin, float wc, char eawmethod)
+                    float smallbin, float largebin, float wc, Config::Method eawmethod)
 {
    //Decides on the rejection of a particle.
    //Ice rejects will return value of 2 or higher
@@ -577,8 +523,8 @@ void reject_particle(Particle& x, float cutoff, float nextinttime, float pixel_r
    //Any conditions
    if ((x.inttime < cutoff) || (nextinttime < cutoff)) {x.wreject=1; x.ireject=1;}
    if (ar < 0.1) {x.wreject=1; x.ireject=1;}
-   if ((eawmethod == 'a') && (x.allin == 0)) {x.wreject=1; x.ireject=1;}
-   if ((eawmethod == 'c') && (x.centerin == 0)) {x.wreject=1; x.ireject=1;}
+   if ((eawmethod == Config::ENTIRE_IN) && (x.allin == 0)) {x.wreject=1; x.ireject=1;}
+   if ((eawmethod == Config::CENTER_IN) && (x.centerin == 0)) {x.wreject=1; x.ireject=1;}
   
    //Water conditions
    if ((ar < 0.4) || ((ar < 0.5) && (x.size > pixel_res*10.0))) x.wreject=1;
@@ -715,8 +661,8 @@ int process2d(Config & cfg, netCDF & ncfile, ProbeInfo & probe)
   unsigned long long slice, firsttimeline=0, lasttimeline=0, timeline, difftimeline;
   double lastbuffertime, buffertime = 0, nextit = 0;
   bool firsttimeflag = true;
-  float wc;
-  long last_time1hz=0, itime=0, isize, wsize, iit;
+  float wc = 1.0;
+  long last_time1hz=0, itime=0, iit;
   Particle particle;
   vector<Particle> particle_stack;
   char probetype = probe.id[0];  
@@ -907,17 +853,12 @@ int process2d(Config & cfg, netCDF & ncfile, ProbeInfo & probe)
            long time1hz = min((long)(lastbuffertime + (difftimeline / probe.clockMhz)), (long)buffertime);
 
            if (time1hz >= cfg.starttime) {
-              particle=findsize(roi, slice_count, probe.nDiodes, probe.resolution);
+              particle=findsize(roi, slice_count, probe.nDiodes, probe.resolution, cfg.smethod);
               particle.holearea=fillholes2(roi, slice_count, probe.nDiodes);           
               particle.inttime=(timeline - lasttimeline) / probe.clockMhz;
               particle.time1hz=time1hz;
               particle.dofReject = dofReject;
 
-
-              // Decide which size to use
-              particle.size=particle.csize;  //Default
-              if (cfg.smethod=='x') particle.size=particle.xsize;
-              if (cfg.smethod=='y') particle.size=particle.ysize;           
 
               // Update interarrival queue
               itq[iitq]=particle.inttime;
@@ -979,28 +920,39 @@ int process2d(Config & cfg, netCDF & ncfile, ProbeInfo & probe)
                  if (cfg.debug) cout << "particle stack size : " << particle_stack.size() << endl;
                  for (size_t i = 0; i < particle_stack.size(); i++) {
                     //Find water size correction
-                    wc=poisson_spot_correction(particle_stack[i].area,particle_stack[i].holearea,particle_stack[i].allin);
+                    if (cfg.smethod == Config::EQUIV_AREA_DIAM)
+                      wc = 1.0;
+                    else
+                      wc = poisson_spot_correction(
+					particle_stack[i].area,
+					particle_stack[i].holearea,
+					particle_stack[i].allin);
 
                     // Rejection
-                    if(i==particle_stack.size()-1) nextit=particle.inttime;  //This particle is for next time period, but use its inttime
-                    else nextit=particle_stack[i+1].inttime;
-                    reject_particle(particle_stack[i], data.pcutoff[itime], nextit, probe.resolution,
-                                    probe.bin_endpoints[0], probe.bin_endpoints[probe.numBins],wc, cfg.eawmethod);
+                    if (i == particle_stack.size()-1)
+                      nextit = particle.inttime;  //This particle is for next time period, but use its inttime
+                    else
+                      nextit = particle_stack[i+1].inttime;
+
+                    reject_particle(	particle_stack[i], data.pcutoff[itime], nextit,
+					probe.resolution, probe.bin_endpoints[0],
+					probe.bin_endpoints[probe.numBins], wc, cfg.eawmethod);
                     if (cfg.debug) showparticle(particle_stack[i]);                    
 
                     // Fill count arrays with accepted particles
                     if (!particle_stack[i].ireject){
-                       isize=0; 
-                       while((particle_stack[i].size)>probe.bin_endpoints[isize+1]) isize++;
-                       count_all[itime][isize+binoffset]++;   //Add offset to isize for RAF convention
+                       int bin = 0;
+                       while((particle_stack[i].size)>probe.bin_endpoints[bin+1]) bin++;
+                       count_all[itime][bin+binoffset]++;   //Add offset to bin for RAF convention
                        data.all.accepted[itime]++;
                     } else data.all.rejected[itime]++;
                     if (!particle_stack[i].wreject){
-                       wsize=0; 
-                       while((particle_stack[i].size/wc)>probe.bin_endpoints[wsize+1]) wsize++;
-                       count_round[itime][wsize+binoffset]++;   //Add offset to wsize for RAF convention
+                       int bin = 0;
+                       while((particle_stack[i].size/wc)>probe.bin_endpoints[bin+1]) bin++;
+                       count_round[itime][bin+binoffset]++;   //Add offset to bin for RAF convention
                        data.round.accepted[itime]++;
-                    } else data.round.rejected[itime]++;
+                    } else
+                       data.round.rejected[itime]++;
                  } // End sorting through particle stack
               } // End of time check
 
@@ -1163,9 +1115,10 @@ int process2d(Config & cfg, netCDF & ncfile, ProbeInfo & probe)
   string varname, eawmethodname;
 
   // Full name for the various effective array width choices
-  if (cfg.eawmethod == 'r') eawmethodname = "Reconstruction";
-  if (cfg.eawmethod == 'a') eawmethodname = "All-in";
-  if (cfg.eawmethod == 'c') eawmethodname = "Center-in";
+  if (cfg.eawmethod == Config::RECONSTRUCTION) eawmethodname = "Reconstruction";
+  if (cfg.eawmethod == Config::ENTIRE_IN) eawmethodname = "All-in";
+  if (cfg.eawmethod == Config::CENTER_IN) eawmethodname = "Center-in";
+//  if (cfg.eawmethod == Config::EQUIV_AREA_DIAM) eawmethodname = "Equivelant Area Diameter";
 
   if ((timevar = ncfile.addTimeVariable(cfg, numtimes)) == 0)
     return netCDF::NC_ERR;
@@ -1358,14 +1311,15 @@ void processArgs(int argc, char *argv[], Config & config)
      if ((arg.find("-sto") == 0) && (i<(argc-1))) config.user_stoptime = argv[++i]; else
      if (arg.find("-fb") == 0) config.firstBin=atoi(argv[++i]); else
      if (arg.find("-n") == 0) config.shattercorrect=0; else
-     if (arg.find("-a") == 0) config.eawmethod='a'; else
-     if (arg.find("-c") == 0) config.eawmethod='c'; else
-     if (arg.find("-r") == 0) config.eawmethod='r'; else
-     if (arg.find("-x") == 0) config.smethod='x'; else
-     if (arg.find("-y") == 0) config.smethod='y'; else
-     if (arg.find("-v") == 0) config.verbose=1; else
-     if (arg.find("-d") == 0) config.debug=1; else
-     if (arg.find("-o") == 0) config.outputFile=argv[++i]; else
+     if (arg.find("-a") == 0) config.eawmethod	= Config::ENTIRE_IN; else
+     if (arg.find("-c") == 0) config.eawmethod	= Config::CENTER_IN; else
+     if (arg.find("-r") == 0) config.eawmethod	= Config::RECONSTRUCTION; else
+     if (arg.find("-ead") == 0) config.smethod= Config::EQUIV_AREA_DIAM; else
+     if (arg.find("-x") == 0) config.smethod	= Config::X; else
+     if (arg.find("-y") == 0) config.smethod	= Config::Y; else
+     if (arg.find("-v") == 0) config.verbose	= true; else
+     if (arg.find("-d") == 0) config.debug	= true; else
+     if (arg.find("-o") == 0) config.outputFile	=argv[++i]; else
      config.inputFile = arg;
   }
 
@@ -1397,6 +1351,8 @@ int usage(const char* argv0)
   cerr << "         Require particle center to be within array"<<endl;
   cerr << "   -reconstruction"<<endl;
   cerr << "         Apply reconstruction for partially images particles"<<endl;
+  cerr << "   -ead"<<endl;
+  cerr << "         Apply equivelant area diamemter sizing"<<endl;
   cerr << "   -noshattercorrect"<<endl;
   cerr << "         Turn off shattering rejection and corrections"<<endl;
   cerr << "   -fb #"<<endl;
