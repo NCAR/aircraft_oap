@@ -11,7 +11,7 @@ COPYRIGHT:	University Corporation for Atmospheric Research, 1997-2018
 */
 
 #include "CIP.h"
-#include "ControlWindow.h"
+#include "UserConfig.h"
 
 const unsigned long long CIP::SyncWord = 0xAAAAAAAAAAAAAAAALL;
 

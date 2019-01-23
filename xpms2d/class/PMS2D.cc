@@ -11,7 +11,7 @@ COPYRIGHT:	University Corporation for Atmospheric Research, 1997-2018
 */
 
 #include "PMS2D.h"
-#include "ControlWindow.h"
+#include "UserConfig.h"
 
 const uint32_t PMS2D::StandardSyncWord = 0x55000000;
 const uint32_t PMS2D::SyncWordMask = 0xff000000;
