@@ -37,14 +37,14 @@ COPYRIGHT:	University Corporation for Atmospheric Research, 1994-2018
 #include <FileMgr.h>
 #include <raf/XPen.h>
 #include <MainCanvas.h>
-#include <UserConfig.h>
+#include <raf/OAPUserConfig.h>
 
 extern Enchilada	*enchiladaWin;
 extern Histogram	*histogramWin;
 extern FileManager	fileMgr;
 extern ControlWindow	*controlWindow;
 extern MainCanvas	*mainPlot;
-extern UserConfig	userConfig;
+extern OAP::UserConfig	userConfig;
 extern XCursor		cursor;
 extern Colors		*color;
 extern XPen		*pen;
@@ -97,7 +97,7 @@ void PageForward(Widget w, XtPointer client, XtPointer call)
   char		*buff_p;
   bool		displayProbes = false;
   float		version;
-  struct recStats p7;
+  struct OAP::recStats p7;
 
   if (fileMgr.NumberOfFiles() == 0)
     return;

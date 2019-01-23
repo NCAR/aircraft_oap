@@ -17,11 +17,11 @@ COPYRIGHT:	University Corporation for Atmospheric Research, 1997-2018
 
 #include <define.h>
 
-#include "PMS2D.h"
-#include "Fast2D.h"
-#include "TwoDS.h"
-#include "CIP.h"
-#include "HVPS.h"
+#include <raf/PMS2D.h>
+#include <raf/Fast2D.h>
+#include <raf/TwoDS.h>
+#include <raf/CIP.h>
+#include <raf/HVPS.h>
 
 #include <map>
 
@@ -34,21 +34,24 @@ COPYRIGHT:	University Corporation for Atmospheric Research, 1997-2018
 #define PMS2_SIZE	4116
 #define PMS2_RECSIZE	(0x8000 / PMS2_SIZE) * PMS2_SIZE
 
-class UserConfig;
+namespace OAP
+{
+  class UserConfig;
+}
 
 
 /**
  * Probe mapping uses the 2 byte key/id in every data record.  Once
  * you have a record, you can get the Probe info from the ProbeList.
  */
-typedef std::map<uint16_t, Probe *> ProbeList;
+typedef std::map<uint16_t, OAP::Probe *> ProbeList;
 
 
 /* -------------------------------------------------------------------- */
 class ADS_DataFile {
 
 public:
-  ADS_DataFile(const char fName[], UserConfig &cfg);
+  ADS_DataFile(const char fName[], OAP::UserConfig &cfg);
   ~ADS_DataFile();
 
   const std::string &
@@ -86,11 +89,11 @@ public:
 
   void	ToggleSyntheticData();
 
-  static Probe::ProbeType ProbeType(const unsigned char *id);
+  static OAP::Probe::ProbeType ProbeType(const unsigned char *id);
 
   bool	isValidProbe(const unsigned char *pr) const;
 
-  Probe *ProbeP(uint32_t id)	{ return _probeList[id]; }
+  OAP::Probe *ProbeP(uint32_t id)	{ return _probeList[id]; }
 
   const ProbeList&
   Probes() const { return _probeList; }
@@ -101,23 +104,23 @@ protected:
 
   typedef struct { long long index; int16_t time[4]; } Index;
 
-  void	initADS2(UserConfig *cfg);
-  void	initADS3(const char *hdrString, UserConfig *cfg);
+  void	initADS2(OAP::UserConfig *cfg);
+  void	initADS3(const char *hdrString, OAP::UserConfig *cfg);
 
   /* Add probe based on id word in old ADS2 header.  These are really
    * old files, or from University of Wyoming
    */
-  void	AddToProbeList(const char *id, UserConfig *cfg);
+  void	AddToProbeList(const char *id, OAP::UserConfig *cfg);
   /* Add probe based on the XML entry in an OAP file.
    */
-  void	AddToProbeListFromXML(const char *id, UserConfig *cfg);
+  void	AddToProbeListFromXML(const char *id, OAP::UserConfig *cfg);
 
   long long	posOfPhysicalRecord(size_t i) {
 	if (i > nIndices) fprintf(stderr, "currPhys exceeds nIndices\n");
 	return _indices[i].index;
 	}
 
-  void	buildIndices(UserConfig *cfg), sort_the_table(int, int), SortIndices(int);
+  void	buildIndices(OAP::UserConfig *cfg), sort_the_table(int, int), SortIndices(int);
   time_t getFileModifyTime(const char *path);
 
   void	SwapPMS2D(P2d_rec *);

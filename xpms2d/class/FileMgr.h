@@ -15,7 +15,10 @@ COPYRIGHT:	University Corporation for Atmospheric Research, 1997-2018
 
 #include <DataFile.h>
 
-class UserConfig;
+namespace OAP
+{
+  class UserConfig;
+}
 
 /* -------------------------------------------------------------------- */
 class FileManager {
@@ -23,8 +26,8 @@ class FileManager {
 public:
 	FileManager();
 
-  void		NewFile(char fileName[], UserConfig &cfg);
-  void		AddFile(char fileName[], UserConfig &cfg);
+  void		NewFile(char fileName[], OAP::UserConfig &cfg);
+  void		AddFile(char fileName[], OAP::UserConfig &cfg);
 
   void		SetCurrentFile(int newFile)	{ currentFile = newFile; }
 

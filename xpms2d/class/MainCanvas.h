@@ -30,7 +30,7 @@ public:
   void	SetTimingWords()	{ _showTimingWords = 1 - _showTimingWords; }
 
   void	reset(ADS_DataFile *file, P2d_rec *rec);
-  void	draw(P2d_rec *record, Probe *probe, float hdrVer, int probeNum, PostScript *ps);
+  void	draw(P2d_rec *record, OAP::Probe *probe, float hdrVer, int probeNum, PostScript *ps);
   size_t maxRecords() const	{ return(_maxRecs); }
   int	SpaceAvailable() const	{ return(Height() - y); }
 
@@ -45,13 +45,13 @@ public:
 protected:
   void  setTitle(ADS_DataFile *file, P2d_rec *rec);
 
-  void	drawPMS2D(P2d_rec *record, Probe *probe, float hdrVer, int probeNum, PostScript *ps);
-  void	drawFast2D(P2d_rec *record, Probe *probe, float hdrVer, int probeNum, PostScript *ps);
-  void	draw2DS(P2d_rec *record, Probe *probe, float hdrVer, int probeNum, PostScript *ps);
-  void	drawHVPS(P2d_rec *record, Probe *probe, float hdrVer, int probeNum, PostScript *ps);
-  void	drawCIP(P2d_rec *record, Probe *probe, float hdrVer, int probeNum, PostScript *ps);
+  void	drawPMS2D(P2d_rec *record, OAP::Probe *probe, float hdrVer, int probeNum, PostScript *ps);
+  void	drawFast2D(P2d_rec *record, OAP::Probe *probe, float hdrVer, int probeNum, PostScript *ps);
+  void	draw2DS(P2d_rec *record, OAP::Probe *probe, float hdrVer, int probeNum, PostScript *ps);
+  void	drawHVPS(P2d_rec *record, OAP::Probe *probe, float hdrVer, int probeNum, PostScript *ps);
+  void	drawCIP(P2d_rec *record, OAP::Probe *probe, float hdrVer, int probeNum, PostScript *ps);
 
-  void	drawSlice(PostScript *ps, int i, const unsigned char *slice, Probe *probe);
+  void	drawSlice(PostScript *ps, int i, const unsigned char *slice, OAP::Probe *probe);
   void	drawSlice(PostScript *ps, int i, uint32_t slice);
 
   /**
@@ -62,16 +62,16 @@ protected:
    */
   void draw_2DC_as_2DP(P2d_rec *record);
 
-  void drawRawRecord(const unsigned char *p, Probe *probe, PostScript *ps);
+  void drawRawRecord(const unsigned char *p, OAP::Probe *probe, PostScript *ps);
 
   /**
    * Count all shadowed diodes across the flight track and display histogram.
    * Routine needs to skip any sync and/or timing words.
    */
-  void drawDiodeHistogram(const unsigned char *data, Probe *probe);
-  void drawDiodeHistogram(const unsigned char *data, Probe *probe, uint32_t sync);
+  void drawDiodeHistogram(const unsigned char *data, OAP::Probe *probe);
+  void drawDiodeHistogram(const unsigned char *data, OAP::Probe *probe, uint32_t sync);
 
-  void drawAccumHistogram(struct recStats &stats, size_t xOffset);
+  void drawAccumHistogram(struct OAP::recStats &stats, size_t xOffset);
 
   size_t uncompressCIP(unsigned char *dest, const unsigned char src[], int nbytes);
 

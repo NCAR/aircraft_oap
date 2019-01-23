@@ -53,7 +53,7 @@ extern XmFile		*fileSel;
 extern size_t nBuffs;
 extern P2d_rec pgFbuff[];
 
-extern UserConfig userConfig;
+extern OAP::UserConfig userConfig;
 
 /* -------------------------------------------------------------------- */
 void GetDataFileName(Widget w, XtPointer client, XtPointer call)
@@ -69,7 +69,7 @@ void NewDataFile(Widget w, XtPointer client, XtPointer call)
   cursor.WaitCursor(mainPlot->Wdgt());
   fileSel->ExtractFileName(
          ((XmFileSelectionBoxCallbackStruct *)call)->value, &dataFile);
- 
+
   fileMgr.NewFile(dataFile, userConfig);
   controlWindow->SetFileNames();
   controlWindow->SetProbes();
@@ -88,11 +88,11 @@ void AddDataFile(Widget w, XtPointer client, XtPointer call)
     ErrorMsg("Currently at maximum allowed files.");
     return;
     }
- 
+
   cursor.WaitCursor(mainPlot->Wdgt());
   fileSel->ExtractFileName(
          ((XmFileSelectionBoxCallbackStruct *)call)->value, &dataFile);
- 
+
   fileMgr.AddFile(dataFile, userConfig);
   controlWindow->SetFileNames();
   cursor.PointerCursor(mainPlot->Wdgt());
@@ -119,7 +119,7 @@ static void PrintPS(Widget w, XtPointer client, XtPointer call)
   cursor.WaitCursor(mainPlot->Wdgt());
   mainPlot->reset(0, 0);
   version = atof(file->HeaderVersion());
- 
+
   std::stringstream title;
   title << file->ProjectNumber() << ", " << file->FlightNumber() << " - "
         << file->FlightDate();
@@ -165,7 +165,7 @@ static void SavePS(Widget w, XtPointer client, XtPointer call)
     }
   else
     PrintPS(NULL, NULL, NULL);
- 
+
 }       /* END SAVEPS */
 
 /* -------------------------------------------------------------------- */
@@ -176,7 +176,7 @@ void PrintSave(Widget w, XtPointer client, XtPointer call)
     ErrorMsg("No data.");
     return;
     }
- 
+
   if (client)
     fileSel->QueryFile("Enter PostScript output file name:", psPath,
                        (XtCallbackProc)SavePS);

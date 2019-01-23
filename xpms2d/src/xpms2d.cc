@@ -36,7 +36,7 @@ COPYRIGHT:      University Corporation for Atmospheric Research, 1997-2018
 #include "MagnifyWindow.h"
 #include "MagnifyCanvas.h"
 #include "MainCanvas.h"
-#include "UserConfig.h"
+#include <raf/OAPUserConfig.h>
 #include <raf/Printer.h>
 #include <raf/XFonts.h>
 #include <raf/XPen.h>
@@ -51,7 +51,7 @@ Magnify		*mag;
 MagnifyWindow	*magWindow;
 MagnifyCanvas	*magPlot = NULL;
 MainCanvas	*mainPlot = NULL;
-UserConfig	userConfig;
+OAP::UserConfig	userConfig;
 XCursor		cursor;
 Printer		*printerSetup;
 Colors		*color;

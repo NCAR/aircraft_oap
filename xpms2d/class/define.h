@@ -20,11 +20,10 @@ FULL NAME:	Include File to Include the Include Files
 
 #include <Xm/Xm.h>
 
-#undef ntohll
-#undef htonll
+#include <raf/portable.h>
 
 #define COMMENT		'#'	/* Comment character for textfiles  */
- 
+
 #define SecondsSinceMidnite(t)	(t[0] * 3600 + t[1] * 60 + t[2])
 
 
@@ -35,8 +34,9 @@ const size_t MAX_DATAFILES = 2;
 const size_t MAX_PROBES = 4;
 
 
-#include "Particle.h"
+#include <raf/Particle.h>
 
+/*
 struct recStats
 {
   unsigned long	thisTime;	// Time of this record in secs since midnight.
@@ -59,6 +59,7 @@ struct recStats
   bool		duplicate;
   unsigned long	prevTime;
 };
+*/
 
 
 /* Values for "displayLevel"		*/
@@ -70,8 +71,6 @@ enum { RETURN, EXIT, IRET };
 extern char *outFile, DataPath[], *timeSeg, pngPath[], psPath[];
 
 extern bool	Interactive, DataChanged, UTCseconds;
-
-long long ntohll(long long *p);
 
 void	GetDataFileName(Widget, XtPointer, XtPointer),
 	NewDataFile(Widget, XtPointer, XtPointer),

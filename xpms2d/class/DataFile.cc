@@ -15,8 +15,6 @@ COPYRIGHT:	University Corporation for Atmospheric Research, 1997-2018
 
 #include "DataFile.h"
 
-#define htonll	ntohll
-
 #include <unistd.h>
 #include <algorithm>
 
@@ -88,6 +86,7 @@ static unsigned short HtestParticle[] = {
 
 static const size_t P2dLRpPR = 1;
 
+using namespace OAP;
 
 /* -------------------------------------------------------------------- */
 ADS_DataFile::ADS_DataFile(const char fName[], UserConfig &cfg)

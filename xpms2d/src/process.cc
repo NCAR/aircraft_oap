@@ -44,17 +44,17 @@ static const size_t	lower_mask = 215, upper_mask = 40;	// HVPS masks.
 
 static float	sampleAreaC[maxDiodes+1], sampleAreaP[maxDiodes+1];
 
-static struct recStats	output;
+static struct OAP::recStats	output;
 
 extern ControlWindow	*controlWindow;
 
-struct recStats &ProcessFast2D(P2d_rec *record, float version);
-struct recStats &ProcessPMS2D(P2d_rec *record, float version);
-struct recStats &ProcessCIP(P2d_rec *record, float version);	// No implemented yet, stub only.
-struct recStats &ProcessHVPSrecord(P2d_rec *record, float version);
+struct OAP::recStats &ProcessFast2D(P2d_rec *record, float version);
+struct OAP::recStats &ProcessPMS2D(P2d_rec *record, float version);
+struct OAP::recStats &ProcessCIP(P2d_rec *record, float version);	// No implemented yet, stub only.
+struct OAP::recStats &ProcessHVPSrecord(P2d_rec *record, float version);
 
 static void computeDerived(double sv[], size_t nBins, double liveTime);
-static size_t checkRejectionCriteria(Particle * cp, recStats & output);
+static size_t checkRejectionCriteria(Particle * cp, OAP::recStats & output);
 
 FILE *fout;
 
@@ -106,7 +106,7 @@ long long CIPTimeWord_Microseconds(unsigned long long slice)
 }
 
 /* -------------------------------------------------------------------- */
-struct recStats &ProcessRecord(P2d_rec *record, float version)
+struct OAP::recStats &ProcessRecord(P2d_rec *record, float version)
 {
   char	*probeID = (char *)&record->id;
 
@@ -197,7 +197,7 @@ if (probeID[1] == '8')	// CIP
 }
 
 /* -------------------------------------------------------------------- */
-struct recStats &ProcessPMS2D(P2d_rec *record, float version)
+struct OAP::recStats &ProcessPMS2D(P2d_rec *record, float version)
 {
   int		startTime, overload;
   size_t	nBins, probeIdx;
@@ -405,7 +405,7 @@ output.tBarElapsedtime += (uint32_t)(nSlices_32bit * output.frequency);
 }	// END PROCESSPMS2D
 
 /* -------------------------------------------------------------------- */
-struct recStats &ProcessHVPSrecord(P2d_rec *record, float version)
+struct OAP::recStats &ProcessHVPSrecord(P2d_rec *record, float version)
 {
   int		startTime;
   size_t	nBins, probeIdx = 0, shaded, unshaded;
@@ -752,7 +752,7 @@ size_t uncompressCIP(unsigned char *dest, const unsigned char src[], int nbytes)
 }
 
 /* -------------------------------------------------------------------- */
-struct recStats &ProcessCIP(P2d_rec *record, float version)
+struct OAP::recStats &ProcessCIP(P2d_rec *record, float version)
 {
   int		startTime, overload = 0;
   size_t	nBins, probeIdx = 0;
@@ -920,7 +920,7 @@ if (debug)
 }	// END PROCESSCIP
 
 /* -------------------------------------------------------------------- */
-struct recStats &ProcessFast2D(P2d_rec *record, float version)
+struct OAP::recStats &ProcessFast2D(P2d_rec *record, float version)
 {
   int		startTime, overload = 0;
   size_t	nBins, probeIdx = 0;
@@ -1092,7 +1092,7 @@ if (debug)
 }	// END PROCESSFAST2D
 
 /* -------------------------------------------------------------------- */
-static size_t checkRejectionCriteria(Particle * cp, recStats & output)
+static size_t checkRejectionCriteria(Particle * cp, OAP::recStats & output)
 {
   if (controlWindow->RejectZeroAreaImage() && cp->w == 0 && cp->h == 0)
     cp->reject = true;

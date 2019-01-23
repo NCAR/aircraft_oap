@@ -1,9 +1,9 @@
 /*
 -------------------------------------------------------------------------
 OBJECT NAME:    MainCanvas.cc
- 
+
 FULL NAME:      Main canvas
- 
+
 COPYRIGHT:	University Corporation for Atmospheric Research, 1997-2018
 -------------------------------------------------------------------------
 */
@@ -15,8 +15,8 @@ COPYRIGHT:	University Corporation for Atmospheric Research, 1997-2018
 #include <raf/XFonts.h>
 #include <raf/XPen.h>
 
-extern Enchilada	*enchiladaWin; 
-extern Histogram	*histogramWin; 
+extern Enchilada	*enchiladaWin;
+extern Histogram	*histogramWin;
 extern Colors	*color;
 extern XFonts	*fonts;
 extern XPen	*pen;
@@ -41,6 +41,8 @@ static std::map<int16_t, P2d_rec> prevRec;
 
 static bool part1[512][64];
 static int part1slice = 0, part2slice = 0;
+
+using namespace OAP;
 
 /* -------------------------------------------------------------------- */
 MainCanvas::MainCanvas(Widget w) : Canvas(w)
@@ -296,7 +298,7 @@ memset(part1, 0, sizeof(part1));
     histogramWin->AddLineItem(record, probe->stats);
 
 }       /* END DRAW */
- 
+
 /* -------------------------------------------------------------------- */
 void MainCanvas::drawPMS2D(P2d_rec *record, Probe *probe, float version, int probeNum, PostScript *ps)
 {
@@ -938,7 +940,7 @@ void MainCanvas::draw_2DC_as_2DP(P2d_rec *record)
 }
 
 /* -------------------------------------------------------------------- */
-void MainCanvas::drawAccumHistogram(struct recStats &stats, size_t xOffset)
+void MainCanvas::drawAccumHistogram(struct OAP::recStats &stats, size_t xOffset)
 {
   pen->SetColor(color->GetColor(BLACK));
 

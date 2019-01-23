@@ -9,6 +9,7 @@ COPYRIGHT:	University Corporation for Atmospheric Research, 2000-2018
 #include "Histogram.h"
 #include <netinet/in.h>
 
+#include <raf/Probe.h>
 
 /* -------------------------------------------------------------------- */
 Histogram::Histogram(const Widget parent) : TextWindow(parent, "histogram")
@@ -16,7 +17,7 @@ Histogram::Histogram(const Widget parent) : TextWindow(parent, "histogram")
 }
 
 /* -------------------------------------------------------------------- */
-void Histogram::AddLineItem(P2d_rec * record, recStats & stats)
+void Histogram::AddLineItem(P2d_rec * record, struct OAP::recStats & stats)
 {
   char buffer[2000];
 

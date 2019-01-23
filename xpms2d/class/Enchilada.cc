@@ -7,9 +7,9 @@ COPYRIGHT:	University Corporation for Atmospheric Research, 2000-2018
 */
 
 #include "Enchilada.h"
-#include "UserConfig.h"
+#include <raf/OAPUserConfig.h>
 
-extern UserConfig	userConfig;
+extern OAP::UserConfig	userConfig;
 
 /* -------------------------------------------------------------------- */
 Enchilada::Enchilada(const Widget parent) : TextWindow(parent, "enchilada")
@@ -17,7 +17,7 @@ Enchilada::Enchilada(const Widget parent) : TextWindow(parent, "enchilada")
 }
 
 /* -------------------------------------------------------------------- */
-void Enchilada::AddLineItem(int cnt, Particle *cp)
+void Enchilada::AddLineItem(int cnt, OAP::Particle *cp)
 {
   int   h, m, s;
   char	buffer[512];
@@ -30,19 +30,19 @@ void Enchilada::AddLineItem(int cnt, Particle *cp)
     Append(" #     Time       timeWord  iy  ix  ia    dt  rj dofRej");
     switch (userConfig.GetConcentration())
     {
-      case BASIC:
+      case OAP::BASIC:
 	Append("theoretical");
 	break;
 
-      case ENTIRE_IN:
+      case OAP::ENTIRE_IN:
 	Append("Entire-in");
 	break;
 
-      case CENTER_IN:
+      case OAP::CENTER_IN:
 	Append("Center-in");
 	break;
 
-      case RECONSTRUCTION:
+      case OAP::RECONSTRUCTION:
         Append("Reconstruct");
 	break;
     }

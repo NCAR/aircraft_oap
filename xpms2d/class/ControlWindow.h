@@ -26,7 +26,7 @@ COPYRIGHT:	University Corporation for Atmospheric Research, 1997-2018
 #include <Xm/TextF.h>
 #include <Xm/ToggleB.h>
 
-#include "UserConfig.h"
+#include <raf/OAPUserConfig.h>
 
 
 /* -------------------------------------------------------------------- */
@@ -46,7 +46,7 @@ public:
 
   float	GetWaterDensity(int idx) const	{ return density[idx].density ; }
   float	GetAreaRatioReject(int idx) const	{ return ratio[idx].density ; }
-  Sizing GetSizingAlgo(int idx) const	{ return (Sizing)idx; }
+  OAP::Sizing GetSizingAlgo(int idx) const	{ return (OAP::Sizing)idx; }
 
 //  bool	RejectZeroAreaImage() const	{ return(true); }
 

@@ -24,7 +24,7 @@ FileManager::FileManager()
 }	/* END CONTRUCTOR */
 
 /* -------------------------------------------------------------------- */
-void FileManager::NewFile(char fileName[], UserConfig &cfg)
+void FileManager::NewFile(char fileName[], OAP::UserConfig &cfg)
 {
   int	i;
 
@@ -47,7 +47,7 @@ void FileManager::NewFile(char fileName[], UserConfig &cfg)
 }	/* END NEWFILE */
 
 /* -------------------------------------------------------------------- */
-void FileManager::AddFile(char fileName[], UserConfig &cfg)
+void FileManager::AddFile(char fileName[], OAP::UserConfig &cfg)
 {
   dataFile[numberFiles++] = new ADS_DataFile(fileName, cfg);
 
