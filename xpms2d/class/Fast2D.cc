@@ -11,7 +11,7 @@ COPYRIGHT:	University Corporation for Atmospheric Research, 1997-2018
 */
 
 #include "Fast2D.h"
-#include "ControlWindow.h"
+#include "UserConfig.h"
 
 const unsigned char Fast2D::SyncString[] = { 0xaa, 0xaa, 0xaa };
 const unsigned char Fast2D::OverldString[] = { 0x55, 0x55, 0xaa };
