@@ -404,9 +404,9 @@ void ADS_DataFile::SetPosition(int position)
   size_t	pos;
   P2d_rec	buff;
 
-  pos = nIndices * position / 100;
+  pos = _indices.size() * position / 100;
 
-  if (pos == nIndices)
+  if (pos == _indices.size())
     --pos;
 
   int hour = ntohs(_indices[pos].time[0]);
@@ -442,10 +442,10 @@ bool ADS_DataFile::LocatePMS2dRecord(P2d_rec *buff, int hour, int minute, int se
     break;
     }
 
-  for (; _indices[i].index > 0 && ntohs(_indices[i].time[2]) < second; ++i)
+  for (; i < _indices.size() && ntohs(_indices[i].time[2]) < second; ++i)
     ;
 
-  if (_indices[i].index == -1)
+  if (i == _indices.size())
     return(false);
 
   currPhys = std::max(0, i - 2);
@@ -471,7 +471,7 @@ bool ADS_DataFile::FirstPMS2dRecord(P2d_rec *buff)
     return(true);
     }
 
-  if (_indices[0].index == -1)	// No 2d records in file.
+  if (_indices.size() == 0)	// No 2d records in file.
     return(false);
 
 #ifdef PNG
@@ -518,14 +518,16 @@ bool ADS_DataFile::NextPMS2dRecord(P2d_rec *buff)
     return(true);
     }
 
-  if (_indices[currPhys].index == -1)
+  if (currPhys >= _indices.size())
+//  if (_indices[currPhys].index == -1)
     return(false);
 
   if (++currLR >= P2dLRpPR)
     {
     currLR = 0;
 
-    if (_indices[++currPhys].index == -1)
+    if (++currPhys >= _indices.size())
+//    if (_indices[++currPhys].index == -1)
       {
       --currPhys;
       return(false);
@@ -722,35 +724,24 @@ void ADS_DataFile::buildIndices(UserConfig *cfg)
     fseek(fpI, 0, SEEK_END);
     len = ftell(fpI);
 
-    if ((_indices = (Index *)malloc(len)) == NULL)
-      {
-      fprintf(stderr, "buildIndices: Memory allocation error, fatal.\n");
-      exit(1);
-      }
+    _indices.resize(len / sizeof(Index));
 
     printf("Reading indices file, %s.\n", tmpFile);
 
     rewind(fpI);
-    fread(_indices, len, 1, fpI);
+    fread(&_indices[0], len, 1, fpI);
     fclose(fpI);
 
     if (5 != ntohl(5))		// If Intel architecture, swap bytes.
-      for (size_t i = 0; i < len / sizeof(Index); ++i)
+      for (size_t i = 0; i < _indices.size(); ++i)
         _indices[i].index = ntohll(&_indices[i].index);
 
-    nIndices = (len / sizeof(Index)) - 1;
     return;
     }
 
 
   printf("Building indices...."); fflush(stdout);
   FlushEvents();
-
-  if ((_indices = (Index *)malloc(8000000 * sizeof(Index))) == NULL)
-    {
-    fprintf(stderr, "buildIndices: Memory allocation error, fatal.\n");
-    exit(1);
-    }
 
 #ifdef PNG
   if (_gzipped)
@@ -789,9 +780,10 @@ void ADS_DataFile::buildIndices(UserConfig *cfg)
 
     for (i = 0; i < 1; ++i)
       {
-      _indices[cnt].index = _savePos + (sizeof(P2d_rec) * i);
-      memcpy(_indices[cnt].time, &buffer[2], 6);
-      ++cnt;
+      Index newOne;
+      newOne.index = _savePos + (sizeof(P2d_rec) * i);
+      memcpy(newOne.time, &buffer[2], 6);
+      _indices.push_back(newOne);
       }
     }
 
@@ -805,24 +797,9 @@ void ADS_DataFile::buildIndices(UserConfig *cfg)
       rewind(fp);
     }
 
-  printf("\n%zu 2d records were found.\n", cnt);
-
-  _indices[cnt].index = -1;
-
-  if ((_indices = (Index *)realloc(_indices, (cnt+1) * sizeof(Index))) == NULL)
-    {
-    fprintf(stderr, "buildIndices: Memory re-allocation error, fatal.\n");
-    exit(1);
-    }
+  printf("\n%zu 2d records were found.\n", _indices.size());
 
 //  SortIndices(cnt);
-
-/* Write new 2d file.  Used to fix IDEAS-III files that were out of time order.
-    {
-
-    }
- */
-
 
   // Write indices to a file for future use.
   if ( _fileHeaderType != NoHeader && (fpI = fopen(tmpFile, "w+b")) )
@@ -830,18 +807,16 @@ void ADS_DataFile::buildIndices(UserConfig *cfg)
     printf("Writing indices file, %s.\n", tmpFile);
 
     if (5 != ntohl(5))		// If Intel architecture, swap bytes.
-      for (size_t i = 0; i < cnt+1; ++i)
+      for (size_t i = 0; i < _indices.size(); ++i)
         _indices[i].index = htonll(&_indices[i].index);
 
-    fwrite(_indices, (cnt+1) * sizeof(Index), 1, fpI);
+    fwrite(&_indices[0], sizeof(Index), _indices.size(), fpI);
     fclose(fpI);
 
     if (5 != ntohl(5))		// Swap em back for current run.
-      for (size_t i = 0; i < cnt+1; ++i)
+      for (size_t i = 0; i < _indices.size(); ++i)
         _indices[i].index = ntohll(&_indices[i].index);
     }
-
-  nIndices = cnt;
 
 }	/* END BUILDINDICES */
 
@@ -922,24 +897,24 @@ bool ADS_DataFile::isValidProbe(const unsigned char *pr) const
 /* -------------------------------------------------------------------- */
 void ADS_DataFile::SortIndices(int cnt)
 {
-  sort_the_table(0, cnt-1);
+  sort_the_table(0, _indices.size());
 
 }       /* SORTTABLE */
 
 /* -------------------------------------------------------------------- */
 void ADS_DataFile::sort_the_table(int beg, int end)
 {
-  Index	*mid, temp;
-  int	x = beg, y = end;
+  Index	temp;
+  int	x = beg, y = end, mid;
 
-  mid = &_indices[(x + y) / 2];
+  mid = (beg + end) / 2;
 
   while (x <= y)
     {
-    while (memcmp(_indices[x].time, mid->time, 6) < 0)
+    while (memcmp(_indices[x].time, _indices[mid].time, 6) < 0)
       ++x;
 
-    while (memcmp(_indices[y].time, mid->time, 6) > 0)
+    while (memcmp(_indices[y].time, _indices[mid].time, 6) > 0)
       --y;
 
     if (x <= y)
@@ -1041,10 +1016,7 @@ void ADS_DataFile::check_rico_half_buff(P2d_rec *buff, size_t beg, size_t end)
 /* -------------------------------------------------------------------- */
 ADS_DataFile::~ADS_DataFile()
 {
-  free(_indices);
-
   delete _hdr;
-  _hdr = 0;
 
   for (size_t i = 0; i < _probeList.size(); ++i)
     delete _probeList[i];

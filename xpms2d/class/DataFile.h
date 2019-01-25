@@ -77,7 +77,7 @@ public:
   void	SetPosition(int position);
 
   int
-  GetPosition() const { return(nIndices == 0 ? 0 : 100 * currPhys / nIndices); }
+  GetPosition() const { return(_indices.size() == 0 ? 0 : 100 * currPhys / _indices.size()); }
 
 //  int	NextSyncRecord(char buff[]);
   bool	LocatePMS2dRecord(P2d_rec *buff, int h, int m, int s);
@@ -102,7 +102,7 @@ public:
 protected:
   enum HeaderType { NoHeader, ADS2, OAP };
 
-  typedef struct { long long index; int16_t time[4]; } Index;
+  struct Index { long long index; int16_t time[4]; };
 
   void	initADS2(OAP::UserConfig *cfg);
   void	initADS3(const char *hdrString, OAP::UserConfig *cfg);
@@ -116,7 +116,7 @@ protected:
   void	AddToProbeListFromXML(const char *id, OAP::UserConfig *cfg);
 
   long long	posOfPhysicalRecord(size_t i) {
-	if (i > nIndices) fprintf(stderr, "currPhys exceeds nIndices\n");
+	if (i > _indices.size()) fprintf(stderr, "currPhys exceeds nIndices\n");
 	return _indices[i].index;
 	}
 
@@ -153,10 +153,9 @@ protected:
    */
   char		_version[16];
 
-  Index		*_indices;
+  std::vector<Index>	_indices;
   int		currPhys;
   int		currLR;
-  size_t	nIndices;
 
   P2d_rec	physRecord[P2DLRPR], *testRecP;
 
