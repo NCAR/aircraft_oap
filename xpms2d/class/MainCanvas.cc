@@ -270,7 +270,7 @@ memset(part1, 0, sizeof(part1));
     case RAW_RECORD:
     case NORMAL:
       sprintf(buffer,
-	"sv = %.2lfL, used = %.3lfL, area = %.2fmm2, conc = %.3lfN/L, lw = %.3lfg/M3, z = %.3lfdb",
+	"sv = %.3lfL, area = %.2fmm2, conc = %.3lfN/L, lw = %.3lfg/M3, z = %.3lfdb",
 	probe->stats.SampleVolume / 1000, res2 * probe->stats.area,
 	probe->stats.concentration, probe->stats.lwc, probe->stats.dbz);
 
