@@ -1,7 +1,7 @@
 /*
  * Resource file for xpms2d.
  */
- 
+
 static String fallback_resources[] =
   {
   "*defaultFontList:	-adobe-courier-bold-r-*-*-14-*-*-*-m-90-*-*",
@@ -23,7 +23,7 @@ static String fallback_resources[] =
   "*XmTextField.foreground:		black",
   "*XmForm.horizontalSpacing:		4",
   "*XmForm.verticalSpacing:		4",
-  "*canvasShell.title:			xpms2d 3.0.0",
+  "*canvasShell.title:			xpms2d 3.0.1",
   "*canvasShell.iconName:		xpms2d",
   "*canvasShell.allowShellResize:	True",
   "*canvasShell.x:			25",
