@@ -133,16 +133,16 @@ memset(part1, 0, sizeof(part1));
 
   probe->ProcessRecord(record, version);
 
-  if (ADS_DataFile::ProbeType((unsigned char *)record) == FAST2D_T)
+  if (OAP::probeType((unsigned char *)record) == FAST2D_T)
     drawFast2D(record, probe, version, probeNum, ps);
   else
-  if (ADS_DataFile::ProbeType((unsigned char *)record) == TWODS_T)
+  if (OAP::probeType((unsigned char *)record) == TWODS_T)
     drawFast2D(record, probe, version, probeNum, ps);
   else
-  if (ADS_DataFile::ProbeType((unsigned char *)record) == HVPS_T)
+  if (OAP::probeType((unsigned char *)record) == HVPS_T)
     drawHVPS(record, probe, version, probeNum, ps);
   else
-  if (ADS_DataFile::ProbeType((unsigned char *)record) == CIP_T)
+  if (OAP::probeType((unsigned char *)record) == CIP_T)
     drawCIP(record, probe, version, probeNum, ps);
   else
     {

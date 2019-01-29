@@ -263,7 +263,7 @@ void ADS_DataFile::AddToProbeListFromXML(const char xml_entry[], UserConfig *cfg
   if (id == 0)
     return;
 
-  switch (ProbeType((const unsigned char *)id))
+  switch (probeType((const unsigned char *)id))
   {
     case PMS2D_T:
       _probeList[*(uint16_t *)id] = new PMS2D(cfg, xml_entry, PMS2_SIZE);
@@ -292,7 +292,7 @@ void ADS_DataFile::AddToProbeList(const char *id, UserConfig *cfg)
   if (id == 0)
     return;
 
-  switch (ProbeType((const unsigned char *)id))
+  switch (probeType((const unsigned char *)id))
   {
     case PMS2D_T:
       _probeList[*(uint16_t *)id] = new PMS2D(cfg, id);
@@ -306,32 +306,6 @@ void ADS_DataFile::AddToProbeList(const char *id, UserConfig *cfg)
     default:
       fprintf(stderr, "DataFile::initOAP, Unknown probe type, [%c%c]\n", id[0], id[1]);
   }
-}
-
-/* -------------------------------------------------------------------- */
-ProbeType ADS_DataFile::ProbeType(const unsigned char *id)
-{
-  if (id[0] == 'C' || id[0] == 'P')
-  {
-    if (id[1] >= '4' && id[1] <= '7')
-      return FAST2D_T;
-
-    if (id[1] == '8')
-      return CIP_T;
-
-    return PMS2D_T;
-  }
-
-  if (id[0] == '2' || id[0] == '3' || id[0] == 'S')
-    return TWODS_T;
-
-  if (id[0] == 'H')
-    return HVPS_T;
-
-  if (id[0] == 'G')
-    return GREYSCALE_T;
-
-  return UNKNOWN_T;
 }
 
 /* -------------------------------------------------------------------- */
@@ -818,33 +792,7 @@ void ADS_DataFile::buildIndices(UserConfig *cfg)
 /* -------------------------------------------------------------------- */
 void ADS_DataFile::SwapPMS2D(OAP::P2d_rec *buff)
 {
-  // Perform byte swapping on whole [data] record if required.
-  if (1 != ntohs(1))
-  {
-    unsigned short	*sp = (unsigned short *)buff;
-
-    for (int i = 1; i < 10; ++i)	// Swap header
-      sp[i] = ntohs(sp[i]);
-
-    if (ProbeType((unsigned char *)buff) == TWODS_T)
-    {
-      unsigned char tmp[16], *cp = (unsigned char *)buff->data;
-      // 256 slices at 16 bytes each.
-      for (size_t i = 0; i < nSlices_128bit; ++i, cp += 16)
-      {
-        for (size_t j = 0; j < 16; ++j)
-          tmp[j] = cp[15-j];
-        memcpy(cp, tmp, 16);
-      }
-    }
-    else
-    if (ProbeType((unsigned char *)buff) == HVPS_T)
-    {
-      sp = (unsigned short *)buff->data;
-      for (size_t i = 0; i < 2048; ++i, ++sp)
-        *sp = ntohs(*sp);
-    }
-  }
+  swapPMS2D(buff);
 
   /* Code for Lake-ICE data, which was shifted 1 bit from overclocking
    * the data lines.  Clocking was fine, except the data lines from the

@@ -88,8 +88,6 @@ public:
 
   void	ToggleSyntheticData();
 
-  static OAP::ProbeType ProbeType(const unsigned char *id);
-
   bool	isValidProbe(const unsigned char *pr) const;
 
   OAP::Probe *ProbeP(uint32_t id)	{ return _probeList[id]; }
