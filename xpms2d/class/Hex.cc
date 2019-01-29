@@ -18,7 +18,7 @@ Hex::Hex(const Widget parent) : TextWindow(parent, "hex")
 }	/* END CONSTRUCTOR */
 
 /* -------------------------------------------------------------------- */
-void Hex::Update(size_t nBuffs, P2d_rec sets[])
+void Hex::Update(size_t nBuffs, OAP::P2d_rec sets[])
 {
   char buffer[1024];
 

@@ -36,14 +36,14 @@ Enchilada	*enchiladaWin = NULL;
 Histogram	*histogramWin = NULL;
 
 extern int     nBuffs;
-extern P2d_rec pgFbuff[];
+extern OAP::P2d_rec pgFbuff[];
 
 /* -------------------------------------------------------------------- */
 void ViewEnchilada(Widget w, XtPointer client, XtPointer call)
-{ 
+{
   if (nBuffs == 0)
     return;
-  
+
   if (!enchiladaWin)
     enchiladaWin = new Enchilada(application->Shell());
 
@@ -53,10 +53,10 @@ void ViewEnchilada(Widget w, XtPointer client, XtPointer call)
 
 /* -------------------------------------------------------------------- */
 void ViewHistogram(Widget w, XtPointer client, XtPointer call)
-{ 
+{
   if (nBuffs == 0)
     return;
-  
+
   if (!histogramWin)
     histogramWin = new Histogram(application->Shell());
 

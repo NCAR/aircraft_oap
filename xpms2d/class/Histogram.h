@@ -12,7 +12,6 @@ COPYRIGHT:	University Corporation for Atmospheric Research, 2000-2018
 #define HISTOGRAM_H
 
 #include <define.h>
-#include <raf/header.h>
 #include <raf/TextWindow.h>
 
 #include <raf/Probe.h>
@@ -23,7 +22,7 @@ class Histogram : public TextWindow
 public:
 	Histogram(const Widget parent);
 
-  void	AddLineItem(P2d_rec * record, struct OAP::recStats & stats);
+  void	AddLineItem(OAP::P2d_rec * record, struct OAP::recStats & stats);
 
 };
 

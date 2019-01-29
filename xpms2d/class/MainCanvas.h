@@ -12,7 +12,6 @@ COPYRIGHT:	University Corporation for Atmospheric Research, 1997-2018
 #define MAINCANVAS_H
 
 #include <define.h>
-#include <raf/header.h>
 
 #include <raf/Canvas.h>
 #include <DataFile.h>
@@ -29,8 +28,8 @@ public:
   void	SetWrapDisplay()	{ _wrap = 1 - _wrap; }
   void	SetTimingWords()	{ _showTimingWords = 1 - _showTimingWords; }
 
-  void	reset(ADS_DataFile *file, P2d_rec *rec);
-  void	draw(P2d_rec *record, OAP::Probe *probe, float hdrVer, int probeNum, PostScript *ps);
+  void	reset(ADS_DataFile *file, OAP::P2d_rec *rec);
+  void	draw(OAP::P2d_rec *record, OAP::Probe *probe, float hdrVer, int probeNum, PostScript *ps);
   size_t maxRecords() const	{ return(_maxRecs); }
   int	SpaceAvailable() const	{ return(Height() - y); }
 
@@ -43,13 +42,13 @@ public:
 
 
 protected:
-  void  setTitle(ADS_DataFile *file, P2d_rec *rec);
+  void  setTitle(ADS_DataFile *file, OAP::P2d_rec *rec);
 
-  void	drawPMS2D(P2d_rec *record, OAP::Probe *probe, float hdrVer, int probeNum, PostScript *ps);
-  void	drawFast2D(P2d_rec *record, OAP::Probe *probe, float hdrVer, int probeNum, PostScript *ps);
-  void	draw2DS(P2d_rec *record, OAP::Probe *probe, float hdrVer, int probeNum, PostScript *ps);
-  void	drawHVPS(P2d_rec *record, OAP::Probe *probe, float hdrVer, int probeNum, PostScript *ps);
-  void	drawCIP(P2d_rec *record, OAP::Probe *probe, float hdrVer, int probeNum, PostScript *ps);
+  void	drawPMS2D(OAP::P2d_rec *record, OAP::Probe *probe, float hdrVer, int probeNum, PostScript *ps);
+  void	drawFast2D(OAP::P2d_rec *record, OAP::Probe *probe, float hdrVer, int probeNum, PostScript *ps);
+  void	draw2DS(OAP::P2d_rec *record, OAP::Probe *probe, float hdrVer, int probeNum, PostScript *ps);
+  void	drawHVPS(OAP::P2d_rec *record, OAP::Probe *probe, float hdrVer, int probeNum, PostScript *ps);
+  void	drawCIP(OAP::P2d_rec *record, OAP::Probe *probe, float hdrVer, int probeNum, PostScript *ps);
 
   void	drawSlice(PostScript *ps, int i, const unsigned char *slice, OAP::Probe *probe);
   void	drawSlice(PostScript *ps, int i, uint32_t slice);
@@ -60,7 +59,7 @@ protected:
    * then generate a pixel in the degraded image.  This particles are shown
    * to the right of the regular data.
    */
-  void draw_2DC_as_2DP(P2d_rec *record);
+  void draw_2DC_as_2DP(OAP::P2d_rec *record);
 
   void drawRawRecord(const unsigned char *p, OAP::Probe *probe, PostScript *ps);
 

@@ -20,7 +20,7 @@ FULL NAME:	Include File to Include the Include Files
 
 #include <Xm/Xm.h>
 
-#include <raf/portable.h>
+#include <raf/OAP.h>
 
 #define COMMENT		'#'	/* Comment character for textfiles  */
 

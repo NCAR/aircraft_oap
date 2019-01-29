@@ -300,7 +300,7 @@ void ControlWindow::SetProbes()
   for (; i < MAX_PROBES; ++i)
     {
     XtSetSensitive(probeB[i], False);
- 
+
     label = XmStringCreate((char *)"none", XmFONTLIST_DEFAULT_TAG);
     XtSetArg(args[0], XmNlabelString, label);
     XtSetValues(probeB[i], args, 1);
@@ -312,7 +312,7 @@ void ControlWindow::SetProbes()
 }	/* END SETPROBES */
 
 /* -------------------------------------------------------------------- */
-void ControlWindow::UpdateStartTime(P2d_rec *buff)
+void ControlWindow::UpdateStartTime(OAP::P2d_rec *buff)
 {
   char	tmpSpace[16];
 

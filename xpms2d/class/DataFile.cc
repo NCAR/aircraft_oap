@@ -18,11 +18,9 @@ COPYRIGHT:	University Corporation for Atmospheric Research, 1997-2018
 #include <unistd.h>
 #include <algorithm>
 
-const size_t nSlices_32bit = 1024;
-const size_t nSlices_64bit = 512;
-const size_t nSlices_128bit = 256;
+using namespace OAP;
 
-static P2d_rec PtestRecord, CtestRecord, HtestRecord;
+static OAP::P2d_rec PtestRecord, CtestRecord, HtestRecord;
 
 static uint32_t PtestParticle[] = {
 0xffffffff,
@@ -114,8 +112,7 @@ ADS_DataFile::ADS_DataFile(const char fName[], UserConfig &cfg)
 
   if ((_gzipped && gz_fd) || (!_gzipped && fp == NULL))
     {
-    sprintf((char *)buffer, "Can't open file %s", _fileName.c_str());
-    ErrorMsg((char *)buffer);
+    fprintf(stderr, "Can't open file %s", _fileName.c_str());
     return;
     }
 
@@ -268,19 +265,19 @@ void ADS_DataFile::AddToProbeListFromXML(const char xml_entry[], UserConfig *cfg
 
   switch (ProbeType((const unsigned char *)id))
   {
-    case Probe::PMS2D:
+    case PMS2D_T:
       _probeList[*(uint16_t *)id] = new PMS2D(cfg, xml_entry, PMS2_SIZE);
       break;
-    case Probe::FAST2D:
+    case FAST2D_T:
       _probeList[*(uint16_t *)id] = new Fast2D(cfg, xml_entry, PMS2_SIZE);
       break;
-    case Probe::TWODS:
+    case TWODS_T:
       _probeList[*(uint16_t *)id] = new TwoDS(cfg, xml_entry, PMS2_SIZE);
       break;
-    case Probe::HVPS:
+    case HVPS_T:
       _probeList[*(uint16_t *)id] = new HVPS(cfg, xml_entry, PMS2_SIZE);
       break;
-    case Probe::CIP:
+    case CIP_T:
       _probeList[*(uint16_t *)id] = new CIP(cfg, xml_entry, PMS2_SIZE);
       break;
     default:
@@ -297,13 +294,13 @@ void ADS_DataFile::AddToProbeList(const char *id, UserConfig *cfg)
 
   switch (ProbeType((const unsigned char *)id))
   {
-    case Probe::PMS2D:
+    case PMS2D_T:
       _probeList[*(uint16_t *)id] = new PMS2D(cfg, id);
       break;
-    case Probe::HVPS:
+    case HVPS_T:
       _probeList[*(uint16_t *)id] = new HVPS(cfg, id);
       break;
-    case Probe::CIP:
+    case CIP_T:
       _probeList[*(uint16_t *)id] = new CIP(cfg, id);
       break;
     default:
@@ -312,29 +309,29 @@ void ADS_DataFile::AddToProbeList(const char *id, UserConfig *cfg)
 }
 
 /* -------------------------------------------------------------------- */
-Probe::ProbeType ADS_DataFile::ProbeType(const unsigned char *id)
+ProbeType ADS_DataFile::ProbeType(const unsigned char *id)
 {
   if (id[0] == 'C' || id[0] == 'P')
   {
     if (id[1] >= '4' && id[1] <= '7')
-      return Probe::FAST2D;
+      return FAST2D_T;
 
     if (id[1] == '8')
-      return Probe::CIP;
+      return CIP_T;
 
-    return Probe::PMS2D;
+    return PMS2D_T;
   }
 
   if (id[0] == '2' || id[0] == '3' || id[0] == 'S')
-    return Probe::TWODS;
+    return TWODS_T;
 
   if (id[0] == 'H')
-    return Probe::HVPS;
+    return HVPS_T;
 
   if (id[0] == 'G')
-    return Probe::GREYSCALE;
+    return GREYSCALE_T;
 
-  return Probe::UNKNOWN;
+  return UNKNOWN_T;
 }
 
 /* -------------------------------------------------------------------- */
@@ -402,7 +399,7 @@ void ADS_DataFile::ToggleSyntheticData()
 void ADS_DataFile::SetPosition(int position)
 {
   size_t	pos;
-  P2d_rec	buff;
+  OAP::P2d_rec	buff;
 
   pos = _indices.size() * position / 100;
 
@@ -420,13 +417,13 @@ void ADS_DataFile::SetPosition(int position)
 }	/* END SETPOSITION */
 
 /* -------------------------------------------------------------------- */
-bool ADS_DataFile::LocatePMS2dRecord(P2d_rec *buff, int hour, int minute, int second)
+bool ADS_DataFile::LocatePMS2dRecord(OAP::P2d_rec *buff, int hour, int minute, int second)
 {
   size_t i;
-  bool	rc, startPreMidnight = False;
+  bool	rc, startPreMidnight = false;
 
   if (ntohs(_indices[0].time[0]) > 12)
-    startPreMidnight = True;
+    startPreMidnight = true;
 
   for (i = 1; _indices[i].index > 0 && ntohs(_indices[i].time[0]) < hour; ++i)
     if (startPreMidnight && ntohs(_indices[i].time[0]) < 12 && hour > 12)
@@ -461,13 +458,13 @@ bool ADS_DataFile::LocatePMS2dRecord(P2d_rec *buff, int hour, int minute, int se
 }	/* END LOCATEPMS2DRECORD */
 
 /* -------------------------------------------------------------------- */
-bool ADS_DataFile::FirstPMS2dRecord(P2d_rec *buff)
+bool ADS_DataFile::FirstPMS2dRecord(OAP::P2d_rec *buff)
 {
   currPhys = currLR = 0;
 
   if (_useTestRecord)
     {
-    memcpy((char *)buff, (char *)&CtestRecord, sizeof(P2d_rec));
+    memcpy((char *)buff, (char *)&CtestRecord, sizeof(OAP::P2d_rec));
     return(true);
     }
 
@@ -478,23 +475,23 @@ bool ADS_DataFile::FirstPMS2dRecord(P2d_rec *buff)
   if (_gzipped)
     {
     gzseek(gz_fd, (z_off_t)_indices[0].index, SEEK_SET);
-    gzread(gz_fd, physRecord, sizeof(P2d_rec) * P2dLRpPR);
+    gzread(gz_fd, physRecord, sizeof(OAP::P2d_rec) * P2dLRpPR);
     }
   else
 #endif
     {
     fseeko(fp, _indices[0].index, SEEK_SET);
-    fread(physRecord, sizeof(P2d_rec), P2dLRpPR, fp);
+    fread(physRecord, sizeof(OAP::P2d_rec), P2dLRpPR, fp);
     }
 
-  memcpy((char *)buff, (char *)physRecord, sizeof(P2d_rec));
+  memcpy((char *)buff, (char *)physRecord, sizeof(OAP::P2d_rec));
   SwapPMS2D(buff);
   return(true);
 
 }	/* END FIRSTPMS2DRECORD */
 
 /* -------------------------------------------------------------------- */
-bool ADS_DataFile::NextPMS2dRecord(P2d_rec *buff)
+bool ADS_DataFile::NextPMS2dRecord(OAP::P2d_rec *buff)
 {
   if (_useTestRecord)
     {
@@ -514,7 +511,7 @@ bool ADS_DataFile::NextPMS2dRecord(P2d_rec *buff)
         ++testRecP->minute;
       }
 
-    memcpy((char *)buff, (char *)testRecP, sizeof(P2d_rec));
+    memcpy((char *)buff, (char *)testRecP, sizeof(OAP::P2d_rec));
     return(true);
     }
 
@@ -537,24 +534,24 @@ bool ADS_DataFile::NextPMS2dRecord(P2d_rec *buff)
     if (_gzipped)
       {
       gzseek(gz_fd, (z_off_t)_indices[currPhys].index, SEEK_SET);
-      gzread(gz_fd, physRecord, sizeof(P2d_rec) * P2dLRpPR);
+      gzread(gz_fd, physRecord, sizeof(OAP::P2d_rec) * P2dLRpPR);
       }
     else
 #endif
       {
       fseeko(fp, _indices[currPhys].index, SEEK_SET);
-      fread(physRecord, sizeof(P2d_rec), P2dLRpPR, fp);
+      fread(physRecord, sizeof(OAP::P2d_rec), P2dLRpPR, fp);
       }
     }
 
-  memcpy((char *)buff, (char *)&physRecord[currLR], sizeof(P2d_rec));
+  memcpy((char *)buff, (char *)&physRecord[currLR], sizeof(OAP::P2d_rec));
   SwapPMS2D(buff);
   return(true);
 
 }	/* END NEXTPMS2DRECORD */
 
 /* -------------------------------------------------------------------- */
-bool ADS_DataFile::PrevPMS2dRecord(P2d_rec *buff)
+bool ADS_DataFile::PrevPMS2dRecord(OAP::P2d_rec *buff)
 {
   if (_useTestRecord)
     {
@@ -571,7 +568,7 @@ bool ADS_DataFile::PrevPMS2dRecord(P2d_rec *buff)
         --testRecP->minute;
       }
 
-    memcpy((char *)buff, (char *)testRecP, sizeof(P2d_rec));
+    memcpy((char *)buff, (char *)testRecP, sizeof(OAP::P2d_rec));
     return(false);
     }
 
@@ -590,17 +587,17 @@ bool ADS_DataFile::PrevPMS2dRecord(P2d_rec *buff)
     if (_gzipped)
       {
       gzseek(gz_fd, (z_off_t)_indices[currPhys].index, SEEK_SET);
-      gzread(gz_fd, physRecord, sizeof(P2d_rec) * P2dLRpPR);
+      gzread(gz_fd, physRecord, sizeof(OAP::P2d_rec) * P2dLRpPR);
       }
     else
 #endif
       {
       fseeko(fp, _indices[currPhys].index, SEEK_SET);
-      fread(physRecord, sizeof(P2d_rec), P2dLRpPR, fp);
+      fread(physRecord, sizeof(OAP::P2d_rec), P2dLRpPR, fp);
       }
     }
 
-  memcpy((char *)buff, (char *)&physRecord[currLR], sizeof(P2d_rec));
+  memcpy((char *)buff, (char *)&physRecord[currLR], sizeof(OAP::P2d_rec));
   SwapPMS2D(buff);
   return(true);
 
@@ -659,7 +656,7 @@ int ADS_DataFile::NextPhysicalRecord(unsigned char buff[])
     case PMS2DP4:		// 64 bit 2DP.
     case SPEC2DSH: case SPEC2DSV:	// SPEC 2DS
     case HVPS1: case HVPS2:	// HVPS
-      size = (P2dLRpPR * sizeof(P2d_rec)) - sizeof(short);
+      size = (P2dLRpPR * sizeof(OAP::P2d_rec)) - sizeof(short);
       break;
 
     case PMS2DG1: case PMS2DG2: /* GrayScale */
@@ -740,7 +737,6 @@ void ADS_DataFile::buildIndices(UserConfig *cfg)
 
 
   printf("Building indices...."); fflush(stdout);
-  FlushEvents();
 
 #ifdef PNG
   if (_gzipped)
@@ -780,7 +776,7 @@ void ADS_DataFile::buildIndices(UserConfig *cfg)
     for (i = 0; i < 1; ++i)
       {
       Index newOne;
-      newOne.index = _savePos + (sizeof(P2d_rec) * i);
+      newOne.index = _savePos + (sizeof(OAP::P2d_rec) * i);
       memcpy(newOne.time, &buffer[2], 6);
       _indices.push_back(newOne);
       }
@@ -820,7 +816,7 @@ void ADS_DataFile::buildIndices(UserConfig *cfg)
 }	/* END BUILDINDICES */
 
 /* -------------------------------------------------------------------- */
-void ADS_DataFile::SwapPMS2D(P2d_rec *buff)
+void ADS_DataFile::SwapPMS2D(OAP::P2d_rec *buff)
 {
   // Perform byte swapping on whole [data] record if required.
   if (1 != ntohs(1))
@@ -830,7 +826,7 @@ void ADS_DataFile::SwapPMS2D(P2d_rec *buff)
     for (int i = 1; i < 10; ++i)	// Swap header
       sp[i] = ntohs(sp[i]);
 
-    if (ProbeType((unsigned char *)buff) == Probe::TWODS)
+    if (ProbeType((unsigned char *)buff) == TWODS_T)
     {
       unsigned char tmp[16], *cp = (unsigned char *)buff->data;
       // 256 slices at 16 bytes each.
@@ -842,7 +838,7 @@ void ADS_DataFile::SwapPMS2D(P2d_rec *buff)
       }
     }
     else
-    if (ProbeType((unsigned char *)buff) == Probe::HVPS)
+    if (ProbeType((unsigned char *)buff) == HVPS_T)
     {
       sp = (unsigned short *)buff->data;
       for (size_t i = 0; i < 2048; ++i, ++sp)
@@ -935,7 +931,7 @@ void ADS_DataFile::sort_the_table(int beg, int end)
 }
 
 /* -------------------------------------------------------------------- */
-void ADS_DataFile::check_rico_half_buff(P2d_rec *buff, size_t beg, size_t end)
+void ADS_DataFile::check_rico_half_buff(OAP::P2d_rec *buff, size_t beg, size_t end)
 {
   std::vector<size_t> spectra, sorted_spectra;
 

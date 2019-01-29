@@ -52,7 +52,7 @@ extern XPen		*pen;
 
 /* Contains current N 2d records (for re-use by things like ViewHex */
 size_t	nBuffs = 0;
-P2d_rec	pgFbuff[20];
+OAP::P2d_rec	pgFbuff[20];
 
 
 /* -------------------------------------------------------------------- */
@@ -166,7 +166,7 @@ void PageForward(Widget w, XtPointer client, XtPointer call)
 void PageCurrent()
 {
   size_t	i;
-  P2d_rec	pgBuff;
+  OAP::P2d_rec	pgBuff;
 
   if (fileMgr.NumberOfFiles() == 0)
     return;
@@ -193,7 +193,7 @@ void PageCurrent()
 void PageBackward(Widget w, XtPointer client, XtPointer call)
 {
   size_t	i;
-  P2d_rec	pgBbuff;
+  OAP::P2d_rec	pgBbuff;
 
   if (fileMgr.NumberOfFiles() == 0)
     return;

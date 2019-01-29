@@ -12,7 +12,6 @@ COPYRIGHT:	University Corporation for Atmospheric Research, 1997-2018
 #define CONWINDOW_H
 
 #include <define.h>
-#include <raf/header.h>
 
 #include <raf/Application.h>
 #include <raf/Window.h>
@@ -41,7 +40,7 @@ public:
 
   Widget StartTime() const	{ return timeText; }
 
-  void	UpdateStartTime(P2d_rec *buff);
+  void	UpdateStartTime(OAP::P2d_rec *buff);
   void	UpdateTimeScale();
 
   float	GetWaterDensity(int idx) const	{ return density[idx].density ; }

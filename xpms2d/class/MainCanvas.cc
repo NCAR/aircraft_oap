@@ -37,7 +37,7 @@ static const int	HVPS_MASKED = 40;
 /* used to determine if thisRecord is a duplicate of previousRecord.
  * Could be stored elsewhere, e.g. recStats.
  */
-static std::map<int16_t, P2d_rec> prevRec;
+static std::map<int16_t, OAP::P2d_rec> prevRec;
 
 static bool part1[512][64];
 static int part1slice = 0, part2slice = 0;
@@ -76,7 +76,7 @@ void MainCanvas::SetDisplayMode(int mode)
 }	/* END SETDISPLAYMODE */
 
 /* -------------------------------------------------------------------- */
-void MainCanvas::reset(ADS_DataFile *file, P2d_rec *rec)
+void MainCanvas::reset(ADS_DataFile *file, OAP::P2d_rec *rec)
 {
   _maxRecs = (Height() - TOP_OFFSET) / _pixelsPerY;
   y = TOP_OFFSET;
@@ -85,7 +85,7 @@ void MainCanvas::reset(ADS_DataFile *file, P2d_rec *rec)
 }
 
 /* -------------------------------------------------------------------- */
-void MainCanvas::setTitle(ADS_DataFile *file, P2d_rec *rec)
+void MainCanvas::setTitle(ADS_DataFile *file, OAP::P2d_rec *rec)
 {
   if (file)
     {
@@ -93,8 +93,8 @@ void MainCanvas::setTitle(ADS_DataFile *file, P2d_rec *rec)
     title << file->ProjectNumber() << ", " << file->FlightNumber() << " - ";
     if (rec)
       {
-      title << std::setfill('0') << std::setw(2) << rec->spare2 << '/' << rec->spare3
-	    << '/' << std::setw(4) << rec->spare1;
+      title << std::setfill('0') << std::setw(2) << rec->month << '/' << rec->day
+	    << '/' << std::setw(4) << rec->year;
       }
     else
       title << file->FlightDate();
@@ -106,7 +106,7 @@ void MainCanvas::setTitle(ADS_DataFile *file, P2d_rec *rec)
 }
 
 /* -------------------------------------------------------------------- */
-void MainCanvas::draw(P2d_rec *record, Probe *probe, float version, int probeNum, PostScript *ps)
+void MainCanvas::draw(OAP::P2d_rec *record, Probe *probe, float version, int probeNum, PostScript *ps)
 {
   char		buffer[256];
   bool		old2d = false;
@@ -133,16 +133,16 @@ memset(part1, 0, sizeof(part1));
 
   probe->ProcessRecord(record, version);
 
-  if (ADS_DataFile::ProbeType((unsigned char *)record) == Probe::FAST2D)
+  if (ADS_DataFile::ProbeType((unsigned char *)record) == FAST2D_T)
     drawFast2D(record, probe, version, probeNum, ps);
   else
-  if (ADS_DataFile::ProbeType((unsigned char *)record) == Probe::TWODS)
+  if (ADS_DataFile::ProbeType((unsigned char *)record) == TWODS_T)
     drawFast2D(record, probe, version, probeNum, ps);
   else
-  if (ADS_DataFile::ProbeType((unsigned char *)record) == Probe::HVPS)
+  if (ADS_DataFile::ProbeType((unsigned char *)record) == HVPS_T)
     drawHVPS(record, probe, version, probeNum, ps);
   else
-  if (ADS_DataFile::ProbeType((unsigned char *)record) == Probe::CIP)
+  if (ADS_DataFile::ProbeType((unsigned char *)record) == CIP_T)
     drawCIP(record, probe, version, probeNum, ps);
   else
     {
@@ -153,7 +153,7 @@ memset(part1, 0, sizeof(part1));
   // In the old ADS2, overld gets stamped in the one record early,
   // not in the actual record that was interupted.  Compensate here.
   size_t overLoad = old2d ? prevOverLoad : record->overld;
- 
+
   if (probe->stats.duplicate)
     {
     strcpy(buffer, " DUPLICATE RECORD! ");
@@ -300,7 +300,7 @@ memset(part1, 0, sizeof(part1));
 }       /* END DRAW */
 
 /* -------------------------------------------------------------------- */
-void MainCanvas::drawPMS2D(P2d_rec *record, Probe *probe, float version, int probeNum, PostScript *ps)
+void MainCanvas::drawPMS2D(OAP::P2d_rec *record, Probe *probe, float version, int probeNum, PostScript *ps)
 {
   int		nextColor, cntr = 0;
   uint32_t	*p, syncWord;
@@ -312,7 +312,7 @@ void MainCanvas::drawPMS2D(P2d_rec *record, Probe *probe, float version, int pro
 
   p = (uint32_t *)record->data;
 
-  if (memcmp((void *)record, (void *)&prevRec[record->id], sizeof(P2d_rec)) == 0)
+  if (memcmp((void *)record, (void *)&prevRec[record->id], sizeof(OAP::P2d_rec)) == 0)
     probe->stats.duplicate = true;
 
   if (version < 3.35)
@@ -433,7 +433,7 @@ for (size_t i = 0; i < probe->nSlices(); ++i)
 }
 
 /* -------------------------------------------------------------------- */
-void MainCanvas::drawFast2D(P2d_rec *record, Probe *probe, float version, int probeNum, PostScript *ps)
+void MainCanvas::drawFast2D(OAP::P2d_rec *record, Probe *probe, float version, int probeNum, PostScript *ps)
 {
   Particle	*cp = 0;
   int		nextColor, cntr = 0;
@@ -441,7 +441,7 @@ void MainCanvas::drawFast2D(P2d_rec *record, Probe *probe, float version, int pr
   unsigned char *p;
   size_t	bytesPerSlice = probe->nDiodes() / 8;
 
-  if (memcmp((void *)record, (void *)&prevRec[record->id], sizeof(P2d_rec)) == 0)
+  if (memcmp((void *)record, (void *)&prevRec[record->id], sizeof(OAP::P2d_rec)) == 0)
     probe->stats.duplicate = true;
 
 /* This was so we could put all the uncompressed 2DS data on one row.  Not sure
@@ -541,13 +541,13 @@ void MainCanvas::drawFast2D(P2d_rec *record, Probe *probe, float version, int pr
 }
 
 /* -------------------------------------------------------------------- */
-void MainCanvas::draw2DS(P2d_rec *record, Probe *probe, float version, int probeNum, PostScript *ps)
+void MainCanvas::draw2DS(OAP::P2d_rec *record, Probe *probe, float version, int probeNum, PostScript *ps)
 {
   unsigned char *p;
 
   static int x = 0;
 
-  if (memcmp((void *)record, (void *)&prevRec[record->id], sizeof(P2d_rec)) == 0)
+  if (memcmp((void *)record, (void *)&prevRec[record->id], sizeof(OAP::P2d_rec)) == 0)
     probe->stats.duplicate = true;
 
   if (	probe->nDiodes() == 128 &&	// 2DS and 3V-CPI; name test would be better
@@ -651,14 +651,14 @@ size_t MainCanvas::uncompressCIP(unsigned char *dest, const unsigned char src[],
 }
 
 /* -------------------------------------------------------------------- */
-void MainCanvas::drawCIP(P2d_rec *record, Probe *probe, float version, int probeNum, PostScript *ps)
+void MainCanvas::drawCIP(OAP::P2d_rec *record, Probe *probe, float version, int probeNum, PostScript *ps)
 {
   Particle	*cp = 0;
   int		nextColor, cntr = 0;
   bool		colorIsBlack = false;
   unsigned char	*p;
 
-  if (memcmp((void *)record, (void *)&prevRec[record->id], sizeof(P2d_rec)) == 0)
+  if (memcmp((void *)record, (void *)&prevRec[record->id], sizeof(OAP::P2d_rec)) == 0)
     probe->stats.duplicate = true;
 
   unsigned char image[16000];
@@ -743,13 +743,13 @@ void MainCanvas::drawCIP(P2d_rec *record, Probe *probe, float version, int probe
 }
 
 /* -------------------------------------------------------------------- */
-void MainCanvas::drawHVPS(P2d_rec *record, Probe *probe, float version, int probeNum, PostScript *ps)
+void MainCanvas::drawHVPS(OAP::P2d_rec *record, Probe *probe, float version, int probeNum, PostScript *ps)
 {
   size_t	y1 = 0, cntr = 0, shaded, unshaded, line = LEFT_MARGIN;
   unsigned short	*sp = (unsigned short *)record->data;
   Particle	*cp = 0;
 
-  if (memcmp((void *)record, (void *)&prevRec[record->id], sizeof(P2d_rec)) == 0)
+  if (memcmp((void *)record, (void *)&prevRec[record->id], sizeof(OAP::P2d_rec)) == 0)
     probe->stats.duplicate = true;
 
   if (*sp == 0xcaaa)
@@ -896,7 +896,7 @@ void MainCanvas::drawRawRecord(const unsigned char *p, Probe *probe, PostScript 
 }
 
 /* -------------------------------------------------------------------- */
-void MainCanvas::draw_2DC_as_2DP(P2d_rec *record)
+void MainCanvas::draw_2DC_as_2DP(OAP::P2d_rec *record)
 {
   if (((char *)&record->id)[0] != 'C')
     return;
@@ -991,7 +991,7 @@ void MainCanvas::drawDiodeHistogram(const unsigned char *p, Probe *probe)
   {
     if (probe->isSyncWord(p) || probe->isOverloadWord(p))
     {
-      if (probe->Type() == Probe::CIP)  // Also skip DMT time word.
+      if (probe->Type() == CIP_T)  // Also skip DMT time word.
         p += nBytes;
 
       continue;

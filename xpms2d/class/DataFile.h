@@ -8,20 +8,19 @@ COPYRIGHT:	University Corporation for Atmospheric Research, 1997-2018
 -------------------------------------------------------------------------
 */
 
-#ifndef DATAFILE_H
-#define DATAFILE_H
+#ifndef _OAP_DATAFILE_H_
+#define _OAP_DATAFILE_H_
 
 #ifdef PNG
 #include <zlib.h>
 #endif
-
-#include <define.h>
 
 #include <raf/PMS2D.h>
 #include <raf/Fast2D.h>
 #include <raf/TwoDS.h>
 #include <raf/CIP.h>
 #include <raf/HVPS.h>
+#include <raf/hdrAPI.h>
 
 #include <map>
 
@@ -80,16 +79,16 @@ public:
   GetPosition() const { return(_indices.size() == 0 ? 0 : 100 * currPhys / _indices.size()); }
 
 //  int	NextSyncRecord(char buff[]);
-  bool	LocatePMS2dRecord(P2d_rec *buff, int h, int m, int s);
-  bool	FirstPMS2dRecord(P2d_rec *buff);
-  bool	NextPMS2dRecord(P2d_rec *buff);
-  bool	PrevPMS2dRecord(P2d_rec *buff);
+  bool	LocatePMS2dRecord(OAP::P2d_rec *buff, int h, int m, int s);
+  bool	FirstPMS2dRecord(OAP::P2d_rec *buff);
+  bool	NextPMS2dRecord(OAP::P2d_rec *buff);
+  bool	PrevPMS2dRecord(OAP::P2d_rec *buff);
 
   int	NextPhysicalRecord(unsigned char buff[]);
 
   void	ToggleSyntheticData();
 
-  static OAP::Probe::ProbeType ProbeType(const unsigned char *id);
+  static OAP::ProbeType ProbeType(const unsigned char *id);
 
   bool	isValidProbe(const unsigned char *pr) const;
 
@@ -123,8 +122,8 @@ protected:
   void	buildIndices(OAP::UserConfig *cfg), sort_the_table(int, int), SortIndices(int);
   time_t getFileModifyTime(const char *path);
 
-  void	SwapPMS2D(P2d_rec *);
-  void	check_rico_half_buff(P2d_rec *buff, size_t start, size_t end);
+  void	SwapPMS2D(OAP::P2d_rec *);
+  void	check_rico_half_buff(OAP::P2d_rec *buff, size_t start, size_t end);
 
   std::string	_fileName;
 
@@ -157,7 +156,7 @@ protected:
   int		currPhys;
   int		currLR;
 
-  P2d_rec	physRecord[P2DLRPR], *testRecP;
+  OAP::P2d_rec	physRecord[P2DLRPR], *testRecP;
 
 };	/* END DATAFILE.H */
 

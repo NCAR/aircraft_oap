@@ -51,7 +51,7 @@ extern XmFile		*fileSel;
 
 /* Contains current N 2d records (for re-use by things like ViewHex */
 extern size_t nBuffs;
-extern P2d_rec pgFbuff[];
+extern OAP::P2d_rec pgFbuff[];
 
 extern OAP::UserConfig userConfig;
 
