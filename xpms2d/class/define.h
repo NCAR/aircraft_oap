@@ -36,31 +36,6 @@ const size_t MAX_PROBES = 4;
 
 #include <raf/Particle.h>
 
-/*
-struct recStats
-{
-  unsigned long	thisTime;	// Time of this record in secs since midnight.
-  int	DASelapsedTime;		// milliseconds.
-  int	tBarElapsedtime;	// milliseconds.
-
-  int	nTimeBars;		// n Particles.
-  int	accum[1024];
-  int	nonRejectParticles;	// n Particles not rejected.
-  uint32_t minBar, maxBar, meanBar;
-
-  double	SampleVolume;	// Basic total sample volume: eaw * dof * tas * time.
-  double	tas, concentration, lwc, dbz;
-  float		frequency;              // TAS clock.
-  int		area;
-
-  std::vector<Particle *>	particles;
-
-  // Return values in/for MainCanvas::draw()
-  bool		duplicate;
-  unsigned long	prevTime;
-};
-*/
-
 
 /* Values for "displayLevel"		*/
 enum { NORMAL, DIAGNOSTIC, RAW_RECORD };
