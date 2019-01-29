@@ -182,25 +182,25 @@ void ADS_DataFile::initADS2(UserConfig *cfg)
   if (_hdr->isValid() == false)
     return;
 
-  for (const void *p = _hdr->GetFirst("PMS2D"); p; p = _hdr->GetNext("PMS2D"))
+  for (const void *blk = _hdr->GetFirst("PMS2D"); blk; blk = _hdr->GetNext("PMS2D"))
     {
-    const char *name = _hdr->VariableName((Pms2 *)p);
+    const char *name = _hdr->VariableName((Pms2 *)blk);
 
     if (name[3] == 'P')
       {
-      PMS2D *p = new PMS2D(cfg, _hdr, (Pms2 *)p, ++Pcnt);
+      PMS2D *p = new PMS2D(cfg, _hdr, (Pms2 *)blk, ++Pcnt);
       _probeList[*(uint16_t *)p->Code()] = p;
       }
     else
     if (name[3] == 'C')
       {
-      PMS2D *p = new PMS2D(cfg, _hdr, (Pms2 *)p, ++Ccnt);
+      PMS2D *p = new PMS2D(cfg, _hdr, (Pms2 *)blk, ++Ccnt);
       _probeList[*(uint16_t *)p->Code()] = p;
       }
     else
     if (name[3] == 'H')
       {
-      HVPS *p = new HVPS(cfg, _hdr, (Pms2 *)p, ++Hcnt);
+      HVPS *p = new HVPS(cfg, _hdr, (Pms2 *)blk, ++Hcnt);
       _probeList[*(uint16_t *)p->Code()] = p;
       }
     }
@@ -422,7 +422,7 @@ void ADS_DataFile::SetPosition(int position)
 /* -------------------------------------------------------------------- */
 bool ADS_DataFile::LocatePMS2dRecord(P2d_rec *buff, int hour, int minute, int second)
 {
-  int	i;
+  size_t i;
   bool	rc, startPreMidnight = False;
 
   if (ntohs(_indices[0].time[0]) > 12)
@@ -448,7 +448,7 @@ bool ADS_DataFile::LocatePMS2dRecord(P2d_rec *buff, int hour, int minute, int se
   if (i == _indices.size())
     return(false);
 
-  currPhys = std::max(0, i - 2);
+  currPhys = std::max(0, (int)i - 2);
   currLR = P2dLRpPR;
   rc = NextPMS2dRecord(buff);
 
@@ -700,7 +700,6 @@ time_t ADS_DataFile::getFileModifyTime(const char *path)
 /* -------------------------------------------------------------------- */
 void ADS_DataFile::buildIndices(UserConfig *cfg)
 {
-  size_t cnt = 0;
   int	rc;
   FILE	*fpI;
   unsigned char	buffer[0x8000];
@@ -750,7 +749,7 @@ void ADS_DataFile::buildIndices(UserConfig *cfg)
 #endif
 
 
-  for (cnt = 0; (rc = NextPhysicalRecord(buffer)); )
+  for (; (rc = NextPhysicalRecord(buffer)); )
     {
     size_t i;
     ProbeList::const_iterator iter;
