@@ -14,6 +14,7 @@ COPYRIGHT:	University Corporation for Atmospheric Research, 1997-2018
 
 
 #include "DataFile.h"
+#include "raf/OAProbeFactory.h"
 
 #include <unistd.h>
 #include <algorithm>
@@ -263,27 +264,9 @@ void ADS_DataFile::AddToProbeListFromXML(const char xml_entry[], UserConfig *cfg
   if (id == 0)
     return;
 
-  switch (probeType((const unsigned char *)id))
-  {
-    case PMS2D_T:
-      _probeList[*(uint16_t *)id] = new PMS2D(cfg, xml_entry, PMS2_SIZE);
-      break;
-    case FAST2D_T:
-      _probeList[*(uint16_t *)id] = new Fast2D(cfg, xml_entry, PMS2_SIZE);
-      break;
-    case TWODS_T:
-      _probeList[*(uint16_t *)id] = new TwoDS(cfg, xml_entry, PMS2_SIZE);
-      break;
-    case HVPS_T:
-      _probeList[*(uint16_t *)id] = new HVPS(cfg, xml_entry, PMS2_SIZE);
-      break;
-    case CIP_T:
-      _probeList[*(uint16_t *)id] = new CIP(cfg, xml_entry, PMS2_SIZE);
-      break;
-    default:
-      fprintf(stderr, "DataFile::initOAP, Unknown probe type, [%c%c]\n", id[0], id[1]);
-      fprintf(stderr, "DataFile:: [%s]\n", xml_entry);
-  }
+  OAProbeFactory *factory = OAProbeFactory::getFactory();
+
+  _probeList[*(uint16_t *)id] = factory->create(xml_entry, cfg);
 }
 
 /* -------------------------------------------------------------------- */
