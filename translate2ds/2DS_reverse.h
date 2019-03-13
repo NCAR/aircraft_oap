@@ -207,6 +207,7 @@ namespace sp
 			{
 				block >> sync;
 
+				// comparison always false. unit32 vs uint64.  cjw 03/2019
 				if(!(sync == Fast2D_Sync))
 				{
 					g_Log <<"Reached end of file\n";
@@ -223,6 +224,10 @@ namespace sp
 
 				//	g_Log << block.size();
 				//}
+
+				// Author seems to have incorrect info on format (below),
+				// should be 128 bits sync with timing, N slices,
+				// no blanks and no ending sync.  cjw 03/2019
 
 				//now we have N particle slices, followed by 3 blank slices, an ending sync uint32_t and a timing uint64_t
 				//slices are 128 bits each, or 16 bytes
