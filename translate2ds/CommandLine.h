@@ -147,7 +147,7 @@ namespace sp
 				{
 					std::vector<std::string> file_list;
 
-					while ((ent = readdir (dir)) != NULL) 
+					while ((ent = readdir (dir)) != NULL)
 					{
 						std::string final_file = dirName + "/" + std::string(ent->d_name);
 						file_list.push_back(final_file);

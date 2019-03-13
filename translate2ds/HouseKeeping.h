@@ -13,7 +13,7 @@ namespace sp
 		COMPRESSION_VERTICAL_ONLY
 	};
 
-	struct HeaterBits 
+	struct HeaterBits
 	{
 		struct  Bits
 		{
@@ -34,10 +34,8 @@ namespace sp
 		union
 		{
 			word AllBits;
-			
 			Bits bits;
 		};
-	
 	};
 
 	template<class T>
@@ -66,8 +64,7 @@ namespace sp
 		union
 		{
 			word All;
-			
-			Bits bits; 
+			Bits bits;
 		};
 	};
 
@@ -99,7 +96,7 @@ namespace sp
 
 			Volts48		RawPositivePowerSupply;
 			Volts48		RawNegativePowerSupply;
-		
+
 			Celcius		HorizontalArm_Tx_Temp;
 			Celcius		HorizontalArm_Rx_Temp;
 
@@ -119,7 +116,7 @@ namespace sp
 
 			Volts48		Negative_5V_Supply;
 			Volts48		Positive_5V_Supply;
-				
+
 			PSI			CanInternalPressure;	//psi
 
 			Volts24		H_Element_21_Voltage;
@@ -136,7 +133,7 @@ namespace sp
 			Word		HorizontalParticlesDetected;
 
 			HeaterBits	HeaterOuputs;
-		
+
 			Volts12		H_Laser_Drive;
 			Volts12		V_Laser_Drive;
 
@@ -159,7 +156,7 @@ namespace sp
 
 			float32		TAS;//true air speed
 
-			Timing		Timing_;		
+			Timing		Timing_;
 
 	};
 
@@ -270,6 +267,5 @@ namespace sp
 	};
 */
 	//static_assert(sizeof(HouseKeeping) == 54*sizeof(Word), "Housekeeping wrong size");
-
 
 }

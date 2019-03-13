@@ -12,13 +12,12 @@ namespace sp
 			word	NumDataWords:12;
 			word	TimingWordsNotFound:1; //bit 12
 			word	TimingWordMismatch:1;  //only seems to be used on the vertical part..?
-			word	FIFO_Empty:1;	
+			word	FIFO_Empty:1;
 			word	HasOverloadTimingWords:1; //indicates that last two words of data record are timing words
 		};
 		union
 		{
 			word All;
-	
 			Bits bits;
 		};
 
@@ -122,8 +121,8 @@ namespace sp
 	{
 		return log;
 		//return log << "\nImageWord: " << out.bits.ImageWord <<
-		//	"\nStartOfSlice: " << out.bits.StartOfSlice << 
-		//	"\nNumShadedPixels: " << out.bits.NumShadedPixels << 
+		//	"\nStartOfSlice: " << out.bits.StartOfSlice <<
+		//	"\nNumShadedPixels: " << out.bits.NumShadedPixels <<
 		//	"\nNumClearPixels: " << out.bits.NumClearPixels;
 	};
 
@@ -136,7 +135,6 @@ namespace sp
 		{
 			return reader;
 		}
-		
 
 		bool HasTiming = in._Description.HasTimingWord();
 		if(HasTiming)
@@ -172,7 +170,6 @@ namespace sp
 		}
 		return writer;
 	}
-	
 
 	struct ParticleRecord: public Packet
 	{
@@ -208,13 +205,13 @@ namespace sp
 	template<class T>
 	inline T& operator << (T& writer, ParticleRecord& pr)
 	{
-		writer	<< pr.PacketID << pr.HorizontalImage._Description 
+		writer	<< pr.PacketID << pr.HorizontalImage._Description
 			<< pr. VerticalImage._Description
 			<< pr.ParticleCount  << pr.NumSlicesInParticle;
 
 		writer << pr.HorizontalImage;
 		writer << pr.VerticalImage;
-	
+
 		return writer;
 	};
 
@@ -222,12 +219,11 @@ namespace sp
 	//inline Log&	operator << (Log& log, ParticleRecord& out)
 	//{
 	//	return log <<	"\n\n***Horizontal Image***:" << out.HorizontalImage._Description <<
-	//		"\n\n***Vertical Image***:"  << out.VerticalImage._Description  << 
+	//		"\n\n***Vertical Image***:"  << out.VerticalImage._Description  <<
 	//		"\nHParticleCount:\t" << out.ParticleCount <<
 	//		"\nNumSlicesInParticle:\t" << out.NumSlicesInParticle <<
 	//		"\n\n***Horizontal Image***:" <<out.HorizontalImage <<
 	//		"\n\n***Vertical Image***:" <<out.VerticalImage;
-	//		
 
 	//};
 

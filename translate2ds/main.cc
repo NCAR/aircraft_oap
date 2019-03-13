@@ -28,7 +28,7 @@ struct Do3VCPI
 			<< file.MegaBytes() << " MB.\n";
 
 		std::string outfile = file_name;
-		outfile.erase(0, outfile.find("base"));	
+		outfile.erase(0, outfile.find("base"));
 		outfile.erase(outfile.end() - 7, outfile.end()); //remove .2dscpi
 
 		sp::UCAR_Writer writer(outfile, *options, sp::HORIZONTAL_3VCPI, sp::VERTICAL_3VCPI,
@@ -60,7 +60,7 @@ struct Do2DS
 			<< file.MegaBytes() << " MB.\n";
 
 		std::string outfile = file_name;
-		outfile.erase(0, outfile.find("base"));	
+		outfile.erase(0, outfile.find("base"));
 		outfile.erase(outfile.end() - 4, outfile.end()); // remove .2ds
 
 		// The 2DS processor doesn't correctly process 2DS data, but the 2DSCPI
@@ -91,13 +91,13 @@ struct Do2DS_Reverse
 			<< file.MegaBytes() << " MB's\n";
 
 		std::string outfile = file_name;
-		outfile.erase(0, outfile.find("base"));	
-		outfile.erase(outfile.end() - 4, outfile.end()); 
+		outfile.erase(0, outfile.find("base"));
+		outfile.erase(outfile.end() - 4, outfile.end());
 		outfile += ".2ds";
 
 		std::string file_full_path = options->OutputDir + "/" + outfile.c_str();
 		std::ofstream	writer(file_full_path.c_str(), std::ios::binary);
-	
+
 		device.Process(file, writer);
 	}
 };

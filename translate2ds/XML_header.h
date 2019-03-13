@@ -5,7 +5,7 @@
 
 namespace sp
 {
-	//UCAR XML header 
+	//UCAR XML header
 	struct XMLHeader
 	{
 		std::string		_header;

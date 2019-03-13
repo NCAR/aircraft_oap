@@ -13,7 +13,7 @@ namespace sp
 			word		ExceededMaxSize:1;
 			word		Unused:1;				 //always 0
 			word		ParticleTriggered:1;
-			word		FIFO_Overflow:1;	
+			word		FIFO_Overflow:1;
 		};
 		union
 		{
@@ -60,7 +60,7 @@ namespace sp
                         {
                                 return -1;	// signal uncompressed data
                         }
-	
+
 			return NumClearPixels;
 		}
 
@@ -124,7 +124,6 @@ namespace sp
 
 		Timing Time()const
 		{ return *reinterpret_cast<const Timing*>(&_TimingWords[0]); }
-	
 
 		void clear()
 		{_data.clear();}
@@ -137,8 +136,8 @@ namespace sp
 	{
 		return log;
 		//return log << "\nImageWord: " << out.bits.ImageWord <<
-		//	"\nStartOfSlice: " << out.bits.StartOfSlice << 
-		//	"\nNumShadedPixels: " << out.bits.NumShadedPixels << 
+		//	"\nStartOfSlice: " << out.bits.StartOfSlice <<
+		//	"\nNumShadedPixels: " << out.bits.NumShadedPixels <<
 		//	"\nNumClearPixels: " << out.bits.NumClearPixels;
 	};
 
@@ -196,7 +195,7 @@ namespace sp
 
 		ImageData3VCPI	HorizontalImage;
 		ImageData3VCPI	VerticalImage;
-	
+
 		void clear()
 		{HorizontalImage.clear(); VerticalImage.clear();}
 
@@ -244,12 +243,11 @@ namespace sp
 	//inline Log&	operator << (Log& log, ParticleRecord& out)
 	//{
 	//	return log <<	"\n\n***Horizontal Image***:" << out.HorizontalImage._Description <<
-	//		"\n\n***Vertical Image***:"  << out.VerticalImage._Description  << 
+	//		"\n\n***Vertical Image***:"  << out.VerticalImage._Description  <<
 	//		"\nHParticleCount:\t" << out.ParticleCount <<
 	//		"\nNumSlicesInParticle:\t" << out.NumSlicesInParticle <<
 	//		"\n\n***Horizontal Image***:" <<out.HorizontalImage <<
 	//		"\n\n***Vertical Image***:" <<out.VerticalImage;
-	//		
 
 	//};
 

@@ -6,7 +6,7 @@ int main(int argc, char* argv[]) {
     int base_file;
     short word;
     int read_bytes = 1;
-  
+
     short Housekeeping = 0; //0x484b;
     short Mask = 0; //0x4d4b;
     short Data = 0; //0x3253;
@@ -21,15 +21,15 @@ int main(int argc, char* argv[]) {
     while (read_bytes > 0){
         read_bytes = read(base_file, &word, sizeof(word));
         //printf("%04x\n", word);
- 
+
         switch(word){
 
 	    case 0x484b:
 		Housekeeping++;
 
- 	    case 0x4d4b:
+	    case 0x4d4b:
 		Mask++;
-	    
+
 	    case 0x3253:
 		Data++;
 
@@ -44,7 +44,7 @@ int main(int argc, char* argv[]) {
         }
 
     }
- 
+
     close(base_file);
 
     printf("HouseKeeping Count: %d\n", Housekeeping);

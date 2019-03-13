@@ -23,8 +23,8 @@ namespace sp
 
 	enum CharacterCodes
 	{
-		HORIZONTAL_2DS = 0x5348, 	//SH
-		VERTICAL_2DS = 0x5356,	 	//SV
+		HORIZONTAL_2DS = 0x5348,	//SH
+		VERTICAL_2DS = 0x5356,		//SV
 		HORIZONTAL_3VCPI = 0x3348,	//3H
 		VERTICAL_3VCPI = 0x3356,	//3V
 
@@ -51,7 +51,7 @@ namespace sp
 		};
 
 		sword			_VerticalCode;
-		sword			_HorizontalCode; 
+		sword			_HorizontalCode;
 		std::string		_ProbeType;
 		std::string		_resolution;
 		std::string		_nDiodes;
@@ -60,7 +60,7 @@ namespace sp
 
 	public:
 		UCAR_Writer(const std::string& fileName, const Options& options,
-			sword HorizontalCode, sword VerticalCode, 
+			sword HorizontalCode, sword VerticalCode,
 			const std::string& ProbeType, const std::string& resolution, const std::string& nDiodes,
 			const std::string& SuffixH, const std::string& SuffixV) : _options(options)
 		{
@@ -125,11 +125,11 @@ namespace sp
 			flightNum.erase(flightNum.begin(), flightNum.begin()+4);
 
 			xml << "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>\n" <<
-				"<OAP version=\"" << 1 << "\">\n" << 
-				" <Source>ncar.ucar.edu</Source>\n" << 
-				" <FormatURL>http://www.eol.ucar.edu/raf/Software/OAPfiles.html</FormatURL>\n" << 
+				"<OAP version=\"" << 1 << "\">\n" <<
+				" <Source>ncar.ucar.edu</Source>\n" <<
+				" <FormatURL>http://www.eol.ucar.edu/raf/Software/OAPfiles.html</FormatURL>\n" <<
 				" <Project>" << _options.Project << "</Project>\n" <<
-				" <Platform>" << _options.Platform << "</Platform>\n" << 
+				" <Platform>" << _options.Platform << "</Platform>\n" <<
 				" <FlightNumber>" << _options.FlightNumber << "</FlightNumber>\n" <<
 				" <FlightDate>" << _FirstTimeStamp.wMonth.toString() << "/" << _FirstTimeStamp.wDay.toString() << "/" << _FirstTimeStamp.wYear.toString() << "</FlightDate>\n" <<
 				" <probe id=\"" << hProbID[1] << hProbID[0] << "\" type=\"" << _ProbeType
@@ -149,7 +149,7 @@ namespace sp
 
 		UCAR_Writer& operator << (TimeStamp16& timeStamp)
 		{
-		    	// Set the time to be used for writing the particle (in WriteParticle)
+			// Set the time to be used for writing the particle (in WriteParticle)
 			_MostRecentTimeStamp = timeStamp;
 			// If first time through, set _FirstTimeStamp to be used to set date in XML header.
 			if ((_FirstTimeStamp.wYear.toString().compare("0")) == 0)
@@ -160,7 +160,7 @@ namespace sp
 		}
 
 		UCAR_Writer& operator << (ParticleRecord& pr)
-		{ 
+		{
 			if (pr.HorizontalImage._Description.bits.NumDataWords > 0)
 			{
 				StoreParticle(_hChannel, pr.HorizontalImage, _hImage, pr.ParticleCount, _HorizontalCode);
@@ -173,7 +173,7 @@ namespace sp
 		}
 
 		UCAR_Writer& operator << (ParticleRecord3VCPI& pr)
-		{ 
+		{
 			if (pr.HorizontalImage._Description.bits.NumDataWords > 0)
 			{
 				StoreParticle(_hChannel, pr.HorizontalImage, _hImage, pr.ParticleCount, _HorizontalCode);
@@ -185,7 +185,6 @@ namespace sp
 			return *this;
 		}
 
-		
 
 		UCAR_Writer& operator << (HouseKeeping& hk)
 		{
@@ -228,7 +227,7 @@ namespace sp
 			return false;
 		}
 
-		//to allow for decompression 
+		//to allow for decompression
 		struct ImageSlice
 		{
 			ImageSlice()
@@ -336,7 +335,7 @@ namespace sp
 			}
 
 			template<class Image>
-			void AddChunk( const Image &chunk ) 
+			void AddChunk( const Image &chunk )
 			{
 				word clearCount = chunk.GetClearCount();
 				word shadedCount = chunk.GetShadedCount();
@@ -352,7 +351,7 @@ namespace sp
 				_slice_pixel_count += (clearCount+shadedCount);
 			}
 
-			void WriteClearEnding() 
+			void WriteClearEnding()
 			{
 				int remains = 128 - _slice_pixel_count%128;
 
@@ -362,7 +361,7 @@ namespace sp
 					return;
 				}
 				assert(remains >= 0);
-				decompressed.resize(decompressed.size()+size_t(remains), 1); 
+				decompressed.resize(decompressed.size()+size_t(remains), 1);
 			}
 
 			Buffer&	WriteRemainder()
@@ -402,7 +401,7 @@ namespace sp
 				_particleCount = newCount;
 			}
 
-			void WriteSyncTimingWord() 
+			void WriteSyncTimingWord()
 			{
 //				WriteBlankSlice();
 
@@ -454,7 +453,7 @@ namespace sp
 		{
 			//_log <<"Particle Count: " << particleCount <<"\n";
 			// This will get rid of the first MinParticle particles, good or bad, in the
-			// record. I suspect it was intended to get rid of particles when the record 
+			// record. I suspect it was intended to get rid of particles when the record
 			// contained a total of <MinParticle particles, but since it is called
 			// particle by particle, it doesn't work that way. Uncomment _log above
 			// to see what I mean. - JAA May 25, 2018
@@ -466,7 +465,7 @@ namespace sp
 			Write(channel, in, CharacterCode);
 		}
 
-		void Write(Channel &channel, const Buffer &in, word CharacterCode, bool ForceIt = false) 
+		void Write(Channel &channel, const Buffer &in, word CharacterCode, bool ForceIt = false)
 		{
 			Buffer& out = channel._buffer;
 
@@ -525,10 +524,7 @@ namespace sp
 
 					break;
 				}
-				
 			}
-		
-	
 		}
 
 		void WriteDebugParticle(Channel& channel)
@@ -545,8 +541,8 @@ namespace sp
 		std::string		_FileName;
 
 		HouseKeeping		_MostRecentHouseKeeping;
-		TimeStamp16		_MostRecentTimeStamp;	
-		TimeStamp16		_FirstTimeStamp;	
+		TimeStamp16		_MostRecentTimeStamp;
+		TimeStamp16		_FirstTimeStamp;
 
 		Channel			_vChannel, _hChannel;
 		ImageSlice		_vImage, _hImage;

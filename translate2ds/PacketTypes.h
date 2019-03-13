@@ -20,7 +20,7 @@ namespace sp
 		H_MASK	= 0x1C1C,			//FSFS
 		V_MASK	= 0x2C2C,			//,,
 
-		V_DUMMY_DEADTIME = 0x1414,		
+		V_DUMMY_DEADTIME = 0x1414,
 		H_DUMMY_DEADTIME = 0x1424,
 
 		V_BACKUP_DEADTIME = 0x2414,

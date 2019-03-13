@@ -36,7 +36,6 @@ namespace sp
 
 		File&	operator >> (float32& in) {return read(in);}
 		File&	operator >> (word& in) {return read(in);}
-	
 
 		template<class T>
 		File& read (T& in)

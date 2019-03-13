@@ -46,7 +46,7 @@ namespace sp
 		TimeStamp16	time_stamp;
 		Word		check_sum;
 		Block		block(SIZE_DATA_BUF, f.SourceEndian(), f.DestinationEndian());
-		size_t 		numParticlesInRecord;
+		size_t		numParticlesInRecord;
 
 		while (!f.empty())
 		{
@@ -54,10 +54,10 @@ namespace sp
 			if (f.empty()) break;
 
 			// If a time offset was given on the command line, apply it here. Save
-			// time to tm struct so can use built-in time conversions to handle 
+			// time to tm struct so can use built-in time conversions to handle
 			// day/month/year rollover, etc. Can't use tm everywhere because it doesn't
 			// include milli-seconds, which are critical for this data.
-			
+
 			// Log time. Useful for debugging.
 			//_log <<"\nTime before offset: " << time_stamp.toSimpleString().c_str() <<"\n";
 
@@ -96,7 +96,7 @@ namespace sp
 			// if anything.
 			//_log << "Block size: " << block.size() <<"\n";
 
-			// This will print out the contents of the block in hex. 
+			// This will print out the contents of the block in hex.
 			// Useful for debugging
 			//block.print();
 
@@ -106,7 +106,7 @@ namespace sp
 			numParticlesInRecord = block.countParticles();
 			//_log << "Found " << block.countParticles() << " particles in this record.\n";
 			if (numParticlesInRecord > 5) {
-				process_block(block, writer); 
+				process_block(block, writer);
 			} else {
 				// If don't process block, need to clear it before read next one.
 				block.go_to_end();
@@ -179,7 +179,7 @@ namespace sp
 					block >> particle;
 					NL++;
 					//_log << "UNUSED FRAME\n";
-					//block.go_to_end();			
+					//block.go_to_end();
 					} break;
 
 				case 0:	// No data.  After a flush.

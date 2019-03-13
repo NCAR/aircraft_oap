@@ -20,12 +20,12 @@ namespace sp
 	struct MaskData: public Packet
 	{
 		Timing			Time;
-	
-		//enum 
+
+		//enum
 		//{
 		//	BitWords = 11 - 4
 		//};
-	//	typedef 	std::bitset<sizeof(Word)*(BitWords)>	MaskBits;
+	//	typedef	std::bitset<sizeof(Word)*(BitWords)>	MaskBits;
 
 		MaskBits		Horizontal;
 		MaskBits		Vertical;

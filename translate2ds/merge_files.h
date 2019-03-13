@@ -3,9 +3,9 @@
 #include <fstream>
 #include "common.h"
 #include "log.h"
+
 namespace sp
 {
-
 	void	AppendFile(std::ifstream& in, std::ofstream& out)
 	{
 		enum
@@ -45,6 +45,5 @@ namespace sp
 		AppendFile(tf2,file);
 
 		return true;
-
 	}
 }

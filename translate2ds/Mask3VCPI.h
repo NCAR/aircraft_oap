@@ -3,7 +3,6 @@
 //#include <bitset>
 namespace sp
 {
-	
 
 	struct MaskData3VCPI: public Packet
 	{

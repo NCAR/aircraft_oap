@@ -65,7 +65,6 @@ namespace sp
 		return v;
 	};
 
-	
 
 	struct Word
 	{
@@ -80,10 +79,10 @@ namespace sp
 		std::string toString()const
 		{
 			char buffer[100];
-			
+
 			int v = val;
 			sprintf(buffer, "%i", v);
-			return std::string(buffer); 
+			return std::string(buffer);
 		}
 
 	private:
@@ -279,8 +278,8 @@ namespace sp
 		Word wSecond;
 		Word wMilliseconds;
 
-		double TimeAsSingleValue() const 
-		// in units of minutes, assuming all months have 30 days. 
+		double TimeAsSingleValue() const
+		// in units of minutes, assuming all months have 30 days.
 		{
 			return double(wYear)*60.0*24.0*30.0*12.0 + double(wMonth)*60.0*24.0*30.0 + double(wDay)*60.0*24.0 + double(wHour)*60.0 + double(wMinute) + double(wSecond)*(1.0/60.0) + double(wMilliseconds) /(60.0*1000.0);
 		}
@@ -341,7 +340,6 @@ namespace sp
 			SerialNumber = "SPEC001";
 			MinParticle = 0;//Get rid of the first MinParticle particles in a record, good or bad.
 			MaxParticle = 0xFFFFFFFF;//std::numeric_limits<size_t>::max(); <-- limits appears to be missing from some cygwin installs
-			
 		}
 
 		bool InRange(const TimeStamp16& ts)const
@@ -360,7 +358,7 @@ namespace sp
 		std::string	Project;
 		std::string	FlightNumber;
 		std::string	SerialNumber;
-		
-		size_t		MinParticle, MaxParticle; 
+
+		size_t		MinParticle, MaxParticle;
 	};
 }

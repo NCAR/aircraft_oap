@@ -8,7 +8,7 @@ namespace sp
 {
 	class File;
 	class Block;
-	
+
 	//128 bit compressed UCAR slice
 	struct CompressedSlice
 	{
@@ -17,7 +17,7 @@ namespace sp
 	public:
 
 		bool all() const
-		//GCC doesn't have all() it seems .. 
+		//GCC doesn't have all() it seems ..
 		{ return _bits.count() == 128; }
 
 		bool isEmpty()const
@@ -56,7 +56,6 @@ namespace sp
 		template<class T>
 		void print(T& f) const
 		{
-			
 			for(int i = 0;i<128;++i)
 			{
 				//f << (_bits[i] ? 'x' : '_');
@@ -83,9 +82,7 @@ namespace sp
 				bool b = !((bits >> j)&0x00000001);
 				in.set(c,b);
 			}
-			
 		}
-		
 		return reader;
 	}
 
@@ -103,8 +100,6 @@ namespace sp
 		template<class Reader, class Writer>
 		void			Process(Reader& f, Writer& writer);
 
-	
-
 
 	private:
 		template<class Writer>
@@ -119,7 +114,6 @@ namespace sp
 
 		Log _log;
 
-	
 		typedef std::vector<TimestampUCAR> time_stamps;
 		typedef std::vector<CompressedSlice> slices;
 		typedef std::vector<uint32_t> time_slots;
@@ -165,7 +159,7 @@ namespace sp
 			{
 				TimestampUCAR	time_stamp;
 				f >> time_stamp;
-	
+
 				_time_stamps.push_back(time_stamp);
 				f >> block;
 			}
@@ -177,7 +171,7 @@ namespace sp
 		Write2DS(writer);
 	}
 
-	
+
 	namespace
 	{
 		struct IsEndOfParticle
@@ -205,7 +199,7 @@ namespace sp
 		{
 			asciiOut.open("spec2d/asci_reverse.txt");
 		}
-		
+
 		try
 		{
 			uint32_t sync;
@@ -215,7 +209,7 @@ namespace sp
 
 				if(!(sync == Fast2D_Sync))
 				{
-					g_Log <<"Reached end of file\n";	
+					g_Log <<"Reached end of file\n";
 					break;
 					//g_Log <<"Got (" << sync << ") instead of correct sync uint32_t ("<<Fast2D_Sync<<"), file is corrupt?\n";
 					//block.clear();
@@ -255,10 +249,10 @@ namespace sp
 					}
 					asciiOut.close();
 				}*/
-				
+
 				uint64_t time;
 				block >> time;
-			
+
 				swap_endian_force(reinterpret_cast<byte*>(&time), sizeof(time)); //convert to little endian
 
 				_slices.erase(_slices.end()-3, _slices.end()); //remove the last three blank slices
@@ -267,9 +261,7 @@ namespace sp
 					write_particle(writer, Timing(time), asciiOut);
 				}
 				_particleCount++;
-				
 			}
-				
 		}
 		catch (block_incomplete&)
 		{
@@ -292,7 +284,7 @@ namespace sp
 	{
 		static uint32_t lineCount = 0;
 		size_t nSlices = std::min(_slices.size(), size_t(500)); //only 12 bits for num data words
-	
+
 		ParticleRecord	pr;
 		pr.PacketID = DATA;
 		pr.NumSlicesInParticle	= nSlices;
@@ -318,17 +310,15 @@ namespace sp
 
 		for(size_t i = 0;i<nSlices;++i,lineCount++)
 		{
-			
 			CompressedSlice& s = _slices[i];
 
 			if(_options.ascii_art)
 			{
 				s.print(asciiOut);
 			}
-			
+
 			const int nRecords = s.numRecords();
-			
-			
+
 			if(0 == nRecords)
 			{
 				pr.HorizontalImage._Description.bits.NumDataWords++;
@@ -361,7 +351,6 @@ namespace sp
 				}
 			}
 
-			
 			//if(pixelIndex < 128)
 			//{
 			////	_LastSliceIncomplete = true;
@@ -381,11 +370,10 @@ namespace sp
 			//	pr.HorizontalImage._data.push_back(chunk);
 			//}
 
-			
 		}
 
 		assert(pr.HorizontalImage._data.size() >= nSlices);
-	
+
 		std::streamoff sizeBytes = writer.tellp();
 		writer << pr;
 		std::streamoff NewsizeBytes = writer.tellp();
@@ -402,7 +390,7 @@ namespace sp
 
 
 	template<class Writer>
-	void Device2DS_reverse::Write2DS( Writer& writer) 
+	void Device2DS_reverse::Write2DS( Writer& writer)
 	{
 		std::ifstream in_slicedata("temp/slicedata.bin",std::ios::binary);
 

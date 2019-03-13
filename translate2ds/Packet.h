@@ -17,7 +17,4 @@ namespace sp
 		return reader;
 	}
 
-
-
-
 }

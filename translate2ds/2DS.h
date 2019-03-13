@@ -15,7 +15,7 @@ namespace sp
 		template<class Reader, class Writer>
 		void	Process(Reader& f, Writer& writer);
 
-		
+
 	private:
 		template<class Writer>
 		void	process_block( Block &block, Writer& writer );
@@ -62,7 +62,7 @@ namespace sp
 	{
 		//	_log << "\n\n+++++++++++++++++NEW BLOCK++++++++++++++++++++\n\n";
 		size_t head = 0;
-		static 		ParticleRecord particle;
+		static		ParticleRecord particle;
 		try
 		{
 			Word w;
@@ -94,7 +94,7 @@ namespace sp
 				case DATA:
 					{
 					static int PC =0;
-						
+
 					particle.clear();
 
 					block >> particle;
@@ -105,13 +105,13 @@ namespace sp
 						_log <<"BAD\n";
 					}*/
 					//	_log << particle2;
-	
+
 					//	_log << "**ParticleFrame**\n";
 					}break;
 				case FLUSH:
 					{
 					//	_log << "FLUSH FRAME\n";
-					block.go_to_end();			
+					block.go_to_end();
 					}break;
 				case 0: //indicates the end of the file it seems?
 					{
