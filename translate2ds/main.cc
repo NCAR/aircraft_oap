@@ -44,6 +44,30 @@ struct Do3VCPI
 	}
 };
 
+struct DoHVPS
+{
+	sp::Options*	options;
+
+	void operator () (const std::string& file_name) const
+	{
+		sp::Device2DS	device;
+		sp::File	file(file_name);
+
+		if (file.is_open() == false) { return; }
+
+		g_Log	<< "Generating NCAR OAP .2d from HVPS file \"" << file_name << "\" of size "
+			<< file.MegaBytes() << " MB.\n";
+
+		std::string outfile = file_name;
+		outfile.erase(0, outfile.find("base"));
+		outfile.erase(outfile.end() - 5, outfile.end()); // remove .hvps
+
+		sp::UCAR_Writer writer(outfile, *options, 0, sp::HVPS,
+					"HVPS", "150", "128", "", "_H1");
+		device.Process(file, writer);
+	}
+};
+
 struct Do2DS
 {
 	sp::Options*	options;
@@ -127,6 +151,11 @@ struct ProcessFile
 		else if(contains(file_name, ".2ds") && file_name.find("base") != std::string::npos)
 		{
 			Do2DS doit = {options};
+			doit(file_name);
+		}
+		else if(contains(file_name, ".hvps") && file_name.find("base") != std::string::npos)
+		{
+			DoHVPS doit = {options};
 			doit(file_name);
 		}
 		else if(contains(file_name,".2d"))

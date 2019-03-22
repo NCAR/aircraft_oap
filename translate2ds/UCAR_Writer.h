@@ -21,6 +21,7 @@ namespace sp
 		 return s;
 	}
 
+	// Output character codes for P2d_rec.id
 	enum CharacterCodes
 	{
 		HORIZONTAL_2DS = 0x5348,	//SH
@@ -131,13 +132,16 @@ namespace sp
 				" <Project>" << _options.Project << "</Project>\n" <<
 				" <Platform>" << _options.Platform << "</Platform>\n" <<
 				" <FlightNumber>" << _options.FlightNumber << "</FlightNumber>\n" <<
-				" <FlightDate>" << _FirstTimeStamp.wMonth.toString() << "/" << _FirstTimeStamp.wDay.toString() << "/" << _FirstTimeStamp.wYear.toString() << "</FlightDate>\n" <<
+				" <FlightDate>" << _FirstTimeStamp.wMonth.toString() << "/" << _FirstTimeStamp.wDay.toString() << "/" << _FirstTimeStamp.wYear.toString() << "</FlightDate>\n";
+
+				if (hProbID[0] != 0) xml <<
 				" <probe id=\"" << hProbID[1] << hProbID[0] << "\" type=\"" << _ProbeType
 						<< "\" resolution=\"" << _resolution
 						<< "\" nDiodes=\"" << _nDiodes
 						<< "\" serialnumber=\"" << _options.SerialNumber
-						<< "\" suffix=\"" << hSuffix << "\"/>\n" <<
+						<< "\" suffix=\"" << hSuffix << "\"/>\n";
 
+				if (vProbID[0] != 0) xml <<
 				" <probe id=\"" << vProbID[1] << vProbID[0] << "\" type=\"" << _ProbeType
 						<< "\" resolution=\"" << _resolution
 						<< "\" nDiodes=\"" << _nDiodes
