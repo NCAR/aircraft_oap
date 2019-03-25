@@ -65,6 +65,14 @@ public:
       timingMask = 0x0000ffffffffffffULL;
     }
 
+    if (id[0] == 'H')		// HVPS
+    {
+      armWidth = 16.25;
+      dof_const = 8.0;
+      clockMhz = 20.0e+06;
+      timingMask = 0x0000ffffffffffffULL;
+    }
+
     if (type.find("CIP") != std::string::npos ||
         type.find("PIP") != std::string::npos)
     {
