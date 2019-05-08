@@ -1104,7 +1104,7 @@ int process2d(Config & cfg, netCDF & ncfile, ProbeInfo & probe)
   //=============Write to netCDF==============================================
   if (buffcount <= 1) return 1;  //Don't write empty files
 
-  cout << "\nWriting to netCDF file...";
+  cout << "\nWriting to netCDF file";
   ncfile.CreateNetCDFfile(cfg);	// Output file; Create as necessary.
   NcFile *dataFile = ncfile.ncid();
 
