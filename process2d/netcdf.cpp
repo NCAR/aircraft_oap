@@ -41,7 +41,6 @@ netCDF::netCDF(Config & cfg) : _outputFile(cfg.outputFile), _file(0), _mode(NcFi
     exit(1);
   }
 
-  cout << " " << cfg.outputFile << "...\n";
   readStartEndTime(cfg);
 
   // Check for existence of TASX variable.
@@ -80,6 +79,8 @@ netCDF::~netCDF()
 
 void netCDF::CreateNetCDFfile(const Config & cfg)
 {
+  cout << " " << cfg.outputFile << "...\n";
+
   if (_file && _file->is_valid())	// Was successfully opened in ctor, leave.
     return;
 
