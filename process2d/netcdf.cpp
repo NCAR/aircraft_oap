@@ -41,7 +41,6 @@ netCDF::netCDF(Config & cfg) : _outputFile(cfg.outputFile), _file(0), _mode(NcFi
     exit(1);
   }
 
-  cout << " " << cfg.outputFile << "...\n";
   readStartEndTime(cfg);
 
   // Check for existence of TASX variable.
@@ -80,6 +79,8 @@ netCDF::~netCDF()
 
 void netCDF::CreateNetCDFfile(const Config & cfg)
 {
+  cout << " " << cfg.outputFile << "...\n";
+
   if (_file && _file->is_valid())	// Was successfully opened in ctor, leave.
     return;
 
@@ -452,8 +453,8 @@ int netCDF::WriteData(ProbeInfo& probe, ProbeData& data)
   varname="NREJECT2DCA"+probe.suffix; varname[9] = probe.id[0];
   if ((var = addVariable(varname, probe.serialNumber)))
     var->put(&data.all.rejected[0], data.size());
-  
-  
+
+
   /* These variables are only output when generating a stand alone netCDF file.
    * i.e. They are not ouput if the -o command line is specified and it finds
    * an existing TAS.
@@ -507,7 +508,7 @@ int netCDF::WriteData(ProbeInfo& probe, ProbeData& data)
       if (!var->add_att("long_name", "True Air Speed")) return netCDF::NC_ERR;
     }
     if (!var->put(&data.tas[0], data.size())) return netCDF::NC_ERR;
-  
+
     varname="SA"+probe.suffix;
     if ((var = _file->get_var(varname.c_str())) == 0) {
       if (!(var = _file->add_var(varname.c_str(), ncFloat, _bindim))) return netCDF::NC_ERR;
@@ -515,14 +516,14 @@ int netCDF::WriteData(ProbeInfo& probe, ProbeData& data)
       if (!var->add_att("long_name", "Sample area per channel")) return netCDF::NC_ERR;
     }
     if (!var->put(&probe.samplearea[0], probe.numBins)) return netCDF::NC_ERR;
-  
-    //Bins  
+
+    //Bins
     varname="bin_endpoints"+probe.suffix;
     if ((var = _file->get_var(varname.c_str())) == 0) {
       if (!(var = _file->add_var(varname.c_str(), ncFloat, _bindim_plusone))) return netCDF::NC_ERR;
       if (!var->add_att("units", "microns")) return netCDF::NC_ERR;
     }
-    if (!var->put(&probe.bin_endpoints[0], probe.numBins+1)) return netCDF::NC_ERR; 
+    if (!var->put(&probe.bin_endpoints[0], probe.numBins+1)) return netCDF::NC_ERR;
 
     varname="bin_midpoints"+probe.suffix;
     if ((var = _file->get_var(varname.c_str())) == 0) {

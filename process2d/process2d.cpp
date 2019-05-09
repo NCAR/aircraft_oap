@@ -1,10 +1,10 @@
 /*
  ******************************************************************
-     
+
     Fast 2DC processing package, NCAR/RAF
 
     COMPILER COMMAND:
-    c++ process2d.cpp -o process2d -I/usr/local/netcdf-3.6.0-p1/include 
+    c++ process2d.cpp -o process2d -I/usr/local/netcdf-3.6.0-p1/include
         -L/usr/local/netcdf-3.6.0-p1/lib -lnetcdf_c++ -lnetcdf
 
     Authors: Aaron Bansemer, Chris Webster
@@ -33,8 +33,8 @@
 #include "Miniball.hpp"
 
 using namespace std;
-   
-const int binoffset = 1;  // Offset for RAF conventions, number of empty bins before counting begins 
+
+const int binoffset = 1;  // Offset for RAF conventions, number of empty bins before counting begins
 const string markerline = "</OAP>";  // Marks end of XML header
 
 const unsigned char syncString[8] = { 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa };
@@ -48,7 +48,7 @@ public:
    { }
 
    long time1hz;
-   double inttime; 	// Interarrival time (diff of surrounding time words).
+   double inttime;	// Interarrival time (diff of surrounding time words).
    float size, csize, xsize, ysize, eadsize, area, holearea, circlearea, xcenter, ycenter;
    bool allin, centerin, wreject, ireject, dofReject;
 };
@@ -212,8 +212,8 @@ double dpoisson_fit(float x[], float y[], double a[3], int n){
    //Sum of squares of residual values is returned.
    //Uses the Gauss-Newton nonlinear least squares regression method.
    //See Numerical Methods for Engineers, Chapra & Canale 1998 p.468
-   
-   double kc, f[n], diff[n], J[3][n];  //The function, difference, and Jacobian  
+
+   double kc, f[n], diff[n], J[3][n];  //The function, difference, and Jacobian
    kc=log10(exp(1));                   //for normalization to 1
    double ysum=0, olda1;
    float damp=0.2;                     //Damping factor to prevent runaways
@@ -226,10 +226,10 @@ double dpoisson_fit(float x[], float y[], double a[3], int n){
    //Normalize to 1
    for (int i=0; i<n; i++) ysum += y[i];
    for (int i=0; i<n; i++) y[i] /= ysum;
-   
+
    //Don't try with low counts
    if (ysum < 10) return -1;
-   
+
    //Find first guess
    int imax=maxindex(y,n);
    a[0]=0.8;
@@ -245,7 +245,7 @@ double dpoisson_fit(float x[], float y[], double a[3], int n){
          diff[i]=y[i]-f[i];
          J[0][i]=a[1]*x[i]*exp(-a[1]*x[i])*kc-a[2]*x[i]*exp(-a[2]*x[i])*kc;
          J[1][i]=a[0]*x[i]*exp(-a[1]*x[i])*kc-a[0]*a[1]*x[i]*x[i]*exp(-a[1]*x[i])*kc;
-         J[2][i]=(1.0-a[0])*x[i]*exp(-a[2]*x[i])*kc-(1.0-a[0])*a[2]*x[i]*x[i]*exp(-a[2]*x[i])*kc; 
+         J[2][i]=(1.0-a[0])*x[i]*exp(-a[2]*x[i])*kc-(1.0-a[0])*a[2]*x[i]*x[i]*exp(-a[2]*x[i])*kc;
       }
       //Multiply Jacobian by its transpose and invert
       double JJt[3][3]={{0}}, JJti[3][3]={{0}};
@@ -256,9 +256,9 @@ double dpoisson_fit(float x[], float y[], double a[3], int n){
             }
          }
       }
-   
+
       (void)invert3(JJt, JJti);
-   
+
       //Multiply transposed Jacobian by Diff
       double JtDiff[3]={0};
       for (int i=0; i<3; i++){
@@ -266,22 +266,22 @@ double dpoisson_fit(float x[], float y[], double a[3], int n){
             JtDiff[i]=JtDiff[i]+diff[j]*J[i][j];
          }
       }
-    
+
       //Compute deltaA and update
       double deltaA[3]={0};
       for (int i=0; i<3; i++){
          for (int j=0; j<3; j++){
             deltaA[i]=deltaA[i] + JtDiff[j] * JJti[i][j];
          }
-      } 
-     
+      }
+
       olda1=a[1];
       a[0]=a[0]+damp*deltaA[0];
       a[1]=a[1]+damp*deltaA[1];
       a[2]=a[2]+damp*deltaA[2];
-      percentchange=100*(abs(a[1])-olda1)/olda1; 
+      percentchange=100*(abs(a[1])-olda1)/olda1;
    }
-   
+
    //Return square of difference
    double diff2=0;
    for (int i=0; i<n; i++){
@@ -291,36 +291,36 @@ double dpoisson_fit(float x[], float y[], double a[3], int n){
    //cout << "A= " << a[0] <<" "<<a[1]<<" "<<a[2]<<" X2= "<<diff2<<endl;
    //cout << "Iterations= " <<iteration<<endl;
    return diff2;
-} 
+}
 
 
 // ----------------CIRCLE SIZE ROUTINE----------------
 Particle findsize(	short *img[], int nslices, int nDiodes, float res,
 			Config::SizeMethod sizeMethod)
 {
-   // Based on http://tog.acm.org/resources/GraphicsGems/gems/BoundSphere.c 
+   // Based on http://tog.acm.org/resources/GraphicsGems/gems/BoundSphere.c
    // Graphics Gems I, Article by Ritter
 
-   short foreval=0;  //values that indicate background and foreground 
+   short foreval=0;  //values that indicate background and foreground
    vector<short> x,y;
    Particle particle;
    bool allin=1;
    float area=0, theta, phi;
    double rad;
    int mindiode=nDiodes, maxdiode=0, minslice=nslices, maxslice=0;
-   
+
    //Stuff x and y vectors, find x and y size, area, check for edge touching
    //May want to erode image to outline to increase performance.
    for (int i = 0; i < nslices; i++) for(int j = 0; j < nDiodes; j++) {
       if(img[i][j]==foreval) {
-         y.push_back(i); 
+         y.push_back(i);
          x.push_back(j);
          if((j==0) || (j==nDiodes-1)) allin=0;
          area++;
          if(j<mindiode) mindiode=j;
          if(j>maxdiode) maxdiode=j;
          if(i<minslice) minslice=i;
-         if(i>maxslice) maxslice=i;         
+         if(i>maxslice) maxslice=i;
       }
    }
 
@@ -330,7 +330,7 @@ Particle findsize(	short *img[], int nslices, int nDiodes, float res,
    // Equialent Area Diameter sizing.
    particle.eadsize	= sqrt((area * res * res * 4) / M_PI);
    particle.area	= area;
-   
+
    // Check for empty roi
    if (x.size() == 0)
       return particle;
@@ -346,16 +346,16 @@ Particle findsize(	short *img[], int nslices, int nDiodes, float res,
       p[1]=y[i];
       coordpointer[i]=p;
    }
-  
+
    // define the types of iterators through the points and their coordinates
-   typedef coordtype* const* PointIterator; 
+   typedef coordtype* const* PointIterator;
    typedef const coordtype* CoordIterator;
 
    // create an instance of Miniball
    typedef Miniball::
      Miniball <Miniball::CoordAccessor<PointIterator, CoordIterator> > MB;
    MB ball (ndims, coordpointer, coordpointer+npoints);
- 
+
    // clean up point array
    for (size_t i=0; i<npoints; ++i)
      delete[] coordpointer[i];
@@ -363,17 +363,17 @@ Particle findsize(	short *img[], int nslices, int nDiodes, float res,
 
    // assign properties
    particle.xcenter = *ball.center();
-   particle.ycenter = *(ball.center()+1);  
+   particle.ycenter = *(ball.center()+1);
    rad = sqrt(ball.squared_radius()) + 0.5;
 
    //Find area of enclosing circle (in the array)
    theta = acos(min((particle.xcenter/rad),1.0));            //angle
    phi = acos(min((nDiodes-1-particle.xcenter)/rad,1.0));
    // find area= triangles(left) + triangles(right) + (remaining wedges)
-   particle.circlearea = (particle.xcenter*rad*sin(theta) + (nDiodes-1-particle.xcenter)*rad*sin(phi) + 
+   particle.circlearea = (particle.xcenter*rad*sin(theta) + (nDiodes-1-particle.xcenter)*rad*sin(phi) +
                        3.14*rad*rad*((3.14-phi-theta)/3.14));
-   
-   particle.csize = (rad*2.0)*res; 
+
+   particle.csize = (rad*2.0)*res;
    if ((particle.xcenter > 1) && (particle.xcenter < (nDiodes-2)))
       particle.centerin = true;
 
@@ -405,16 +405,16 @@ Particle findsize(	short *img[], int nslices, int nDiodes, float res,
 // ----------------HOLE FILL ROUTINE----------------
 short fillholes2(short *img_original[], int nslices, int nDiodes)
 {
-  short img[nslices][nDiodes]; //create a new image for processing 
-  short backval=1, foreval=0;  //values that indicate background and foreground 
+  short img[nslices][nDiodes]; //create a new image for processing
+  short backval=1, foreval=0;  //values that indicate background and foreground
   short label=1, area_added=0;
   stack<int> sx, sy;
   int itest[4], jtest[4];
   bool edgetouch;
-  
+
   //Make blank image
   memset(img, 0, sizeof(img));
-  
+
   //Check pixels for background values (to be filled)
   for (int i = 0; i < nslices; i++) {
      for (int j = 0; j < nDiodes; j++) {
@@ -443,7 +443,7 @@ short fillholes2(short *img_original[], int nslices, int nDiodes)
         }
      }
   }
- 
+
   for (short ic=1; ic<label; ic++){      //Run through all possible values 1:c
      //Check edges for this value
      edgetouch=0;
@@ -456,48 +456,48 @@ short fillholes2(short *img_original[], int nslices, int nDiodes)
            if (img[i][j]==ic) {img_original[i][j]=foreval; area_added++;}
         }
      }
-  }  
+  }
   return area_added;
 
-}  
+}
 
 // ----------------POISSON SPOT CORRECTION FOR WATER----------------
 float poisson_spot_correction(float area_img, float area_hole, bool allin){
    //Based on Korolev JTECH #24 2007 p. 376
    float Dspot_Dedge[]={0.003,0.008,0.017,0.024,0.033,0.04,0.047,0.054,0.062,0.072,0.076,0.088,0.093,0.096,
-      0.101,0.119,0.123,0.127,0.13,0.134,0.139,0.148,0.175,0.18,0.184,0.188,0.192,0.195,0.199,0.202,0.206,0.209, 
+      0.101,0.119,0.123,0.127,0.13,0.134,0.139,0.148,0.175,0.18,0.184,0.188,0.192,0.195,0.199,0.202,0.206,0.209,
       0.213,0.217,0.221,0.225,0.23,0.235,0.243,0.327,0.334,0.34,0.345,0.351,0.355,0.36,0.365,0.369,
-      0.373,0.377,0.381,0.385,0.389,0.393,0.397,0.4,0.404,0.408,0.411,0.415,0.419,0.422,0.426,0.429, 
+      0.373,0.377,0.381,0.385,0.389,0.393,0.397,0.4,0.404,0.408,0.411,0.415,0.419,0.422,0.426,0.429,
       0.433,0.436,0.439,0.443,0.446,0.45,0.453,0.457,0.46,0.463,0.467,0.47,0.473,0.477,0.48,0.484,0.487,
-      0.49,0.494,0.497,0.501,0.504,0.507,0.511,0.514,0.518,0.521,0.525,0.528,0.532,0.535,0.539, 
+      0.49,0.494,0.497,0.501,0.504,0.507,0.511,0.514,0.518,0.521,0.525,0.528,0.532,0.535,0.539,
       0.543,0.547,0.55,0.554,0.558,0.562,0.566,0.569,0.572,0.575,0.578,0.581,0.584,0.587,0.59,0.593,
-      0.596,0.598,0.601,0.605,0.61,0.614,0.618,0.623,0.627,0.631,0.635,0.64,0.644,0.648,0.653,0.657, 
+      0.596,0.598,0.601,0.605,0.61,0.614,0.618,0.623,0.627,0.631,0.635,0.64,0.644,0.648,0.653,0.657,
       0.662,0.666,0.671,0.676,0.68,0.685,0.69,0.695,0.7,0.705,0.711,0.716,0.721,0.727,0.733,0.738,
-      0.744,0.751,0.757,0.763,0.77,0.777,0.784,0.792,0.8,0.808,0.817,0.826,0.836,0.846,0.858,0.87, 
+      0.744,0.751,0.757,0.763,0.77,0.777,0.784,0.792,0.8,0.808,0.817,0.826,0.836,0.846,0.858,0.87,
       0.884,0.901,0.921,0.95};
-  
+
    float Dedge_D0[]={1.0,1.054,1.083,1.101,1.095,1.11,1.148,1.162,1.155,1.123,1.182,1.121,1.162,1.21,1.242,
-      1.134,1.166,1.202,1.238,1.27,1.294,1.278,1.13,1.148,1.17,1.194,1.218,1.242,1.265,1.288,1.31,1.331,1.351, 
+      1.134,1.166,1.202,1.238,1.27,1.294,1.278,1.13,1.148,1.17,1.194,1.218,1.242,1.265,1.288,1.31,1.331,1.351,
       1.369,1.386,1.4,1.411,1.416,1.407,1.074,1.08,1.087,1.096,1.106,1.117,1.127,1.139,1.15,1.162,1.173,
-      1.185,1.197,1.208,1.22,1.232,1.243,1.255,1.266,1.277,1.289,1.3,1.311,1.322,1.333,1.344,1.355, 
+      1.185,1.197,1.208,1.22,1.232,1.243,1.255,1.266,1.277,1.289,1.3,1.311,1.322,1.333,1.344,1.355,
       1.366,1.376,1.387,1.397,1.407,1.418,1.428,1.438,1.448,1.458,1.467,1.477,1.486,1.496,1.505,1.515,
-      1.524,1.533,1.542,1.551,1.559,1.568,1.577,1.585,1.594,1.602,1.61,1.618,1.626,1.634,1.642,1.65, 
+      1.524,1.533,1.542,1.551,1.559,1.568,1.577,1.585,1.594,1.602,1.61,1.618,1.626,1.634,1.642,1.65,
       1.657,1.665,1.673,1.68,1.687,1.694,1.702,1.709,1.716,1.722,1.729,1.736,1.742,1.749,1.755,1.761,
-      1.768,1.774,1.78,1.786,1.791,1.797,1.803,1.808,1.813,1.819,1.824,1.829,1.834,1.839,1.843,1.848, 
+      1.768,1.774,1.78,1.786,1.791,1.797,1.803,1.808,1.813,1.819,1.824,1.829,1.834,1.839,1.843,1.848,
       1.852,1.857,1.861,1.865,1.869,1.872,1.876,1.88,1.883,1.886,1.889,1.892,1.895,1.897,1.899,1.901,
       1.903,1.905,1.906,1.907,1.908,1.908,1.908,1.908,1.907,1.905,1.903,1.9,1.897,1.892,1.885,1.877,1.865,1.845};
 /*
    float Zd[]={0.0,0.05,0.1,0.15,0.2,0.25,0.3,0.35,0.4,0.45,0.5,0.55,0.6,0.65,0.7,0.75,0.8,0.85,0.9,0.95,1.0,
-      1.05,1.1,1.15,1.2,1.25,1.3,1.35,1.4,1.45,1.5,1.55,1.6,1.65,1.7,1.75,1.8,1.85,1.9,1.95,2.0,2.05,2.1,2.15,2.2, 
+      1.05,1.1,1.15,1.2,1.25,1.3,1.35,1.4,1.45,1.5,1.55,1.6,1.65,1.7,1.75,1.8,1.85,1.9,1.95,2.0,2.05,2.1,2.15,2.2,
       2.25,2.3,2.35,2.4,2.45,2.5,2.55,2.6,2.65,2.7,2.75,2.8,2.85,2.9,2.95,3.0,3.05,3.1,3.15,3.2,3.25,3.3,
-      3.35,3.4,3.45,3.5,3.55,3.6,3.65,3.7,3.75,3.8,3.85,3.9,3.95,4.0,4.05,4.1,4.15,4.2,4.25,4.3,4.35,4.4, 
+      3.35,3.4,3.45,3.5,3.55,3.6,3.65,3.7,3.75,3.8,3.85,3.9,3.95,4.0,4.05,4.1,4.15,4.2,4.25,4.3,4.35,4.4,
       4.45,4.5,4.55,4.6,4.65,4.7,4.75,4.8,4.85,4.9,4.95,5.0,5.05,5.1,5.15,5.2,5.25,5.3,5.35,5.4,5.45,5.5,
-      5.55,5.6,5.65,5.7,5.75,5.8,5.85,5.9,5.95,6.0,6.05,6.1,6.15,6.2,6.25,6.3,6.35,6.4,6.45,6.5,6.55,6.6, 
+      5.55,5.6,5.65,5.7,5.75,5.8,5.85,5.9,5.95,6.0,6.05,6.1,6.15,6.2,6.25,6.3,6.35,6.4,6.45,6.5,6.55,6.6,
       6.65,6.7,6.75,6.8,6.85,6.9,6.95,7.0,7.05,7.1,7.15,7.2,7.25,7.3,7.35,7.4,7.45,7.5,7.55,7.6,7.65,7.7,
       7.75,7.8,7.85,7.9,7.95,8.0,8.05,8.1,8.15};
 */
    float ratio, correction=1;
-   
+
    if((area_img>0) && (area_hole>0) && (allin==1)){
      //Use the area option in paper: sqrt(Sspot/Sedge)
      ratio = sqrt(area_hole/(area_img+area_hole));
@@ -510,12 +510,12 @@ float poisson_spot_correction(float area_img, float area_hole, bool allin){
 }
 
 // ----------------PARTICLE REJECTION ---------------------------
-void reject_particle(Particle& x, float cutoff, float nextinttime, float pixel_res, 
+void reject_particle(Particle& x, float cutoff, float nextinttime, float pixel_res,
                     float smallbin, float largebin, float wc, Config::Method eawmethod)
 {
    //Decides on the rejection of a particle.
    //Ice rejects will return value of 2 or higher
-   //Water rejects will return value of 1 or higher                 
+   //Water rejects will return value of 1 or higher
    float ar;
    ar=(x.area+x.holearea)/x.circlearea;
    x.wreject = x.ireject = x.dofReject;	// start off with dofReject as answer
@@ -525,7 +525,7 @@ void reject_particle(Particle& x, float cutoff, float nextinttime, float pixel_r
    if (ar < 0.1) {x.wreject=1; x.ireject=1;}
    if ((eawmethod == Config::ENTIRE_IN) && (x.allin == 0)) {x.wreject=1; x.ireject=1;}
    if ((eawmethod == Config::CENTER_IN) && (x.centerin == 0)) {x.wreject=1; x.ireject=1;}
-  
+
    //Water conditions
    if ((ar < 0.4) || ((ar < 0.5) && (x.size > pixel_res*10.0))) x.wreject=1;
    if (x.size > 6000) x.wreject=1;
@@ -542,7 +542,7 @@ int hms2sfm(int hms)
    int hour = hms / 10000;
    int minute = (hms-hour*10000) / 100;
    int second = hms - hour*10000 - minute*100;
-   int sfm = hour*3600 + minute*60 + second;      
+   int sfm = hour*3600 + minute*60 + second;
    return sfm;
 }
 
@@ -613,13 +613,13 @@ void showparticle(Particle& x)
 		" WR=" << x.wreject <<
 		" DOFREJ=" << x.dofReject <<
 		endl;
-} 
+}
 
 //----------------Display particle image to screen--------
 void showroi(short *img[], int nslices, int nDiodes)
 {
   for (int i = 0; i < nslices; i++){
-    for (int j = 0; j < nDiodes; j++) cout<<img[i][j]; 
+    for (int j = 0; j < nDiodes; j++) cout<<img[i][j];
     cout<<endl;
   }
   cout<<flush<<endl;
@@ -628,7 +628,7 @@ void showroi(short *img[], int nslices, int nDiodes)
 // ----------------A FEW BYTE SWAPPING ROUTINES----------------
 unsigned long long endianswap_ull(unsigned long long x)
 {
-   x = (x>>56) | 
+   x = (x>>56) |
         ((x<<40) & 0x00FF000000000000ULL) |
         ((x<<24) & 0x0000FF0000000000ULL) |
         ((x<<8)  & 0x000000FF00000000ULL) |
@@ -654,7 +654,7 @@ int process2d(Config & cfg, netCDF & ncfile, ProbeInfo & probe)
   */
 
   //-----------Various declarations-----------------------------------------------
-  type_buffer buffer;  
+  type_buffer buffer;
   ifstream input_file;
   string line;
   int slice_count=0;
@@ -665,7 +665,7 @@ int process2d(Config & cfg, netCDF & ncfile, ProbeInfo & probe)
   long last_time1hz=0, itime=0, iit;
   Particle particle;
   vector<Particle> particle_stack;
-  char probetype = probe.id[0];  
+  char probetype = probe.id[0];
   char probenumber = probe.id[1];
 
   // allocate space for roi.
@@ -734,9 +734,9 @@ int process2d(Config & cfg, netCDF & ncfile, ProbeInfo & probe)
 
 
   //=============Process Particles============================================================
-  
+
   input_file.open(cfg.inputFile.c_str(), ios::binary);
- 
+
   //Skip the XML header
   do getline(input_file, line); while (line.compare(markerline)!=0);
 
@@ -841,7 +841,7 @@ int process2d(Config & cfg, netCDF & ncfile, ProbeInfo & probe)
 
         if (syncWord) {	// Found a sync line
            if (firsttimeflag) {
-              firsttimeline = timeline; 
+              firsttimeline = timeline;
               firsttimeflag = false;
            }
 
@@ -854,7 +854,7 @@ int process2d(Config & cfg, netCDF & ncfile, ProbeInfo & probe)
 
            if (time1hz >= cfg.starttime) {
               particle=findsize(roi, slice_count, probe.nDiodes, probe.resolution, cfg.smethod);
-              particle.holearea=fillholes2(roi, slice_count, probe.nDiodes);           
+              particle.holearea=fillholes2(roi, slice_count, probe.nDiodes);
               particle.inttime=(timeline - lasttimeline) / probe.clockMhz;
               particle.time1hz=time1hz;
               particle.dofReject = dofReject;
@@ -884,16 +884,16 @@ int process2d(Config & cfg, netCDF & ncfile, ProbeInfo & probe)
                    data.tas[itime]=((float)ntohs(buffer.tas));
 
                  //Fill interarrival time array with all particles
-//                 for (int i=0; i<particle_stack.size(); i++){                    
+//                 for (int i=0; i<particle_stack.size(); i++){
 //                    iit=0;
 //                    while((particle_stack[i].inttime)>it_endpoints[iit+1]) iit++;
 //                    count_it[itime][iit+1]++;   //Add 1 to iit for RAF convention
-//                 }   
+//                 }
 
                  //Interarrival time array, queue version
-                 for (int i=0; i<nitq; i++){                    
+                 for (int i=0; i<nitq; i++){
                     iit=0;
-                    if (itq[i] < it_endpoints[cfg.nInterarrivalBins]) {  // This should be the largest time allowable 
+                    if (itq[i] < it_endpoints[cfg.nInterarrivalBins]) {  // This should be the largest time allowable
                        while((itq[i])>it_endpoints[iit+1]) iit++;
                        count_it[itime][iit+binoffset]++;   //Add offset to iit for RAF convention
                     }
@@ -937,7 +937,7 @@ int process2d(Config & cfg, netCDF & ncfile, ProbeInfo & probe)
                     reject_particle(	particle_stack[i], data.pcutoff[itime], nextit,
 					probe.resolution, probe.bin_endpoints[0],
 					probe.bin_endpoints[probe.numBins], wc, cfg.eawmethod);
-                    if (cfg.debug) showparticle(particle_stack[i]);                    
+                    if (cfg.debug) showparticle(particle_stack[i]);
 
                     // Fill count arrays with accepted particles
                     if (!particle_stack[i].ireject){
@@ -967,7 +967,7 @@ int process2d(Config & cfg, netCDF & ncfile, ProbeInfo & probe)
            // Start a new particle
            lasttimeline = timeline;
            slice_count = 0;
-        } // end of image processing after detection of sync line 
+        } // end of image processing after detection of sync line
         else {
            // Found an image slice, make the next slice part of binary image
            int diode = 0;
@@ -1000,7 +1000,7 @@ int process2d(Config & cfg, netCDF & ncfile, ProbeInfo & probe)
 		<< " - " << buffcount << " records    \r" << flush;
 
   } // end buffer loop
- 
+
   // Close raw data file
   input_file.close();
 
@@ -1110,7 +1110,7 @@ int process2d(Config & cfg, netCDF & ncfile, ProbeInfo & probe)
 
   ncfile.CreateDimensions(numtimes, probe, cfg);
 
-  // Define the variables. 
+  // Define the variables.
   NcVar *timevar, *var;
   string varname, eawmethodname;
 
@@ -1248,7 +1248,7 @@ void ParseHeader(ifstream & input_file, Config & cfg, vector<ProbeInfo> & probe_
 
   // Parse XML header
   do
-  {    
+  {
     getline(input_file, line);
 
     if (line.find("Project") != string::npos)
@@ -1271,11 +1271,11 @@ void ParseHeader(ifstream & input_file, Config & cfg, vector<ProbeInfo> & probe_
       int ndiodes = atoi(extractAttribute(line, "nDiodes").c_str());
 
       ProbeInfo thisProbe(	extractAttribute(line, "type"),
-      				extractAttribute(line, "probe id"),
-      				extractAttribute(line, "serialnumber"),
+				extractAttribute(line, "probe id"),
+				extractAttribute(line, "serialnumber"),
 				ndiodes,
 				atof(extractAttribute(line, "resolution").c_str()),
-      				extractAttribute(line, "suffix"),
+				extractAttribute(line, "suffix"),
 				binoffset, ndiodes * 2);
 
       // Attempt to read RAF PMSspecs file.
@@ -1297,7 +1297,7 @@ void ParseHeader(ifstream & input_file, Config & cfg, vector<ProbeInfo> & probe_
 
       probe_list.push_back(thisProbe);
     }
-  } while ((line.compare(markerline)!=0) && (!input_file.eof()));  
+  } while ((line.compare(markerline)!=0) && (!input_file.eof()));
 }
 
 /* -------------------------------------------------------------------------- */
@@ -1364,8 +1364,8 @@ int usage(const char* argv0)
   cerr << "Example:  process2d myfile.2d -start 123000 -stop 140000 -xsize -allin"<<endl<<endl;
 
   return 1;
-} 
-  
+}
+
 
 //================================================================================================
 // ------------MAIN-----------------------
@@ -1376,7 +1376,7 @@ int main(int argc, char *argv[])
   ifstream input_file;
   vector<ProbeInfo> probes;
   Config config;
-  
+
   // Check for correct number of arguments
   if (argc < 2)
     return usage(argv[0]);
@@ -1393,8 +1393,8 @@ int main(int argc, char *argv[])
   if (!input_file.good()) {
     cerr << "Unable to open " << config.inputFile << endl;
     return 1;
-  }  
-  
+  }
+
   // Parse the XML header in the 2d file and get list of probes.
   ParseHeader(input_file, config, probes);
 
@@ -1420,7 +1420,7 @@ int main(int argc, char *argv[])
 		<< " armwidth : " << probes[i].armWidth << endl
 		<< " FirstBin : " << probes[i].firstBin << endl;
 
-    int errorcode = process2d(config, ncFile, probes[i]); 
+    int errorcode = process2d(config, ncFile, probes[i]);
 
     if (!errorcode)
       cout << endl << "Sucessfully processed probe " << i << endl;
