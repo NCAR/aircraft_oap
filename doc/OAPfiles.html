@@ -85,8 +85,9 @@ Work may continue on a particle frame or record in the future.
    &lt;Platform&gt;C130_N130AR&lt;/Platform&gt;
    &lt;FlightNumber&gt;rf03&lt;/FlightNumber&gt;
    &lt;FlightDate&gt;12/02/2009&lt;/FlightDate&gt;
-    &lt;probe id="C6" type="Fast2DC" resolution="10" nDiodes="64" serialnumber="F2DC002" suffix="_LPC"/&gt;
-    &lt;probe id="C4" type="Fast2DC" resolution="25" nDiodes="64" serialnumber="F2DC001" suffix="_RPC"/&gt;
+    &lt;probe id="C4" type="Fast2DC" resolution="25" nDiodes="64" clockFreq="12" laserWaveLength="658" serialnumber="F2DC003" suffix="_LPO"/&gt;
+    &lt;probe id="C6" type="Fast2DC_v2" resolution="10" nDiodes="64" clockFreq="33.333" laserWaveLength="720" serialnumber="F2DC002" suffix="_LPC"/&gt;
+
     &lt;probe id="P1" type="TwoDP" resolution="200" nDiodes="32" serialnumber="2DP10" suffix="_RWI"/&gt;
   &lt;/OAP&gt;
 </pre>
@@ -147,6 +148,18 @@ Additional meta-data may present and is encouraged.  Each line is ended with a n
 </tr>
 <tr>
 <td></td>
+<td><pre class="CDL">clockFreq</pre></td>
+<td>Optional</td>
+<td>Timing word clock frequency in Mhz.</td>
+</tr>
+<tr>
+<td></td>
+<td><pre class="CDL">laserWaveLength</pre></td>
+<td>Optional</td>
+<td>Laser wave length in nanometers.</td>
+</tr>
+<tr>
+<td></td>
 <td><pre class="CDL">endian</pre></td>
 <td>Optional</td>
 <td>Identify byte order.  Options are "big" or "little".  Default is "big".</td>
@@ -186,18 +199,39 @@ The data is stored in big-endian format, so all data will need to be swapped whe
 <h5>OAP Logical Record Format</h5>
 <pre class="CDL">
 /* Values currently in use for the 'id' field. */
-#define PMS2D_C1         0x4331		// First PMS-2DC
-#define PMS2D_C2         0x4332		// Second PMS-2DC
-#define PMS2D_C4         0x4334         // First RAF 64 diode 25 um Fast 2DC
-#define PMS2D_C5         0x4335         // Second RAF 64 diode 25 um Fast 2DC
-#define PMS2D_C6         0x4336         // First RAF 64 diode 10 um Fast 2DC
-#define PMS2D_G1         0x4731		// First 2D Greyscale; unused to date
-#define PMS2D_H1         0x4831		// SPEC HVPS
-#define PMS2D_P1         0x5031		// First PMS-2DP
-#define PMS2D_P2         0x5032		// Second PMS-2DP
-#define PMS2D_P4         0x5034		// First RAF 64 diode 200 um Fast 2DP
-#define PMS2D_3V         0x3348		// 3V-CPI 2DS Vertical
-#define PMS2D_3H         0x3356		// 3V-CPI 2DS Horizontal
+// Traditional 32 diode PMS2D probes.
+#define PMS2DC1         0x4331
+#define PMS2DC2         0x4332
+#define PMS2DP1         0x5031
+#define PMS2DP2         0x5032
+
+// 64 diode Fast 2DC, 25um.
+#define PMS2DC4         0x4334
+#define PMS2DC5         0x4335
+// 64 diode Fast 2DC, 10um.
+#define PMS2DC6         0x4336
+// 64 diode Fast 2DP, 200um.
+#define PMS2DP4         0x5034
+
+// 64 diode DMT CIP, 25um.
+#define PMS2DC8         0x4338
+// 64 diode DMT PIP, 100um.
+#define PMS2DP8         0x5038
+
+// Greyscale which we never flew.
+#define PMS2DG1         0x4731
+#define PMS2DG2         0x4732
+
+// SPEC HVPS
+#define HVPS1           0x4831
+#define HVPS2           0x4832
+// SPEC 3V-CPI
+#define SPEC2D3H        0x3348
+#define SPEC2D3V        0x3356
+// SPEC 2DS
+#define SPEC2DSH        0x5348
+#define SPEC2DSV        0x5356
+
 
 struct P2d_rec {
   int16_t id;				/* 'P1','C1','P2','C2', H1, etc */
