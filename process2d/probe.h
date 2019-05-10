@@ -40,7 +40,7 @@ public:
 
       if (type.find("_v2") != std::string::npos)
       {
-        clockMhz = 33.0e+06;
+        clockMhz = 33.33333333e+06;
         timingMask = 0x000003ffffffffffULL;
       }
     }
