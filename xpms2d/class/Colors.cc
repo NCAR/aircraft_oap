@@ -18,7 +18,7 @@ COPYRIGHT:	University Corporation for Atmospheric Research, 1997
 
 #ifdef PNG
 #include <sys/types.h>
-#include <netinet/in.h>
+#include <raf/portable.h>
 #include <inttypes.h>
 #endif
 

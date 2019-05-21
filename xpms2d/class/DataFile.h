@@ -21,6 +21,7 @@ COPYRIGHT:	University Corporation for Atmospheric Research, 1997-2018
 #include <raf/CIP.h>
 #include <raf/HVPS.h>
 #include <raf/hdrAPI.h>
+#include <raf/portable.h>
 
 #include <map>
 
@@ -99,7 +100,7 @@ public:
 protected:
   enum HeaderType { NoHeader, ADS2, OAP };
 
-  struct Index { long long index; int16_t time[4]; };
+  struct Index { uint64_t index; int16_t time[4]; };
 
   void	initADS2(OAP::UserConfig *cfg);
   void	initADS3(const char *hdrString, OAP::UserConfig *cfg);
@@ -112,7 +113,7 @@ protected:
    */
   void	AddToProbeListFromXML(const char *id, OAP::UserConfig *cfg);
 
-  long long	posOfPhysicalRecord(size_t i) {
+  uint64_t	posOfPhysicalRecord(size_t i) {
 	if (i > _indices.size()) fprintf(stderr, "currPhys exceeds nIndices\n");
 	return _indices[i].index;
 	}
@@ -136,7 +137,7 @@ protected:
   int		gz_fd;
 #endif
   FILE		*fp;
-  long long	_savePos;
+  uint64_t	_savePos;
 
   ProbeList	_probeList;
 

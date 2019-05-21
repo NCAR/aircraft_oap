@@ -14,6 +14,7 @@ COPYRIGHT:	University Corporation for Atmospheric Research, 1997-2018
 #include "Colors.h"
 #include <raf/XFonts.h>
 #include <raf/XPen.h>
+#include <raf/portable.h>
 
 extern Enchilada	*enchiladaWin;
 extern Histogram	*histogramWin;
@@ -27,7 +28,6 @@ extern XPen	*pen;
 #include <sstream>
 
 #include <sys/types.h>
-#include <netinet/in.h>
 
 static const int	TOP_OFFSET = 35;
 static const int	LEFT_MARGIN = 5;

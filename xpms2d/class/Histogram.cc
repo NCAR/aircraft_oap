@@ -7,7 +7,6 @@ COPYRIGHT:	University Corporation for Atmospheric Research, 2000-2018
 */
 
 #include "Histogram.h"
-#include <netinet/in.h>
 
 
 /* -------------------------------------------------------------------- */
