@@ -1,6 +1,6 @@
 Summary: Spec file for xpms2d
 Name: xpms2d
-Version: 2.7
+Version: 3.0
 Release: 1
 License: GPL
 Group: System Environment/Daemons
@@ -20,7 +20,7 @@ Configuration for NCAR-EOL xpms2d display for OAP probes.
 %setup -n %{name}
 
 %build
-scons
+scons --prefix=/opt/local -u
 
 %install
 rm -rf %{buildroot}
