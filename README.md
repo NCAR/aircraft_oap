@@ -32,10 +32,10 @@ The utilities build and run on any Unix/Linux operating system, including Mac OS
 
 ### Dependencies ###
 
-To install these programs on your computer, ensure the following libraries are installed:
+To install these programs on your computer, ensure the following packages (the -devel versions for Linux) are installed:
 
  * openmotif
- * netcdf
+ * netcdf, netcdf-cxx
  * python (needed by vardb)
  * log4cpp (needed by vardb)
  * xerces-c (needed by vardb)
