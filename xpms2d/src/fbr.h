@@ -23,7 +23,7 @@ static String fallback_resources[] =
   "*XmTextField.foreground:		black",
   "*XmForm.horizontalSpacing:		4",
   "*XmForm.verticalSpacing:		4",
-  "*canvasShell.title:			xpms2d 3.0.1",
+  "*canvasShell.title:			xpms2d 3.0.2",
   "*canvasShell.iconName:		xpms2d",
   "*canvasShell.allowShellResize:	True",
   "*canvasShell.x:			25",
@@ -150,6 +150,7 @@ static String fallback_resources[] =
   "*menuBar*synthetic.labelString:	Toggle Synthetic Data",
   "*menuBar*wrapDisplay.labelString:	Toggle Display Wrap",
   "*menuBar*toggleTiming.labelString:	Toggle Timing Words",
+  "*menuBar*toggleHisto.labelString:	Toggle Histograms",
 
   /*
    * Control window

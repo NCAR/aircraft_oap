@@ -26,6 +26,7 @@ public:
 
   void	SetDisplayMode(int mode);
   void	SetWrapDisplay()	{ _wrap = 1 - _wrap; }
+  void	SetHistograms()		{ _histograms = 1 - _histograms; }
   void	SetTimingWords()	{ _showTimingWords = 1 - _showTimingWords; }
 
   void	reset(ADS_DataFile *file, OAP::P2d_rec *rec);
@@ -83,6 +84,8 @@ protected:
   bool	_wrap;
   /// Display timing words or not.
   bool  _showTimingWords;
+  /// Display histograms on canvas (not Histogram Window).
+  bool  _histograms;
 
 };	/* END MAINCANVAS.H */
 

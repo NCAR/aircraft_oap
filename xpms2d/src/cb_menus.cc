@@ -266,6 +266,15 @@ void ToggleDisplay(Widget w, XtPointer client, XtPointer call)
 }       /* END TOGGLEDISPLAY */
 
 /* -------------------------------------------------------------------- */
+void ToggleHistogram(Widget w, XtPointer client, XtPointer call)
+{
+  // This is the histograms on the canvas, not the HistogramWindow.
+  mainPlot->SetHistograms();
+  PageCurrent();
+
+}       /* END TOGGLEDISPLAY */
+
+/* -------------------------------------------------------------------- */
 void ToggleSynthetic(Widget w, XtPointer client, XtPointer call)
 {
   fileMgr.CurrentFile()->ToggleSyntheticData();

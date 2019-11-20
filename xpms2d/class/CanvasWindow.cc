@@ -46,6 +46,7 @@ static struct menu	viewMenu[] = {
 
 static struct menu	optMenu[] = {
 	{ "toggleTiming", ToggleTiming, (XtPointer)NULL, },
+	{ "toggleHisto", ToggleHistogram, (XtPointer)NULL, },
 	{ "wrapDisplay", ToggleWrap, (XtPointer)NULL, },
 	{ "synthetic", ToggleSynthetic, (XtPointer)NULL, },
 	{ NULL, NULL, NULL }};

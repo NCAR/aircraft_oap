@@ -51,6 +51,7 @@ MainCanvas::MainCanvas(Widget w) : Canvas(w)
 
   _wrap = false;
   _showTimingWords = true;
+  _histograms = true;
   _pixelsPerY = 70;	// generally nDiodes() + 38
 
   reset(0, 0);
@@ -422,6 +423,7 @@ void MainCanvas::drawPMS2D(OAP::P2d_rec *record, Probe *probe, float version, in
     drawDiodeHistogram(record->data, probe, syncWord);
   else
     drawAccumHistogram(probe->stats, 1050);
+
 /*
 p = (uint32_t *)record->data;
 for (size_t i = 0; i < probe->nSlices(); ++i)
@@ -942,6 +944,9 @@ void MainCanvas::draw_2DC_as_2DP(OAP::P2d_rec *record)
 /* -------------------------------------------------------------------- */
 void MainCanvas::drawAccumHistogram(struct OAP::recStats &stats, size_t xOffset)
 {
+  if (_histograms == false)
+    return;
+
   pen->SetColor(color->GetColor(BLACK));
 
   for (size_t i = 0; i < 128; ++i)
@@ -954,6 +959,9 @@ void MainCanvas::drawAccumHistogram(struct OAP::recStats &stats, size_t xOffset)
 /* -------------------------------------------------------------------- */
 void MainCanvas::drawDiodeHistogram(const unsigned char *buffer, Probe *probe, uint32_t syncWord)
 {
+  if (_histograms == false)
+    return;
+
   size_t histo[32];
   uint32_t slice;
   memset(histo, 0, sizeof(histo));
