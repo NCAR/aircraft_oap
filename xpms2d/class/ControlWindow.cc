@@ -4,19 +4,6 @@ OBJECT NAME:	ControlWindow.cc
 
 FULL NAME:	Callbacks for Control Window
 
-ENTRY POINTS:	ControlWindow()
-		PoopUp()
-		SetFileNames()
-		SetTimeText()
-		SetDensity()
-		SetDelay()
-		Start()
-		Stop()
-		PositionTime()
-		UpdateTimeScale()
-
-STATIC FNS:	
-
 DESCRIPTION:	
 
 MODIFIES:	CurrentDataFile, CurrentPanelNumber, NumberOfPanels

@@ -4,12 +4,6 @@ OBJECT NAME:	cb_mag.cc
 
 FULL NAME:	Callback Wrappers for the magnify canvas.
 
-ENTRY POINTS:	MagnifyExpose()
-		MagnifyInput()
-		MagnifyResize()
-
-STATIC FNS:	
-
 DESCRIPTION:	
 
 COPYRIGHT:	University Corporation for Atmospheric Research, 1997-2018
@@ -46,7 +40,7 @@ void MagnifyInput(Widget w, XtPointer client, XtPointer call)
 
   evt = (XmDrawingAreaCallbackStruct *)call;
   xe = (XAnyEvent *)evt->event;
- 
+
 }	/* END MAGNIFYINPUT */
 
 /* END CB_MAG.CC */

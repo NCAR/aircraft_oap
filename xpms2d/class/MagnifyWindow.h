@@ -28,8 +28,8 @@ public:
 	MagnifyWindow(Widget parent);
 
   Widget DrawingArea() const	{ return(drawA); }
- 
- 
+
+
 private:
   Widget        drawA;
 

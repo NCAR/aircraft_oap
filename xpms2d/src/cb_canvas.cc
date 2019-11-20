@@ -49,10 +49,10 @@ void CanvasInput(Widget w, XtPointer client, XtPointer call)
 
   evt = (XmDrawingAreaCallbackStruct *)call;
   xe = (XAnyEvent *)evt->event;
- 
+
   if (xe->type == 4 || xe->type == 5)
     mag->ProcessInput(evt);
- 
+
 }	/* END CANVASINPUT */
 
 /* -------------------------------------------------------------------- */
@@ -60,7 +60,7 @@ void DoTheBox(Widget w, XtPointer client, XMotionEvent *evt, Boolean cont2disp)
 {
   if (evt)
     mag->DrawBox(evt);
- 
+
 }       /* END DOTHEBOX */
 
 /* END CB_CANVAS.CC */

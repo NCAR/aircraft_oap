@@ -1,15 +1,13 @@
 /*
 -------------------------------------------------------------------------
 OBJECT NAME:    MagnifyCanvas.cc
- 
+
 FULL NAME:      Magnify canvas
- 
-ENTRY POINTS:
- 
+
 DESCRIPTION:
- 
+
 NOTES:
- 
+
 COPYRIGHT:	University Corporation for Atmospheric Research, 1997
 -------------------------------------------------------------------------
 */
@@ -86,5 +84,5 @@ void MagnifyCanvas::draw()
   cursor.PointerCursor(Wdgt());
 
 }       /* END DRAW */
- 
+
 /* END MAGNIFYCANVAS.CC */

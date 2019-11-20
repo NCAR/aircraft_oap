@@ -42,10 +42,10 @@ void Magnify::ProcessInput(XmDrawingAreaCallbackStruct *evt)
 
   if (xb->button != Button1)
     return;
- 
+
   if ((xb->state & Button1Mask) == 0)
     startX = startY = endX = endY = 0;
- 
+
   if ((xb->state & Button1Mask) == Button1Mask)
     {
     XtRemoveEventHandler(mainPlot->Wdgt(), Button1MotionMask, False,
@@ -53,18 +53,18 @@ void Magnify::ProcessInput(XmDrawingAreaCallbackStruct *evt)
     RemoveBox();
     pen->SetFunction(GXcopy);
     }
- 
+
   if ((xb->state & Button1Mask) != 0)
     if (cancel || endX < startX || endY < startY)
       return;
- 
+
   if ((xb->state & Button1Mask) == 0)
     {
     cancel = false;
- 
+
     startX = xb->x;
     startY = xb->y;
- 
+
     pen->SetColor(color->GetColor(2));
     pen->SetLineWidth(1);
     pen->SetFunction(GXxor);
@@ -75,7 +75,7 @@ void Magnify::ProcessInput(XmDrawingAreaCallbackStruct *evt)
     {
     if (abs(startX - xb->x) < 10 || abs(startY - xb->y) < 10)
       return;
- 
+
     endX = xb->x;
     endY = xb->y;
 
@@ -97,14 +97,14 @@ void Magnify::DrawBox(XMotionEvent *evt)
 {
   pen->SetColor(color->GetColor(2));
   pen->SetLineWidth(1);
- 
+
   if (endX != 0 && endY != 0)
     pen->DrawRectangle(mainPlot->Surface(),
 		startX, startY, endX - startX, endY - startY);
- 
+
   endX = evt->x;
   endY = evt->y;
- 
+
   pen->DrawRectangle(mainPlot->Surface(),
 		startX, startY, endX - startX, endY - startY);
 
@@ -116,7 +116,7 @@ void Magnify::RemoveBox()
   if (endX != 0 && endY != 0)
     pen->DrawRectangle(mainPlot->Surface(),
                    startX, startY, endX - startX, endY - startY);
- 
+
 }	/* END REMOVEBOX */
 
 /* END MAGNIFY.CC */

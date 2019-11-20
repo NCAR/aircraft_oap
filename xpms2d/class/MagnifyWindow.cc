@@ -19,7 +19,6 @@ MagnifyWindow::MagnifyWindow(Widget parent) : WinForm(parent, "mag", Form)
   Widget        frame, rc, b[3];
   Cardinal      n;
   Arg           args[8];
- 
 
   n = 0;
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
@@ -27,11 +26,11 @@ MagnifyWindow::MagnifyWindow(Widget parent) : WinForm(parent, "mag", Form)
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
   frame = XmCreateFrame(Window(), (char *)"buttonFrame", args, n);
   XtManageChild(frame);
- 
+
   n = 0;
   rc = XmCreateRowColumn(frame, (char *)"buttonRC", args, n);
   XtManageChild(rc);
- 
+
   n = 0;
   b[0] = XmCreatePushButton(rc, (char *)"dismissButton", args, n);
   b[1] = XmCreatePushButton(rc, (char *)"printButton", args, n);
@@ -39,8 +38,8 @@ MagnifyWindow::MagnifyWindow(Widget parent) : WinForm(parent, "mag", Form)
   XtAddCallback(b[0], XmNactivateCallback, DismissWindow, Window());
 //  XtAddCallback(b[1], XmNactivateCallback, diffPostScript, NULL);
 XtSetSensitive(b[1], false);
- 
- 
+
+
   /* Create Graphics Canvas
    */
   n = 0;

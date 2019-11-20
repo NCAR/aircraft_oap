@@ -4,10 +4,6 @@ OBJECT NAME:	Colors.cc
 
 FULL NAME:	X Color values.
 
-ENTRY POINTS:	Colors()
-
-STATIC FNS:		
-
 DESCRIPTION:	
 
 COPYRIGHT:	University Corporation for Atmospheric Research, 1997
