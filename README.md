@@ -42,7 +42,7 @@ To install these programs on your computer, ensure the following packages (the -
  * boost (needed by vardb)
  
  If you are still getting compile errors, you can look here for other things you may need (like Xcode)
- https://github.com/ncar/aspen/wiki/MacOS-Build-Environment
+ https://github.com/ncar/aircraft_oap/wiki/MacOS-Build-Environment
 
 ### Installation ###
 
