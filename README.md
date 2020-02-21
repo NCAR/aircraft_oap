@@ -55,7 +55,3 @@ All programs will be installed in aircraft_oap/bin by default.
 
 If you wish to compile just a single utility, cd to that utilities subdir (say xpms2d) and run
  * scons -u .
-
-To install in a different directory, say your home dir, 
- * scons install --prefix=~
-This will put compiled programs in ~/bin
