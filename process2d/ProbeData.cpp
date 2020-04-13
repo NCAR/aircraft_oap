@@ -37,7 +37,7 @@ ProbeData::ProbeData(size_t size) : _size(size)
 
 void ProbeData::ReplaceNANwithMissingData()
 {
-  for (int i = 0; i < all.total_conc.size(); i++)
+  for (size_t i = 0; i < all.total_conc.size(); i++)
   {
     if (isnanf(all.total_conc[i]))
       all.total_conc[i] = all.dbz[i] = all.dbar[i] = all.disp[i] =
