@@ -115,6 +115,9 @@ public:
   std::vector<float> dof;    // Depth Of Field
   std::vector<float> eaw;    // Effective Area Width
   std::vector<float> samplearea;
+
+  // Blank these times per $PROJ_DIR/$PROJECT/$PLATFORM/Production/BlankOAP_rf##
+  std::vector<std::pair<time_t, time_t> > blank_out;
 };
 
 #endif

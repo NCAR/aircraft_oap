@@ -9,8 +9,6 @@ class ProbeData
 public:
   struct derived
   {
-    float **counts, **conc;	// Histogram for counts and concentration.
-
     std::vector<float> accepted;	// Counts of accepted particles.
     std::vector<float> rejected;	// Counts of rejected particles.
     std::vector<float> total_conc, dbz, dbar, disp, lwc, eff_rad;
@@ -18,6 +16,8 @@ public:
   };
 
   ProbeData(size_t size);
+
+  void ReplaceNANwithMissingData();
 
   int size() const { return _size; }
 
@@ -28,5 +28,6 @@ public:
   struct derived all, round;
 
 protected:
+  // Number of seconds we are processing / writing into the netCDF file.
   int _size;
 };

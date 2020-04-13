@@ -1,5 +1,5 @@
 /*
- ******************************************************************
+ **************************************************************************
 
     Fast 2DC processing package, NCAR/RAF
 
@@ -9,7 +9,7 @@
 
     Authors: Aaron Bansemer, Chris Webster
 
- ******************************************************************
+ **************************************************************************
 */
 
 #include <iostream>
@@ -21,10 +21,12 @@
 #include <cmath>
 #include <cstring>
 #include <iomanip>
+#include <ctime>
 #include <unistd.h>
 #include <arpa/inet.h>
 
 #include <raf/PMSspex.h>
+#include <raf/TextFile.h>
 
 #include "config.h"
 #include "probe.h"
@@ -1011,8 +1013,24 @@ int process2d(Config & cfg, netCDF & ncfile, ProbeInfo & probe)
     delete [] roi[i];
 
 
+  // Apply blankouts from $PROJ_DIR/$PROJECT/$PLATFORM/Production/BlankOAP.rf##
+  cout << "\nApplying Blankouts...";
+  for (size_t p = 0; p < probe.blank_out.size(); ++p)
+  {
+    int	start_blank = probe.blank_out[p].first - cfg.starttime,
+	end_blank = probe.blank_out[p].second - cfg.starttime;
+    for (int i = 0; i < numtimes; i++)
+    {
+      if (i >= start_blank && i <= end_blank)
+      {
+        for (int bin = binoffset; bin < probe.numBins+binoffset; bin++)
+          count_all[i][bin] = count_round[i][bin] = nan("");
+      }
+    }
+  }
 
-  //=========Compute sample volume, concentration, total number, and LWC======
+
+  // Compute sample volume, concentration, total number, and LWC
   cout << "\nComputing derived parameters...";
 
   float zFac[probe.numBins], dia2[probe.numBins], dia3[probe.numBins];
@@ -1100,6 +1118,19 @@ int process2d(Config & cfg, netCDF & ncfile, ProbeInfo & probe)
     data.round.lwc[i] *= M_PI / 6.0 * 1.0e-9;
   }
 
+
+  //=============Replace NAN with missing value (-32767) =====================
+  data.ReplaceNANwithMissingData();
+  for (int i = 0; i < numtimes; i++)
+  {
+    for (int bin = binoffset; bin < probe.numBins+binoffset; bin++)
+    {
+      if (isnanf(count_all[i][bin]))
+        count_all[i][bin] = conc_all[i][bin] = -32767.0;
+      if (isnanf(count_round[i][bin]))
+        count_round[i][bin] = conc_round[i][bin] = -32767.0;
+    }
+  }
 
   //=============Write to netCDF==============================================
   if (buffcount <= 1) return 1;  //Don't write empty files
@@ -1238,6 +1269,62 @@ void Read2dStartEndTime(Config & config, ifstream & input_file)
   {
     cerr << "Date/time of first record is greater than date/time of last record!\n";
     config.stoptime += 240000;  // Midnight crossing
+  }
+}
+
+/* -------------------------------------------------------------------------- */
+void ReadBlankOuts(Config & cfg, vector<ProbeInfo> & probe_list)
+{
+  if (cfg.project.size() == 0 || cfg.platform.size() == 0)
+    return;
+
+  char filename[512], *proj_dir, target[64];
+  if ((proj_dir = getenv("PROJ_DIR")) == 0)
+    return;
+
+  sprintf(filename, "%s/%s/%s/Production/BlankOAP.%s", proj_dir, cfg.project.c_str(),
+	cfg.platform.c_str(), cfg.flightNumber.c_str());
+
+  TextFile blanks(filename);
+  if (blanks.size() == 0)	// Empty or non-exitent file.
+    return;
+
+
+  /* For each line in the blanksouts file, parse probe, starttime and endtime
+   */
+  for (size_t i = 0; i < blanks.size(); ++i)
+  {
+    struct tm st, et;
+    memset(&st, 0, sizeof(struct tm));
+    memset(&et, 0, sizeof(struct tm));
+
+    if (cfg.flightDate.size() > 0)
+    {
+      sscanf(cfg.flightDate.c_str(), "%d/%d/%d", &st.tm_mon, &st.tm_mday, &st.tm_year);
+      sscanf(cfg.flightDate.c_str(), "%d/%d/%d", &et.tm_mon, &et.tm_mday, &et.tm_year);
+      st.tm_year -= 1900;
+      et.tm_year -= 1900;
+      st.tm_mon -= 1;
+      et.tm_mon -= 1;
+    }
+
+    sscanf(blanks.Line(i).c_str(), "%s %d:%d:%d %d:%d:%d", target,
+        &st.tm_hour, &st.tm_min, &st.tm_sec, &et.tm_hour, &et.tm_min, &et.tm_sec);
+
+    for (size_t p = 0; p < probe_list.size(); ++p)
+    {
+      if (probe_list[p].suffix.find(target) != std::string::npos)
+      {
+        time_t stt = mktime(&st);
+        time_t ett = mktime(&et);
+        if (ett < stt) ett += 86400;	// 24 hours; in case we crossed midnight...
+        if (stt < ett)
+        {
+          std::pair<time_t, time_t> tm(stt, ett);
+          probe_list[p].blank_out.push_back(tm);
+        }
+      }
+    }
   }
 }
 
@@ -1409,6 +1496,7 @@ int main(int argc, char *argv[])
   input_file.close();
 
   netCDF ncFile(config);
+  ReadBlankOuts(config, probes);
 
   // Process all probes found in the file
   for (size_t i = 0; i < probes.size(); i++)
