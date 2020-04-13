@@ -39,11 +39,11 @@ void ProbeData::ReplaceNANwithMissingData()
 {
   for (size_t i = 0; i < all.total_conc.size(); i++)
   {
-    if (isnanf(all.total_conc[i]))
+    if (std::isnan(all.total_conc[i]))
       all.total_conc[i] = all.dbz[i] = all.dbar[i] = all.disp[i] =
 		all.lwc[i] = all.eff_rad[i] = all.accepted[i] =
 		all.rejected[i] = all.total_conc100[i] = all.total_conc150[i] = -32767.0;
-    if (isnanf(round.total_conc[i]))
+    if (std::isnan(round.total_conc[i]))
       round.total_conc[i] = round.dbz[i] = round.dbar[i] = round.disp[i] =
 		round.lwc[i] = round.eff_rad[i] = round.accepted[i] =
 		round.rejected[i] = round.total_conc100[i] = round.total_conc150[i] = -32767.0;

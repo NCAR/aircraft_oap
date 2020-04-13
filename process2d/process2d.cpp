@@ -1125,9 +1125,9 @@ int process2d(Config & cfg, netCDF & ncfile, ProbeInfo & probe)
   {
     for (int bin = binoffset; bin < probe.numBins+binoffset; bin++)
     {
-      if (isnanf(count_all[i][bin]))
+      if (std::isnan(count_all[i][bin]))
         count_all[i][bin] = conc_all[i][bin] = -32767.0;
-      if (isnanf(count_round[i][bin]))
+      if (std::isnan(count_round[i][bin]))
         count_round[i][bin] = conc_round[i][bin] = -32767.0;
     }
   }
