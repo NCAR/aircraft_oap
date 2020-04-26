@@ -1,6 +1,6 @@
 #!python
 
-env = Environment()
+env = Environment(tools=['default', 'raf'])
 
 env.Append(CCFLAGS='-g -Wall')
 
