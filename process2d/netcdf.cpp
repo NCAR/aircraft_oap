@@ -63,7 +63,7 @@ void netCDF::InitVarDB()
   }
 
   char file[1024];
-  sprintf(file, "%s/Configuration/raf/VarDB", proj_dir);
+  sprintf(file, "%s/Configuration/VarDB", proj_dir);
 
   if (InitializeVarDB(file) == ERR)
   {
