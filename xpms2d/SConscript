@@ -9,9 +9,6 @@ env.Append(LIBPATH=["../lib"])
 env.Append(CXXFLAGS='-std=c++11 -g -Wall -Wno-write-strings -Wno-deprecated-register')
 
 env.Append(CPPDEFINES=['PNG'])
-if env['PLATFORM'] == 'darwin':
-  env.Append(CPPDEFINES=['PNG15'])
-
 
 env.Append(LIBS=['png'])
 env.Append(LIBS=['z'])
