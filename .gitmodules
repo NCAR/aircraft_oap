@@ -1,3 +1,3 @@
 [submodule "vardb"]
 	path = vardb
-	url = https://github.com/NCAR/aircraft_vardb
+	url = ../aircraft_vardb
