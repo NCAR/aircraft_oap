@@ -1,6 +1,6 @@
 # -*- python -*-
 
-tools = ['default', 'prefixoptions', 'netcdf', 'vardb', 'raf']
+tools = ['default', 'prefixoptions', 'netcdfcxx', 'vardb', 'raf']
 env = Environment(tools=tools)
 
 env.Append(CCFLAGS='-g -Wall')
