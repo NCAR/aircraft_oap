@@ -4,7 +4,7 @@
 
 import os
 import sys
-sys.path.append('vardb/site_scons')
+sys.path.append(os.path.abspath('vardb/site_scons'))
 import eol_scons
 
 
