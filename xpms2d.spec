@@ -29,7 +29,7 @@ Configuration for NCAR-EOL xpms2d display for OAP probes.
 %setup -n %{name}
 
 %build
-scons -u
+scons
 
 %install
 rm -rf %{buildroot}
