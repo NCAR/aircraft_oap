@@ -1,7 +1,7 @@
 Summary: Spec file for xpms2d
 Name: xpms2d
 Version: 3.0
-Release: 1
+Release: 2
 License: GPL
 Group: System Environment/Daemons
 Url: http://www.eol.ucar.edu/
@@ -10,7 +10,16 @@ Packager: Chris Webster <cjw@ucar.edu>
 BuildRoot:  %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 Vendor: UCAR
 BuildArch: x86_64
-Requires: openmotif libpng
+
+BuildRequires: scons
+Requires: libpng
+
+%if 0%{?rhel} <= 7
+Requires: openmotif
+%else
+Requires: motif
+%endif
+
 Source: ftp://ftp.eol.ucar.edu/pub/archive/RAF-src/%{name}.tar.gz
 
 %description
@@ -20,7 +29,7 @@ Configuration for NCAR-EOL xpms2d display for OAP probes.
 %setup -n %{name}
 
 %build
-scons --prefix=/opt/local -u
+scons -u
 
 %install
 rm -rf %{buildroot}
