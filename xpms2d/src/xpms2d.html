@@ -32,7 +32,7 @@ span.comment { background-color: #88FF88; font-style: italic; }
 
 
 <h1 align=CENTER>XPMS2D User's Guide</h1>
-<h1 align=CENTER>Version 2.8.0</h1>
+<h1 align=CENTER>Version 3.0.2</h1>
 <hr>
 <h1 align=CENTER>Table Of Contents</h1>
 <ol type=A>
@@ -275,42 +275,42 @@ with contents of the box magnified by a factor of two.
 <hr>
 <h2 align=CENTER>Guide to Menus</h2>
 <dl>
-<dt><h3>File Menu</h3>
+<dt><h3>File Menu</h3></dt>
 <dd>The items in the File menu allow opening of data files from disk,
 printer setup, and printing.  In the case of an operation that will
 overwrite an existing file, you will be prompted by an alert that allows
 you to abort the write if you don't want the file to be overwritten.
 <p>
  <dl>
- <dt><h4>Open Data File</h4>
+ <dt><h4>Open Data File</h4></dt>
  <dd>This displays a File Selection Box to select a file to read.  There
 is no error checking to see if the input file is valid.  Invalid files
 tend to cause a segmentation fault.  If this is the first time you have opened
 this file, <b>xpms2d</b> will create an index file; this may take a minute or
-more.
+more.</dd>
 <p>
- <dt><h4>Save PostScript</h4>
+ <dt><h4>Save PostScript</h4></dt>
  <dd>This displays a File Selection Box prompting for the name of the file
-where you want to write the PostScript output.
+where you want to write the PostScript output.</dd>
 <p>
- <dt><h4>Printer Setup</h4>
+ <dt><h4>Printer Setup</h4></dt>
  <dd>This pops up a window with options to change the 'lp' command, the size of
 plot to be printed, whether to print landscape or portrait, and color vs.
-black and white.
+black and white.</dd>
 <p>
- <dt><h4>Print</h4>
- <dd>This opens a pipe and sends PostScript commands to <b>lp(1)</b>.  
+ <dt><h4>Print</h4></dt>
+ <dd>This opens a pipe and sends PostScript commands to <b>lp(1)</b>.</dd>
 <p>
- <dt><h4>Save <a href="http://www.libpng.org/pub/png/">PNG</a></h4>
+ <dt><h4>Save <a href="http://www.libpng.org/pub/png/">PNG</a></h4></dt>
  <dd>This option allows you to save the plot image as a graphics file, which
 can then be used in web pages, etc.  You can adjust the size of the image
-saved by first sizing the plot canvas.
+saved by first sizing the plot canvas.</dd>
 <p>
- </dl>
+ </dd></dl>
 
-<dt><h3>View Menu</h3>
- <dl>
- <dt><h4>View Hex</h4>
+<dt><h3>View Menu</h3></dt>
+ <dd><dl>
+ <dt><h4>View Hex</h4></dt>
  <dd>Pops up a seperate window with an ASCII hex dump of each PMS2D record.
  <dt><h4>View Histograms</h4>
  <dd>Pops up a seperate window with ASCII bin count histogram data per 2D record.
@@ -318,30 +318,32 @@ saved by first sizing the plot canvas.
 <img src="http://www.eol.ucar.edu/raf/Software/x2dhisto.png">
 <p align=center>Figure 5.  Histogram for each record.  There are 64 columns for resolution(i) from 1 to 64.
 
- <dt><h4>View Particle Data</h4>
- <dd>Pops up a seperate window with particle by particle blow of the records being displayed.  Information includes particle height, width, area, time word, and whether the particle was rejected or accepted.  Printing, Saving, and Searching are available options.
+ <dt><h4>View Particle Data</h4></dt>
+ <dd>Pops up a seperate window with particle by particle blow of the records being displayed.  Information includes particle height, width, area, time word, and whether the particle was rejected or accepted.  Printing, Saving, and Searching are available options.</dd>
 <p>
- <dt><h4>Normal</h4>
- <dd>This is the default ASCII output displayed below each record.  A histogram of bin sizing will be displayed on the right.
+ <dt><h4>Normal</h4></dt>
+ <dd>This is the default ASCII output displayed below each record.  A histogram of bin sizing will be displayed on the right.</dd>
 <p>
- <dt><h4>Diagnostic</h4>
- <dd>Changes the ASCII output below each record to display information about timing words and probe frequency.  Diode count histogram will be displayed on the right.  this is the number of times each diode was shadowed, not inluding sync and timing words.
+ <dt><h4>Diagnostic</h4></dt>
+ <dd>Changes the ASCII output below each record to display information about timing words and probe frequency.  Diode count histogram will be displayed on the right.  this is the number of times each diode was shadowed, not inluding sync and timing words.</dd>
 <p>
- <dt><h4>Raw Data Records</h4>
- <dd>This will display the raw 2d record with no processing.  Just loop through all slices and draw them.  It will then display the processed record below the raw record.  Useful for debugging xpms2d.
+ <dt><h4>Raw Data Records</h4></dt>
+ <dd>This will display the raw 2d record with no processing.  Just loop through all slices and draw them.  It will then display the processed record below the raw record.  Useful for debugging xpms2d.</dd>
 <p>
- </dl>
+ </dd></dl>
 
-<dt><h3>Options Menu</h3>
- <dl>
- <dt><h4>Wrap Display</h4>
- <dd>Toggles on/off display of timing words.
- <dt><h4>Wrap Display</h4>
- <dd>The HVPS has more than a 1024 "slices" per buffer.  By default <b>xpms2d</b> will just run the display off the edge.  By toggling this option, records will "wrap" on the display so all particles are visible.
- <dt><h4>Toggle Synthetic Data</h4>
- <dd>This will have <b>xpms2d</b> toggle to a uniform record of data for double checking calculation accuracy.
+<dt><h3>Options Menu</h3></dt>
+ <dd><dl>
+ <dt><h4>Toggle Timing Words</h4></dt>
+ <dd>Toggles on/off display of timing words.</dd>
+ <dt><h4>Toggle Histograms</h4></dt>
+ <dd>Toggles on/off display of histgrams at the end of image data.</dd>
+ <dt><h4>Wrap Display</h4></dt>
+ <dd>The HVPS has more than a 1024 "slices" per buffer.  By default <b>xpms2d</b> will just run the display off the edge.  By toggling this option, records will "wrap" on the display so all particles are visible.</dd>
+ <dt><h4>Toggle Synthetic Data</h4></dt>
+ <dd>This will have <b>xpms2d</b> toggle to a uniform record of data for double checking calculation accuracy.</dd>
 <p>
- </dl>
+ </dd></dl>
 
 </dl>
 <p>
@@ -360,12 +362,11 @@ saved by first sizing the plot canvas.
 Christopher J. Webster<br>
 National Center for Atmospheric Research<br>
 Research Aviation Facility.<br>
-(303) 497-1044
 <p>
 <address><a href="mail&#116;&#111;:cjw&#064;ucar.edu?Subject=from_RAF_Web_Software_Page">email Chris Webster</a></address>
 <hr>
 <font size=2>
 Last update:
-Thu Oct 10 19:05:59 MDT 2019
+Wed Mar 10 09:00:00 MDT 2021
 </body>
 </html>
