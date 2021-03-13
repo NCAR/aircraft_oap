@@ -283,26 +283,23 @@ void ToggleSynthetic(Widget w, XtPointer client, XtPointer call)
 }       /* END TOGGLESYNTHETIC */
 
 /* -------------------------------------------------------------------- */
-void ForkNetscape(Widget w, XtPointer client, XtPointer call)
-{
-  if (fork() == 0)
-    {
-    switch ((long)client)
-      {
-      case 1:
-        execlp("firefox", "firefox", "http://www.eol.ucar.edu/research-aircraft", NULL);
-        break;
-      case 2:
-        execlp("firefox", "firefox", "http://www.eol.ucar.edu/raf/Software", NULL);
-        break;
-      case 3:
-        execlp("firefox", "firefox", "http://www.eol.ucar.edu/raf/Software/xpms2d.html", NULL);
-        break;
-      }
+#include "raf/opener.h"
 
-    printf("exec of firefox failed, errno = %d\n", errno);
-    exit(0);
+void OpenURL(Widget w, XtPointer client, XtPointer call)
+{
+  switch ((long)client)
+    {
+    case 1:
+      opener("http://www.eol.ucar.edu/research-aircraft");
+      break;
+    case 2:
+      opener("http://www.eol.ucar.edu/raf/Software");
+      break;
+    case 3:
+      opener("http://www.eol.ucar.edu/raf/Software/xpms2d.html");
+      break;
     }
-}       /* END FORKNETSCAPE */
+
+}       /* END OPENURL */
 
 /* END CB_MENUS.CC */

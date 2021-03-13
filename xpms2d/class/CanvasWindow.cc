@@ -52,9 +52,9 @@ static struct menu	optMenu[] = {
 	{ NULL, NULL, NULL }};
 
 static struct menu	helpMenu[] = {
-        { "RAF Homepage", ForkNetscape, (XtPointer)1 },
-        { "RAF Software Page", ForkNetscape, (XtPointer)2 },
-        { "xpms2d User's Manual", ForkNetscape, (XtPointer)3 },
+        { "EOL Homepage", OpenURL, (XtPointer)1 },
+        { "RAF Software Page", OpenURL, (XtPointer)2 },
+        { "xpms2d User's Manual", OpenURL, (XtPointer)3 },
 	{ NULL, NULL, NULL }};
 
 static struct
