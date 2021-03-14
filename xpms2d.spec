@@ -20,7 +20,7 @@ Requires: openmotif
 Requires: motif
 %endif
 
-Source: ftp://ftp.eol.ucar.edu/pub/archive/RAF-src/%{name}.tar.gz
+Source: %{name}.tar.gz
 
 %description
 Configuration for NCAR-EOL xpms2d display for OAP probes.
@@ -34,7 +34,7 @@ scons
 %install
 rm -rf %{buildroot}
 mkdir -p %{buildroot}%{_bindir}
-cp src/%{name} %{buildroot}%{_bindir}
+cp xpms2d/src/%{name} %{buildroot}%{_bindir}
 
 %post
 
@@ -48,13 +48,16 @@ rm -rf %{buildroot}
 
 %changelog
 
+* Sat Mar 13 2021 Chris Webster <cjw@ucar.edu> - 3.0-2
+- Try and get rpmbuild to work.  Help Menu refactor.
+
 * Mon Jul 27 2015 Chris Webster <cjw@ucar.edu> - 2.7-1
 - Merge in 2DS branch.
 
 * Fri Dec 05 2014 Chris Webster <cjw@ucar.edu> - 2.7-0
 - Add support for CIP & PIP probes.  Files still need to meet OAP format.  I would call this beta support.
 
-* Wed Dec 12 2013 Chris Webster <cjw@ucar.edu> - 2.6-2
+* Thu Dec 12 2013 Chris Webster <cjw@ucar.edu> - 2.6-2
 - bug fixes.
 - Magnify box issue - XButtonEvent needed update, wasn't detecting if NumLock was off (or on).
 - Merge in branch file positioning.
