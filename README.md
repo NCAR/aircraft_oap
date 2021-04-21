@@ -1,8 +1,6 @@
 # aircraft_oap
 A collection of programs for manipulating Optical Array Probe data.  Consists of several translators to convert native probe data into a common OAP file format, a processor, and a display program. 
 
-The OAP file format can be found at http://www.eol.ucar.edu/raf/software/OAPfiles.html
-
 Directories:
 
 | Directory | Description |
@@ -26,15 +24,15 @@ http://www.eol.ucar.edu/raf/software/xpms2d.html
 The OAP file format can be found at http://www.eol.ucar.edu/raf/software/OAPfiles.html
 
 ### Environment ###
-The aircraft OAP utilities are written in C. They require netCDF library 3.0 or later.
+The aircraft OAP utilities are written in C/C++. They require netCDF library 3.0 or later.
 
 The utilities build and run on any Unix/Linux operating system, including Mac OS X.
 
 ### Dependencies ###
 
-To install these programs on your computer, ensure the following packages (the -devel versions for Linux) are installed:
+To install these programs on your computer, ensure the following packages (and the corresponding -devel versions for Linux) are installed:
 
- * openmotif
+ * openmotif (starting to show up as just "motif" on Linux).
  * netcdf, netcdf-cxx
  * python (needed by vardb)
  * log4cpp (needed by vardb)
@@ -51,7 +49,7 @@ To install these programs on your computer, ensure the following packages (the -
  * scons
  * scons install
  
-All programs will be installed in aircraft_oap/bin by default.
+All programs will be installed in /usr/local on MacOS, otherwise /opt/local.  You may override the install directory, e.g. "scons INSTALL_DIRECTORY=/home/local install" and the binaries will be place in /home/local/bin.
 
 If you wish to compile just a single utility, cd to that utilities subdir (say xpms2d) and run
  * scons -u .
