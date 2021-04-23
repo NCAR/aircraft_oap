@@ -28,26 +28,30 @@ The aircraft OAP utilities are written in C/C++.  The utilities build and run on
 ### Dependencies ###
 
 To install these programs on your computer, ensure the following packages (and the corresponding -devel versions for Linux) are installed:
-
- * openmotif (starting to show up as just "motif" on RHEL8 & Fedora).
- * netcdf, netcdf-cxx
- * python (needed by vardb)
- * log4cpp (needed by vardb)
- * xerces-c (needed by vardb)
- * boost (needed by vardb)
+```
+ openmotif (starting to show up as just "motif" on RHEL8 & Fedora).
+ netcdf, netcdf-cxx
+ python (needed by vardb)
+ log4cpp (needed by vardb)
+ xerces-c (needed by vardb)
+ boost (needed by vardb)
+ xorg-x11-fonts-ISO8859-1-75dpi
+ xorg-x11-fonts-ISO8859-1-100dpi
+```
  
  If you are still getting compile errors, you can look here for other things you may need (like Xcode)
  https://github.com/ncar/aircraft_oap/wiki/MacOS-Build-Environment
 
 ### Installation ###
-
- * git clone --recursive https://github.com/ncar/aircraft_oap
- * cd aircraft_oap
- * scons
- * scons install
- 
+```
+ git clone --recursive https://github.com/ncar/aircraft_oap
+ cd aircraft_oap
+ scons
+ scons install
+ ```
 All programs will be installed in /usr/local on MacOS, otherwise /opt/local.  You may override the install directory, e.g. "scons INSTALL_DIRECTORY=/home/local install" and the binaries will be place in /home/local/bin.
 
 If you just want xpms2d, then edit SConstruct file:
  * Comment out line with Requires('vardb')
  * Change subdirs list to only include xpms2d
+The only dependencies for xpms2d are the openmotif and fonts listed above.
