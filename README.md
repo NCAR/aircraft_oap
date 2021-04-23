@@ -12,27 +12,24 @@ Directories:
 | process2d | 2D Processor to process 2D image data into size-distributions and other quantitative data. |
 | translate2ds | SPEC 2DS data translator. |
 | usb2diag | |
-| xpms2d | X Windows / Motif program for viewing image data from most OAP probes. http://www.eol.ucar.edu/raf/software/xpms2d.html |
+| xpms2d | X Windows / Motif program for viewing image data from most OAP probes. |
 
 ### Documentation ###
 
 Documentation is available on a per-program basis.
 
-xpms2d - The users manual can be found online at 
-http://www.eol.ucar.edu/raf/software/xpms2d.html
-
-The OAP file format can be found at http://www.eol.ucar.edu/raf/software/OAPfiles.html
+[xpms2d User's Guide](http://www.eol.ucar.edu/raf/software/xpms2d.html)\
+[The OAP File Format](http://www.eol.ucar.edu/raf/software/OAPfiles.html)\
+See doc/procfd2c.doc for description of processing algorithms.
 
 ### Environment ###
-The aircraft OAP utilities are written in C/C++. They require netCDF library 3.0 or later.
-
-The utilities build and run on any Unix/Linux operating system, including Mac OS X.
+The aircraft OAP utilities are written in C/C++.  The utilities build and run on any Unix/Linux operating system, including Mac OS X.
 
 ### Dependencies ###
 
 To install these programs on your computer, ensure the following packages (and the corresponding -devel versions for Linux) are installed:
 
- * openmotif (starting to show up as just "motif" on Linux).
+ * openmotif (starting to show up as just "motif" on RHEL8 & Fedora).
  * netcdf, netcdf-cxx
  * python (needed by vardb)
  * log4cpp (needed by vardb)
@@ -51,5 +48,6 @@ To install these programs on your computer, ensure the following packages (and t
  
 All programs will be installed in /usr/local on MacOS, otherwise /opt/local.  You may override the install directory, e.g. "scons INSTALL_DIRECTORY=/home/local install" and the binaries will be place in /home/local/bin.
 
-If you wish to compile just a single utility, cd to that utilities subdir (say xpms2d) and run
- * scons -u .
+If you just want xpms2d, then edit SConstruct file:
+ * Comment out line with Requires('vardb')
+ * Change subdirs list to only include xpms2d
