@@ -54,4 +54,5 @@ All programs will be installed in /usr/local on MacOS, otherwise /opt/local.  Yo
 If you just want xpms2d, then edit SConstruct file:
  * Comment out line with Requires('vardb')
  * Change subdirs list to only include xpms2d
+
 The only dependencies for xpms2d are the openmotif and fonts listed above.
