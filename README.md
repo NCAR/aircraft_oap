@@ -39,6 +39,17 @@ To install these programs on your computer, ensure the following packages (and t
  xorg-x11-fonts-ISO8859-1-100dpi
 ```
  
+ Ubuntu Focal (20.04)
+```
+libxt-dev
+libmotif-dev
+libnetcdf-dev
+libnetcdf-cxx-legacy-dev
+liblog4cpp5-dev
+libxerces-c-dev
+libboost-regex-dev
+```
+
  If you are still getting compile errors, you can look here for other things you may need (like Xcode)
  https://github.com/ncar/aircraft_oap/wiki/MacOS-Build-Environment
 
