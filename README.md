@@ -25,6 +25,10 @@ See doc/procfd2c.doc for description of processing algorithms.
 ### Environment ###
 The aircraft OAP utilities are written in C/C++.  The utilities build and run on any Unix/Linux operating system, including Mac OS X.
 
+### MacOS
+
+aircraft_oap is available via [MacPorts](https://www.macports.org/) or follow the [MacOS build environment](https://github.com/ncar/aircraft_oap/wiki/MacOS-Build-Environment) directions to build from source.
+
 ### Dependencies ###
 
 To install these programs on your computer, ensure the following packages (and the corresponding -devel versions for Linux) are installed:
