@@ -12,8 +12,8 @@ pipeline {
     }
   }
   post {
-    success {
-      mail(to: 'cjw@ucar.edu janine@ucar.edu cdewerd@ucar.edu taylort@ucar.edu', subject: 'oap Jenkinsfile build successful', body: 'oap Jenkinsfile build successful')
+    failure {
+      mail(to: 'cjw@ucar.edu janine@ucar.edu cdewerd@ucar.edu taylort@ucar.edu', subject: 'oap Jenkinsfile build failed', body: 'oap Jenkinsfile build failed')
     }
   }
   options {
