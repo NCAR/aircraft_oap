@@ -50,9 +50,11 @@ extern Colors		*color;
 extern XPen		*pen;
 
 
+static const size_t MAX_RECORDS = 30;
+
 /* Contains current N 2d records (for re-use by things like ViewHex */
 size_t	nBuffs = 0;
-OAP::P2d_rec	pgFbuff[20];
+OAP::P2d_rec	pgFbuff[MAX_RECORDS];
 
 
 /* -------------------------------------------------------------------- */
@@ -146,9 +148,9 @@ void PageForward(Widget w, XtPointer client, XtPointer call)
         pen->SetColor(color->GetColor(j+1));
         mainPlot->draw(&pgFbuff[nBuffs], iter->second, version, j+1, NULL);
         pen->SetColor(color->GetColor(0));
-        if (++nBuffs >= 20)
+        if (++nBuffs >= MAX_RECORDS)
           {
-          fprintf(stderr, "cb_control.ccL::PageForward: nBuffs exceeds max of 20.\n");
+          fprintf(stderr, "cb_control.ccL::PageForward: nBuffs exceeds max of %zu.\n", MAX_RECORDS);
           exit(1);
           }
         break;

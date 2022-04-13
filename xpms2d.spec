@@ -11,7 +11,7 @@ BuildRoot:  %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 Vendor: UCAR
 BuildArch: x86_64
 
-BuildRequires: scons
+BuildRequires: python3-scons
 Requires: libpng
 
 %if 0%{?rhel} <= 7
