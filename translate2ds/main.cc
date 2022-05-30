@@ -12,6 +12,38 @@
 sp::Log	g_Log("program.log");
 
 
+struct DoF2DS
+{
+	sp::Options*	options;
+
+	void operator () (const std::string& file_name) const
+	{
+		sp::Device3VCPI	device(*options);
+		sp::File	file(file_name);
+		sp::File	file_hk(file_name+"HK");
+
+		if (file.is_open() == false) { return; }
+
+		g_Log << "Generating NCAR OAP .2d from Fast2DS file \"" << file_name << "\" of size "
+			<< file.MegaBytes() << " MB.\n";
+
+		std::string outfile = file_name;
+		outfile.erase(0, outfile.find("base"));
+		outfile.erase(outfile.end() - 5, outfile.end()); //remove .F2DS
+
+		sp::UCAR_Writer writer(outfile, *options, sp::HORIZONTAL_2DS, sp::VERTICAL_2DS,
+					"F2DS", "10", "128", "_2H", "_2V");
+/*
+		if (file_hk.is_open())
+		{
+			std::cout << "Processing housekeeping file.\n";
+			device.ProcessHK(file_hk, writer);
+		}
+*/
+		device.ProcessData(file, writer);
+	}
+};
+
 struct Do3VCPI
 {
 	sp::Options*	options;
@@ -74,6 +106,9 @@ struct Do2DS
 
 	void operator () (const std::string& file_name) const
 	{
+// I wonder if the real issue is we were trying to process Fast2DS data in here, and that is same
+// format as 3V-CPI.  I've since added a DoF2DS().  --cjw 6/2022
+
 		//sp::Device2DS	device;
 		sp::Device3VCPI	device(*options);
 		sp::File	file(file_name);
@@ -136,16 +171,23 @@ struct ProcessFile
 		std::string copy(match);
 		if(fName.length() < copy.length())
 			return false;
+std::cout << "In=" << fName << ", " << match <<'\n';
 		std::transform(fName.end()-strlen(match), fName.end(), copy.begin(), ::tolower);
+std::cout << "Copy=" << copy << ", " << match <<'\n';
 
 		return copy.find(match) != std::string::npos;
 	}
 
 	void operator () (const std::string& file_name) const
 	{
-		if(contains(file_name, ".2dscpi") && file_name.find("base") != std::string::npos)
+		if (contains(file_name, ".2dscpi") && file_name.find("base") != std::string::npos)
 		{
 			Do3VCPI doit = {options};
+			doit(file_name);
+		}
+		else if(contains(file_name, ".f2ds") && file_name.find("base") != std::string::npos)
+		{
+			DoF2DS doit = {options};
 			doit(file_name);
 		}
 		else if(contains(file_name, ".2ds") && file_name.find("base") != std::string::npos)
@@ -158,7 +200,7 @@ struct ProcessFile
 			DoHVPS doit = {options};
 			doit(file_name);
 		}
-		else if(contains(file_name,".2d"))
+		else if(contains(file_name, "2d"))
 		{
 			Do2DS_Reverse doit = {options};
 			doit(file_name);
