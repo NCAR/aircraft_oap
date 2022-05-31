@@ -25,14 +25,12 @@ extern "C" { int usleep(unsigned int); }
 #endif
 
 /* -------------------------------------------------------------------- */
-ControlWindow::ControlWindow(Widget parent) : WinForm(parent, "control", RowColumn)
+ControlWindow::ControlWindow(Widget parent) : WinForm(parent, "control", RowColumn), delay(50)
 {
   Widget	pnRC[2], plRC[8], label, trc;
   Widget	title[8], frame[6], RC[6];
   Arg		args[8];
   size_t	i, n;
-
-  delay = 0;
 
   /* Did anyone every mention that C++'s ability to have pre-initialized
    * stuff in a class sucks the big one.
@@ -151,6 +149,7 @@ trc = XmCreateRowColumn(Window(), (char *)"trc", args, 0);
   XtManageChild(delayScale);
   XtAddCallback(delayScale, XmNdragCallback, SetScaleSpeed, NULL);
   XtAddCallback(delayScale, XmNvalueChangedCallback, SetScaleSpeed, NULL);
+  XmScaleSetValue(delayScale, delay);
 
 
 
