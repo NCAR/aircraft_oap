@@ -167,6 +167,8 @@ void Output(char buff[])
 //    case 0x4832:
     case 0x3348:	// 3V-CPI / 2DS Horizontal.
     case 0x3356:	// 3V-CPI / 2DS Vertical.
+    case 0x5348:	// 2DS Horizontal.
+    case 0x5356:	// 2DS Vertical.
       nDiodes = 128;
       break;
     default:
