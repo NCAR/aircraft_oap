@@ -36,7 +36,9 @@
 
 using namespace std;
 
-const int binoffset = 1;  // Offset for RAF conventions, number of empty bins before counting begins
+const int binoffset = 0;	// Offset for RAF conventions, number of empty bins before counting begins
+				// Turned off 6/2022.  TI3GER is first project without.
+
 const string markerline = "</OAP>";  // Marks end of XML header
 
 const unsigned char syncString[8] = { 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa };
