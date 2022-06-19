@@ -552,9 +552,9 @@ struct tm getTime(const P2d_rec *rec)
 {
   struct tm tm;
 
-  tm.tm_mday = 13; // ntohs(rec->day);
-  tm.tm_mon = 11; // ntohs(rec->month) - 1;
-  tm.tm_year = 104; // ntohs(rec->year) - 1900;
+  tm.tm_mday = ntohs(rec->day);
+  tm.tm_mon = ntohs(rec->month) - 1;
+  tm.tm_year = ntohs(rec->year) - 1900;
   tm.tm_hour = ntohs(rec->hour);
   tm.tm_min = ntohs(rec->minute);
   tm.tm_sec = ntohs(rec->second);
