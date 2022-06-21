@@ -23,7 +23,7 @@ COPYRIGHT:	University Corporation for Atmospheric Research, 2012
 
 #include <netinet/in.h>
 
-#include <raf/header.h>
+#include <raf/OAP.h>
 
 using namespace std;
 
@@ -56,7 +56,7 @@ public:
 
 
 void Output(char buff[]);
-void ParticleCount(P2d_rec *p2d, size_t nDiodes);
+void ParticleCount(OAP::P2d_rec *p2d, size_t nDiodes);
 
 
 void Usage()
@@ -125,7 +125,7 @@ int main(int argc, char *argv[])
 
 
   if (!cfg.hdrOnly)
-    while (fread(buffer, sizeof(P2d_rec), 1, fp) == 1)
+    while (fread(buffer, sizeof(OAP::P2d_rec), 1, fp) == 1)
       Output(buffer);
 
   fclose(fp);
@@ -144,7 +144,7 @@ int main(int argc, char *argv[])
 /* -------------------------------------------------------------------- */
 void Output(char buff[])
 {
-  P2d_rec *p2d = (P2d_rec *)buffer;
+  OAP::P2d_rec *p2d = (OAP::P2d_rec *)buffer;
   size_t nDiodes = 0;
 
   switch (ntohs(*(unsigned short *)buff))
@@ -186,6 +186,9 @@ void Output(char buff[])
   else
   {
     cout << dec << "  " << ((char*)p2d)[0] << ((char*)p2d)[1] << " ";
+    cout << setw(2) << setfill('0') << ntohs(p2d->year) << '/';
+    cout << setw(2) << setfill('0') << ntohs(p2d->month) << '/';
+    cout << setw(2) << setfill('0') << ntohs(p2d->day) << " ";
     cout << setw(2) << setfill('0') << ntohs(p2d->hour) << ':';
     cout << setw(2) << setfill('0') << ntohs(p2d->minute) << ':';
     cout << setw(2) << setfill('0') << ntohs(p2d->second);
@@ -209,7 +212,7 @@ void Output(char buff[])
 }
 
 /* -------------------------------------------------------------------- */
-void OutputParticleCount(P2d_hdr *p, size_t counts[], size_t n, bool output_msec)
+void OutputParticleCount(OAP::P2d_hdr *p, size_t counts[], size_t n, bool output_msec)
 {
   int total = 0;
 
@@ -236,11 +239,11 @@ static const unsigned char dofRejected[] = { 0xAA, 0xAA, 0xAB };
 static const size_t nSyncB = 3;
 
 
-void ParticleCount(P2d_rec *p2d, size_t nDiodes)
+void ParticleCount(OAP::P2d_rec *p2d, size_t nDiodes)
 {
   static bool firstTime = true;
   static size_t	perSecondCounts[512], sizeCounter = 0;
-  static P2d_hdr prevRec;
+  static OAP::P2d_hdr prevRec;
   size_t recordCounts[512];
 
   if (firstTime)
@@ -250,7 +253,7 @@ void ParticleCount(P2d_rec *p2d, size_t nDiodes)
   }
 
   memset(recordCounts, 0, sizeof(recordCounts));
-  
+
   // Output 1 second totals.
   if (memcmp((void *)&p2d->hour, (void *)&prevRec.hour, 6) != 0)
   {
@@ -287,6 +290,6 @@ void ParticleCount(P2d_rec *p2d, size_t nDiodes)
   }
 
   cout << ((char*)p2d)[0] << ((char*)p2d)[1] << " - ";
-  OutputParticleCount((P2d_hdr *)p2d, recordCounts, nDiodes, true);
-  memcpy((void *)&prevRec, (void *)p2d, sizeof(P2d_hdr));
+  OutputParticleCount((OAP::P2d_hdr *)p2d, recordCounts, nDiodes, true);
+  memcpy((void *)&prevRec, (void *)p2d, sizeof(OAP::P2d_hdr));
 }

@@ -36,7 +36,9 @@
 
 using namespace std;
 
-const int binoffset = 1;  // Offset for RAF conventions, number of empty bins before counting begins
+const int binoffset = 0;	// Offset for RAF conventions, number of empty bins before counting begins
+				// Turned off 6/2022.  TI3GER is first project without.
+
 const string markerline = "</OAP>";  // Marks end of XML header
 
 const unsigned char syncString[8] = { 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa };
@@ -552,9 +554,9 @@ struct tm getTime(const P2d_rec *rec)
 {
   struct tm tm;
 
-  tm.tm_mday = 13; // ntohs(rec->day);
-  tm.tm_mon = 11; // ntohs(rec->month) - 1;
-  tm.tm_year = 104; // ntohs(rec->year) - 1900;
+  tm.tm_mday = ntohs(rec->day);
+  tm.tm_mon = ntohs(rec->month) - 1;
+  tm.tm_year = ntohs(rec->year) - 1900;
   tm.tm_hour = ntohs(rec->hour);
   tm.tm_min = ntohs(rec->minute);
   tm.tm_sec = ntohs(rec->second);
