@@ -97,7 +97,7 @@ void processParticle(uint16_t *wp)
   {
     nWords = wp[1] & 0x0FFF;
     timingWord = !(wp[1] & 0x1000);
-    printf("H nWords=%4d - %s\n", nWords, timingWord ? "" : "NT");
+    printf("V nWords=%4d - %s\n", nWords, timingWord ? "" : "NT");
   }
 
   wp += 5;
@@ -105,7 +105,7 @@ void processParticle(uint16_t *wp)
 
   for (i = 0; i < nWords; ++i)
   {
-    if (wp[i] == 0x4000)
+    if (wp[i] == 0x4000)	// Fully shadowed slice.
     {
       if (asciiArt)
       {
@@ -118,14 +118,17 @@ void processParticle(uint16_t *wp)
       continue;
     }
 
-    if (wp[i] == 0x7FFF)
+    if (wp[i] == 0x7FFF)	// Uncompressed slice.
     {
+      if (verbose)
+        printf("                 -- uncomressed slice -- \n");
+
       if (asciiArt)
       {
         printf("\n  %2d u 0x", sliceCnt);
         for (int j = 0; j < 8; ++j)
           for (int k = 0; k < 16; ++k)
-            printf("%d", !((wp[j] << k) & 0x8000));
+            printf("%d", !((wp[1+j] << k) & 0x8000));
       }
       i += 15;
       nBits = 0;
@@ -133,7 +136,7 @@ void processParticle(uint16_t *wp)
       continue;
     }
 
-    if (wp[i] & 0x4000)	// First word of slice
+    if (wp[i] & 0x4000)		// First word of slice
     {
       finishSlice(nBits);
 
@@ -143,7 +146,7 @@ void processParticle(uint16_t *wp)
         printf("\n  %2d 0x", sliceCnt);
     }
 
-    if ((value = (wp[i] & 0x007F)) > 0)
+    if ((value = (wp[i] & 0x007F)) > 0)		// Number of clear pixels
     {
       if (asciiArt)
       {
@@ -153,7 +156,7 @@ void processParticle(uint16_t *wp)
       nBits += value;
     }
 
-    if ((value = (wp[i] & 0x3F80) >> 7) > 0)
+    if ((value = (wp[i] & 0x3F80) >> 7) > 0)	// Number of shadowed pixels
     {
       if (asciiArt)
       {
