@@ -169,13 +169,24 @@ void processParticle(uint16_t *wp)
 
   finishSlice(nBits);
 
-  printf("\n end - %d/%d words, sliceCnt = %d/%d\n", i, nWords, sliceCnt, nSlices);
+  if (timingWord)
+  {
+    static unsigned long prevTimeWord = 0;
+    unsigned long tWord = ((unsigned long *)&wp[nWords])[0] & 0x0000FFFFFFFFFFFF;
+
+    printf("\n Timing = %lu, deltaT=%lu\n", tWord, tWord - prevTimeWord);
+    prevTimeWord = tWord;
+  }
+  else
+    printf("\n No timing word\n");
+
+  printf(" end - %d/%d words, sliceCnt = %d/%d\n", i, nWords, sliceCnt, nSlices);
 }
 
 
 void processImageFile(FILE *infp)
 {
-  char	buffer[8192], particle[8192];
+  static char	buffer[8192], particle[8192];
   int	imCnt = 0, nlCnt = 0, oCnt = 0, partialPos = 0;
 
   struct imageBuf *tds = (struct imageBuf *)buffer;
@@ -194,8 +205,9 @@ void processImageFile(FILE *infp)
         if (wp[j] == 0x3253)	// we have end particle
           break;
       }
-
-      memcpy(&particle[partialPos], &wp[0], (j+1) * sizeof(uint16_t));
+printf(" copy second part of partical started last record, partilaPos=%d %d\n", partialPos, j);
+      memcpy(&particle[partialPos*sizeof(uint16_t)], &wp[0], (j+1) * sizeof(uint16_t));
+      processParticle((uint16_t *)particle);
       partialPos = 0;
     }
 
@@ -205,7 +217,7 @@ void processImageFile(FILE *infp)
       {
 //        printf("%x - %d %d %d %d\n", wp[j], wp[j+1], wp[j+2], wp[j+3], wp[j+4]);
         if (verbose)
-          printf("NL Flush\n");
+          printf("NL Flush, pos = %d\n", j);
         nlCnt++;
         continue;
       }
@@ -224,14 +236,16 @@ void processImageFile(FILE *infp)
             break;
         }
 
-        memcpy(particle, &wp[j], (k-j+1) * sizeof(uint16_t));
 
         // This was a partial particle, break out for more data.
         if (k == 2048)
         {
           partialPos = k - j;
+          memcpy(particle, &wp[j], (k-j) * sizeof(uint16_t));
           break;	// end of record, break out for more data.
         }
+
+        memcpy(particle, &wp[j], (k-j+1) * sizeof(uint16_t));
 
 
         // OK, we can process particle
