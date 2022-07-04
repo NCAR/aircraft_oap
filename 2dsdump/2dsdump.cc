@@ -45,7 +45,7 @@ bool cksum(const uint16_t buff[], int nWords, uint16_t ckSum)
 }
 
 
-int moreData(FILE *infp, char buffer[])
+int moreData(FILE *infp, unsigned char buffer[])
 {
   if (verbose)
     printf("  moreData\n");
@@ -79,25 +79,44 @@ void finishSlice(int nBits)
 }
 
 
+void printParticleHeader(uint16_t *hdr)
+{
+  int idx = 1;
+  printf(" %x - ID=%6d nSlices=%3d ", hdr[0], hdr[3], hdr[4]);
+
+  if ((hdr[idx] & 0x0FFF) == 0)
+    ++idx;
+
+  printf("%c nWords=%4d %s\n",
+	idx == 1 ? 'H' : 'V',
+	hdr[idx] & 0x0fff,
+	hdr[idx] & 0x1000 ? "- NT" : "");
+}
+
 void processParticle(uint16_t *wp)
 {
   int i, nSlices = wp[4], nWords, sliceCnt = 0, nBits = 0;
-  uint16_t value;
+  uint16_t value, id = wp[3];
   bool timingWord = true;
+  static uint16_t prevID = 0;
 
-  printf("%x - ID=%6d nSlices=%3d ", wp[0], wp[3], nSlices);
+  printParticleHeader(wp);
+
+
+  if (id > 0 && id != prevID+1)
+    printf("!!! Non sequential praticle ID : prev=%d, this=%d !!!\n", prevID, id);
+
+  prevID = id;
 
   if (wp[2] != 0)
   {
     nWords = wp[2] & 0x0FFF;
     timingWord = !(wp[2] & 0x1000);
-    printf("H nWords=%4d - %s\n", nWords, timingWord ? "" : "NT");
   }
   else
   {
     nWords = wp[1] & 0x0FFF;
     timingWord = !(wp[1] & 0x1000);
-    printf("V nWords=%4d - %s\n", nWords, timingWord ? "" : "NT");
   }
 
   wp += 5;
@@ -174,11 +193,11 @@ void processParticle(uint16_t *wp)
     static unsigned long prevTimeWord = 0;
     unsigned long tWord = ((unsigned long *)&wp[nWords])[0] & 0x0000FFFFFFFFFFFF;
 
-    printf("\n Timing = %lu, deltaT=%lu\n", tWord, tWord - prevTimeWord);
+    printf("\n  Timing = %lu, deltaT=%lu\n", tWord, tWord - prevTimeWord);
     prevTimeWord = tWord;
   }
   else
-    printf("\n No timing word\n");
+    printf("\n  No timing word\n");
 
   printf(" end - %d/%d words, sliceCnt = %d/%d\n", i, nWords, sliceCnt, nSlices);
 }
@@ -186,7 +205,8 @@ void processParticle(uint16_t *wp)
 
 void processImageFile(FILE *infp)
 {
-  static char	buffer[8192], particle[8192];
+  static unsigned char	buffer[8192];
+  static uint16_t	particle[4096];
   int	imCnt = 0, nlCnt = 0, oCnt = 0, partialPos = 0;
 
   struct imageBuf *tds = (struct imageBuf *)buffer;
@@ -197,19 +217,6 @@ void processImageFile(FILE *infp)
   while (moreData(infp, buffer) == 1)
   {
     int j = 0;
-
-    if (partialPos > 0)	// remainder of last particle from last record
-    {
-      for (j = 0; j < 2048; ++j)
-      {
-        if (wp[j] == 0x3253)	// we have end particle
-          break;
-      }
-printf(" copy second part of partical started last record, partilaPos=%d %d\n", partialPos, j);
-      memcpy(&particle[partialPos*sizeof(uint16_t)], &wp[0], (j+1) * sizeof(uint16_t));
-      processParticle((uint16_t *)particle);
-      partialPos = 0;
-    }
 
     for (; j < 2048; ++j)
     {
@@ -227,32 +234,43 @@ printf(" copy second part of partical started last record, partilaPos=%d %d\n", 
       {
         int k;
 
+        if (verbose)
+          printf(" start particle, pos=%d\n", j);
+
         partialPos = 0;
-
-        // Search for next particle (we want end of this particle).
-        for (k = j+1; k < 2048; ++k)
+        if (j > 2043)	// want particle 5 byte header
         {
-          if (wp[k] == 0x3253)	// we have end particle
-            break;
+          if (verbose) printf(" short header, j=%d\n", j);
+          partialPos = 2048-j;
+          memcpy(particle, &wp[j], partialPos * sizeof(uint16_t));
+          moreData(infp, buffer);
+          j = 0;
         }
 
+        memcpy(&particle[partialPos], &wp[j], (5-partialPos) * sizeof(uint16_t));
+        int n = std::max(particle[1] & 0x0FFF, particle[2] & 0x0FFF);
+//printf("    %d %d %d\n", partialPos, j, n);
+        j += (5-partialPos);
 
-        // This was a partial particle, break out for more data.
-        if (k == 2048)
+        partialPos = 0;
+        if (j + n >= 2048)
         {
-          partialPos = k - j;
-          memcpy(particle, &wp[j], (k-j) * sizeof(uint16_t));
-          break;	// end of record, break out for more data.
+          if (verbose) printf(" short image, j=%d, n=%d\n", j, n);
+          partialPos = 2048-j;
+          memcpy(&particle[5], &wp[j], partialPos * sizeof(uint16_t));
+          moreData(infp, buffer);
+          j = 0;
+          n -= partialPos;
         }
 
-        memcpy(particle, &wp[j], (k-j+1) * sizeof(uint16_t));
+//printf("    %d %d %d\n", partialPos, j, n);
+        memcpy(&particle[5+partialPos], &wp[j], n * sizeof(uint16_t));
+        j += (n-1);
 
 
         // OK, we can process particle
         imCnt++;
         processParticle((uint16_t *)particle);
-
-        j = k - 1;
       }
     }
   }
