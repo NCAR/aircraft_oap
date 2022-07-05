@@ -251,7 +251,7 @@ void processImageFile(FILE *infp)
         j += (5-partialPos);
 
         partialPos = 0;
-        if (j + n >= 2048)
+        if (j + n > 2048)
         {
           if (verbose) printf(" short image, j=%d, n=%d\n", j, n);
           partialPos = 2048-j;
