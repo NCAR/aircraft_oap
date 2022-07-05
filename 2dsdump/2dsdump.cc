@@ -226,14 +226,12 @@ void processImageFile(FILE *infp)
         if (verbose)
           printf("NL Flush, pos = %d\n", j);
         nlCnt++;
-        continue;
+        break;
       }
 
 
       if (wp[j] == 0x3253)		// start particle
       {
-        int k;
-
         if (verbose)
           printf(" start particle, pos=%d\n", j);
 
