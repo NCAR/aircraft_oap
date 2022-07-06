@@ -27,8 +27,12 @@ struct maskBuf
 };
 
 
+// Options
 bool verbose = false;
+bool timeOnly = false;
 bool asciiArt = false;
+char fileName[512];
+int  recordCnt = 0;
 
 
 bool cksum(const uint16_t buff[], int nWords, uint16_t ckSum)
@@ -55,10 +59,11 @@ int moreData(FILE *infp, unsigned char buffer[])
   if (rc != 1)
     return rc;
 
+  ++recordCnt;
   struct imageBuf *tds = (struct imageBuf *)buffer;
 
-  if (verbose)
-    printf("%d/%d/%d %02d:%02d:%02d.%03d - %x\n", tds->year, tds->month,
+  if (verbose || timeOnly)
+    printf("%d/%d/%d %02d:%02d:%02d.%03d - 0x%04x\n", tds->year, tds->month,
 	tds->day, tds->hour, tds->minute, tds->second, tds->msecond,
 	((uint16_t *)tds->rdf)[0]);
 
@@ -82,16 +87,17 @@ void finishSlice(int nBits)
 void printParticleHeader(uint16_t *hdr)
 {
   int idx = 1;
-  printf(" %x - ID=%6d nSlices=%3d ", hdr[0], hdr[3], hdr[4]);
+  printf("  %x - ID=%6d nSlices=%3d ", hdr[0], hdr[3], hdr[4]);
 
   if ((hdr[idx] & 0x0FFF) == 0)
     ++idx;
 
-  printf("%c nWords=%4d %s\n",
+  printf("%c nWords=%4d %s",
 	idx == 1 ? 'H' : 'V',
 	hdr[idx] & 0x0fff,
 	hdr[idx] & 0x1000 ? "- NT" : "");
 }
+
 
 void processParticle(uint16_t *wp)
 {
@@ -199,7 +205,7 @@ void processParticle(uint16_t *wp)
   else
     printf("\n  No timing word\n");
 
-  printf(" end - %d/%d words, sliceCnt = %d/%d\n", i, nWords, sliceCnt, nSlices);
+  printf(" end - %d/%d words, sliceCnt = %d/%d\n\n", i, nWords, sliceCnt, nSlices);
 }
 
 
@@ -207,7 +213,7 @@ void processImageFile(FILE *infp)
 {
   static unsigned char	buffer[8192];
   static uint16_t	particle[4096];
-  int	imCnt = 0, nlCnt = 0, oCnt = 0, partialPos = 0;
+  int	imCnt = 0, nlCnt = 0, partialPos = 0;
 
   struct imageBuf *tds = (struct imageBuf *)buffer;
   uint16_t *wp = ((uint16_t *)tds->rdf);
@@ -217,6 +223,18 @@ void processImageFile(FILE *infp)
   while (moreData(infp, buffer) == 1)
   {
     int j = 0;
+
+    if (timeOnly)
+    {
+      if (wp[0] == 0x4e4c)		// NL flush buffer
+        nlCnt++;
+
+      for (; j < 2045; ++j)
+        if (wp[j] == 0x3253 && (wp[j+1] == 0 || wp[j+2] == 0))		// start particle
+          ++imCnt;
+
+      continue;
+    }
 
     for (; j < 2048; ++j)
     {
@@ -273,7 +291,7 @@ void processImageFile(FILE *infp)
     }
   }
 
-  printf("2Scnt=%d nlCnt=%d otherCnt=%d\n", imCnt, nlCnt, oCnt);
+  printf("Record cnt = %d, particle Cnt=%d nullCnt=%d\n", recordCnt, imCnt, nlCnt);
 }
 
 
@@ -321,37 +339,53 @@ void processHouseKeepingFile(FILE *infp)
 }
 
 
+void processArgs(int argc, char *argv[])
+{
+
+  for (int i = 1; i < argc; ++i)
+  {
+    if (strcmp(argv[i], "-v") == 0)
+    {
+      verbose = true;
+    }
+    else
+    if (strcmp(argv[i], "-t") == 0)
+    {
+      timeOnly = true;
+    }
+    else
+    if (strcmp(argv[i], "-ascii") == 0)
+    {
+      asciiArt = true;
+    }
+    else
+      strcpy(fileName, argv[i]);
+  }
+
+}
+
+
 int main(int argc, char *argv[])
 {
-  int	argCnt = 1;
-
   FILE *infp;
 
   if (argc == 1)
   {
-    fprintf(stderr, "Usage: 2dsdump [-v] [-ascii] file.F2DS[HK]\n");
-    fprintf(stderr, "  Use -ascii for ascii art dump.\n");
+    fprintf(stderr, "Usage: 2dsdump [-v] [-t] [-ascii] file.F2DS[HK]\n");
+    fprintf(stderr, "  -t for timestamps only.\n");
+    fprintf(stderr, "  -v for verbose.\n");
+    fprintf(stderr, "  -ascii for ascii art dump.\n");
   }
 
-  if (strcmp(argv[argCnt], "-v") == 0)
-  {
-    verbose = true;
-    argCnt++;
-  }
+  processArgs(argc, argv);
 
-  if (strcmp(argv[argCnt], "-ascii") == 0)
+  if ((infp = fopen(fileName, "rb")) == 0)
   {
-    asciiArt = true;
-    argCnt++;
-  }
-
-  if ((infp = fopen(argv[argCnt], "rb")) == 0)
-  {
-    fprintf(stderr, "Can't open %s.\n", argv[argCnt]);
+    fprintf(stderr, "Can't open %s.\n", fileName);
     return(1);
   }
 
-  if (strstr(argv[argCnt], "F2DSHK") )
+  if (strstr(fileName, "F2DSHK") )
     processHouseKeepingFile(infp);
   else
     processImageFile(infp);
