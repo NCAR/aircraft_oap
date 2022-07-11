@@ -375,6 +375,7 @@ int main(int argc, char *argv[])
     fprintf(stderr, "  -t for timestamps only.\n");
     fprintf(stderr, "  -v for verbose.\n");
     fprintf(stderr, "  -ascii for ascii art dump.\n");
+    return 1;
   }
 
   processArgs(argc, argv);
@@ -390,5 +391,5 @@ int main(int argc, char *argv[])
   else
     processImageFile(infp);
 
-  return(0);
+  return 0;
 }
