@@ -1,0 +1,13 @@
+# -*- python -*-
+
+env = Environment(tools = ['default', 'raf'])
+env.Append(CXXFLAGS='-g -std=c++11 -Wall')
+
+sources = Split("""
+2dsdump.cc
+""")
+
+tdsdump=env.Program(target = '2dsdump', source = sources)
+env.Default(tdsdump)
+
+env.Install("$INSTALL_PREFIX/bin", '2dsdump')
