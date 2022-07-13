@@ -4,6 +4,7 @@
 #include <cstdio>
 #include <cstring>
 
+static const char hkTitle[] = "      ------  Outside temperatures  ------                 DSP_T      ---- Inside temperatures ----           -5      +5    RH   CanP   +7raw                         ----------  Diode Voltages  ----------                   Total Counts  TAS(m/s)";
 
 struct imageBuf
 {
@@ -61,11 +62,16 @@ int moreData(FILE *infp, unsigned char buffer[])
 
   ++recordCnt;
   struct imageBuf *tds = (struct imageBuf *)buffer;
+  int pCnt = 0;
+
+  for (int i = 0; i < 2048; ++i)
+    if (((uint16_t *)tds->rdf)[i] == 0x3253)
+      ++pCnt;
 
   if (verbose || timeOnly)
-    printf("%d/%d/%d %02d:%02d:%02d.%03d - 0x%04x\n", tds->year, tds->month,
+    printf("%d/%d/%d %02d:%02d:%02d.%03d - pCnt=%d - 0x%04x\n", tds->year, tds->month,
 	tds->day, tds->hour, tds->minute, tds->second, tds->msecond,
-	((uint16_t *)tds->rdf)[0]);
+	pCnt, ((uint16_t *)tds->rdf)[0]);
 
   cksum((uint16_t *)tds->rdf, 2048, tds->cksum);
 
@@ -264,7 +270,12 @@ void processImageFile(FILE *infp)
         }
 
         memcpy(&particle[partialPos], &wp[j], (5-partialPos) * sizeof(uint16_t));
-        int n = std::max(particle[1] & 0x0FFF, particle[2] & 0x0FFF);
+        uint16_t nh = particle[1] & 0x0FFF;
+        uint16_t nv = particle[2] & 0x0FFF;
+        if (nh > 0 && nv > 0)	// One of these must be zero.
+          continue;
+
+        int n = std::max(nh, nv);
 //printf("    %d %d %d\n", partialPos, j, n);
         j += (5-partialPos);
 
@@ -299,24 +310,45 @@ void processHouseKeepingFile(FILE *infp)
 {
   char	buffer[1024];
   int	hkCnt = 0, mkCnt = 0, oCnt = 0;
+  uint32_t tas;
+  float *tasf = (float *)&tas;
 
   struct hkBuf *hkb = (struct hkBuf *)buffer;
   struct maskBuf *mkb = (struct maskBuf *)buffer;
 
   printf("processHouseKeepingFile\n");
 
+  printf("%s\n", hkTitle);
+
   while (fread(buffer, 18, 1, infp) == 1)
   {
     if (verbose)
-      printf("%d/%d/%d %02d:%02d:%02d.%03d - %x\n", hkb->year,
+      printf("%d/%02d/%02d %02d:%02d:%02d.%03d - 0x%04x len=%d\n", hkb->year,
 	hkb->month, hkb->day, hkb->hour, hkb->minute, hkb->second, hkb->msecond,
-	((uint16_t *)&hkb->rdf)[0]);
+	((uint16_t *)&hkb->rdf)[0], ((uint16_t *)&hkb->rdf)[1]);
 
     switch (((uint16_t *)&hkb->rdf)[0])
     {
       case 0x484b:		// HK buffer
         fread(&buffer[18], 164, 1, infp);
         cksum((uint16_t *)hkb->rdf, 82, hkb->cksum);
+        for (int i = 9; i < 22; ++i)
+          printf("  %6.1f", (double)((int16_t *)&hkb->rdf)[i] * 0.07323 - 64.8);
+        for (int i = 22; i < 24; ++i)
+          printf("  %6.1f", (double)((int16_t *)&hkb->rdf)[i] * 0.0048828);
+        printf(" - %d %6.1f", ((int16_t *)&hkb->rdf)[28], (double)((int16_t *)&hkb->rdf)[28] * 0.077547 - 26.24);
+        printf(" %6.1f", (double)((int16_t *)&hkb->rdf)[29] * 0.018356 - 3.75);
+        printf(" %6.1f  - V", (double)((int16_t *)&hkb->rdf)[34] * 0.00488);
+//        printf(" %6.1f  - V", (double)((int16_t *)&hkb->rdf)[34] * 0.000152588);
+        for (int i = 36; i < 50; ++i)
+          if (i != 43) // blank
+            printf(" %4.1f", (double)((int16_t *)&hkb->rdf)[i] * 0.00244140625);
+          else
+            printf(" H");
+
+        printf(" - %6d %6d", ((uint16_t *)&hkb->rdf)[57], ((uint16_t *)&hkb->rdf)[58]);
+        tas = (uint32_t)((uint16_t *)&hkb->rdf)[75] << 16 | ((uint16_t *)&hkb->rdf)[76];
+        printf("  %5.1f\n", *tasf);
         hkCnt++;
         break;
 
