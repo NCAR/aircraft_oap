@@ -1207,6 +1207,13 @@ int process2d(Config & cfg, netCDF & ncfile, ProbeInfo & probe)
     if (!var->add_att("CellSizes", probe.numBins+1, &probe.bin_endpoints[0])) return netCDF::NC_ERR;
     if (!var->add_att("CellSizeUnits", "micrometers")) return netCDF::NC_ERR;
     if (!var->add_att("Density", (float)1.0)) return netCDF::NC_ERR;
+    if (binoffset)
+    {
+      if (!var->add_att("CellSizeNote", "CellSizes are upper bin limits as diameter.")) return netCDF::NC_ERR;
+      if (!var->add_att("HistogramNote", "Zeroth data bin is an unused legacy placeholder.")) return netCDF::NC_ERR;
+    }
+    else
+      if (!var->add_att("CellSizeNote", "CellSizes are lower bin limits as diameter.")) return netCDF::NC_ERR;
   }
   var->put(&conc_all[0][0], numtimes, 1, probe.numBins+binoffset);
 
@@ -1219,7 +1226,13 @@ int process2d(Config & cfg, netCDF & ncfile, ProbeInfo & probe)
     if (!var->add_att("EffectiveAreaWidth", probe.numBins, &probe.eaw[0])) return netCDF::NC_ERR;
     if (!var->add_att("CellSizes", probe.numBins+1, &probe.bin_endpoints[0])) return netCDF::NC_ERR;
     if (!var->add_att("CellSizeUnits", "micrometers")) return netCDF::NC_ERR;
-    if (!var->add_att("Density", (float)1.0)) return netCDF::NC_ERR;
+    if (binoffset)
+    {
+      if (!var->add_att("CellSizeNote", "CellSizes are upper bin limits as diameter.")) return netCDF::NC_ERR;
+      if (!var->add_att("HistogramNote", "Zeroth data bin is an unused legacy placeholder.")) return netCDF::NC_ERR;
+    }
+    else
+      if (!var->add_att("CellSizeNote", "CellSizes are lower bin limits as diameter.")) return netCDF::NC_ERR;
   }
   var->put(&conc_round[0][0], numtimes, 1, probe.numBins+binoffset);
 
