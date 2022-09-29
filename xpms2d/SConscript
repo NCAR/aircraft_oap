@@ -10,6 +10,9 @@ env.Append(CXXFLAGS='-std=c++11 -g -Wall -Wno-write-strings -Wno-deprecated-regi
 
 env.Append(CPPDEFINES=['PNG'])
 
+# Change default fonts for Ubuntu as the adobe courier is not available.
+#env.Append(CPPDEFINES=['UBUNTU'])
+
 env.Append(LIBS=['png'])
 env.Append(LIBS=['z'])
 
