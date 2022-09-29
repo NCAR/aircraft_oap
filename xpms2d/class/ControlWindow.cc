@@ -32,9 +32,6 @@ ControlWindow::ControlWindow(Widget parent) : WinForm(parent, "control", RowColu
   Arg		args[8];
   size_t	i, n;
 
-  /* Did anyone every mention that C++'s ability to have pre-initialized
-   * stuff in a class sucks the big one.
-   */
   density[0].label = "Water (1.0)";
   density[1].label = "Ice (0.916)";
   density[2].label = "Graupel (0.5)";

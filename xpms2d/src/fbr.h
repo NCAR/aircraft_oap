@@ -4,6 +4,19 @@
 
 static String fallback_resources[] =
   {
+#ifdef UBUNTU
+  "*defaultFontList:    -misc-fixed-bold-r-*-*-14-*-*-*-*-*-iso8859-1",
+
+  "*font24:             -misc-fixed-bold-r-*-*-24-*-*-*-*-*-iso8859-1",
+  "*font18:             -misc-fixed-bold-r-*-*-18-*-*-*-*-*-iso8859-1",
+  "*font14:             -misc-fixed-bold-r-*-*-14-*-*-*-*-*-iso8859-1",
+  "*font12:             -misc-fixed-bold-r-*-*-12-*-*-*-*-*-iso8859-1",
+  "*font10:             -misc-fixed-bold-r-*-*-10-*-*-*-*-*-iso8859-1",
+
+  "*plRC*fontList:              -misc-fixed-bold-r-*-*-12-*-*-*-*-*-iso8859-1",
+  "*controlRC*fontList:         -misc-fixed-bold-r-*-*-12-*-*-*-*-*-iso8859-1",
+  "*printParmsRC*fontList:      -misc-fixed-bold-r-*-*-12-*-*-*-*-*-iso8859-1",
+#else
   "*defaultFontList:	-adobe-courier-bold-r-*-*-14-*-*-*-m-90-*-*",
   "*foreground:         black",
 
@@ -16,7 +29,7 @@ static String fallback_resources[] =
   "*plRC*fontList:	-adobe-courier-bold-r-*-*-12-*-*-*-*-*-*-*",
   "*controlRC*fontList:	-adobe-courier-bold-r-*-*-12-*-*-*-*-*-*-*",
   "*printParmsRC*fontList:  -adobe-courier-bold-r-*-*-12-*-*-*-*-*-*-*",
-  "*editSpecShell*fontList: -adobe-courier-bold-r-*-*-12-*-*-*-*-*-*-*",
+#endif
 
   "*XmPushButton.height:		32",
   "*XmTextField.background:		Burlywood",
