@@ -4,7 +4,7 @@
 #include <cstdio>
 #include <cstring>
 
-static const char hkTitle[] = "      ------  Outside temperatures  ------                 DSP_T      ---- Inside temperatures ----           -5      +5    RH   CanP   +7raw                         ----------  Diode Voltages  ----------                   Total Counts  TAS(m/s)";
+static const char hkTitle[] = " |  --------  Outside temperatures  --------   |           DSP_T   |  ----- Inside temperatures -----  |      -5      +5       RH   CanP   +7raw       |      ---------------   Diode Voltages   ---------------      |    Total Counts  TAS(m/s)";
 
 struct imageBuf
 {
@@ -335,9 +335,9 @@ void processHouseKeepingFile(FILE *infp)
         for (int i = 9; i < 22; ++i)
           printf("  %6.1f", (double)((int16_t *)&hkb->rdf)[i] * 0.07323 - 64.8);
         for (int i = 22; i < 24; ++i)
-          printf("  %6.1f", (double)((int16_t *)&hkb->rdf)[i] * 0.0048828);
-        printf(" - %d %6.1f", ((int16_t *)&hkb->rdf)[28], (double)((int16_t *)&hkb->rdf)[28] * 0.077547 - 26.24);
-        printf(" %6.1f", (double)((int16_t *)&hkb->rdf)[29] * 0.018356 - 3.75);
+          printf("  %6.1f", (double)((int16_t *)&hkb->rdf)[i] * 0.0048828);		// +- 5Vdc
+        printf(" - %6.1f", (double)((int16_t *)&hkb->rdf)[28] * 0.077547 - 26.24);	// RH in %
+        printf(" %6.1f", (double)((int16_t *)&hkb->rdf)[29] * 0.018356 - 3.75);		// Canister pressure in psi
         printf(" %6.1f  - V", (double)((int16_t *)&hkb->rdf)[34] * 0.00488);
 //        printf(" %6.1f  - V", (double)((int16_t *)&hkb->rdf)[34] * 0.000152588);
         for (int i = 36; i < 50; ++i)
