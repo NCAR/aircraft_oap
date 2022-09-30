@@ -36,8 +36,8 @@
 
 using namespace std;
 
-const int binoffset = 0;	// Offset for RAF conventions, number of empty bins before counting begins
-				// Turned off 6/2022.  TI3GER is first project without.
+int binoffset = 0;	// Offset for RAF conventions, number of empty bins before counting begins
+			// Turned off 6/2022.  TI3GER is first project without.
 
 const string markerline = "</OAP>";  // Marks end of XML header
 
@@ -1422,6 +1422,7 @@ void processArgs(int argc, char *argv[], Config & config)
      if (arg.find("-v") == 0) config.verbose	= true; else
      if (arg.find("-d") == 0) config.debug	= true; else
      if (arg.find("-o") == 0) config.outputFile	=argv[++i]; else
+     if (arg.find("-z") == 0) binoffset	= 1; else
      config.inputFile = arg;
   }
 
@@ -1439,31 +1440,35 @@ int usage(const char* argv0)
 {
   cerr << endl << "USAGE:  process2d [filename.2d] <options>" << endl << endl;
   cerr << "OPTIONS:" << endl;
-  cerr << "   -starttime [hhmmss]"<<endl;
+  cerr << "   -starttime [hhmmss]" << endl;
   cerr << "         Specify start time in format hhmmss, default is first available time"<<endl;
-  cerr << "   -stoptime [hhmmss]"<<endl;
+  cerr << "   -stoptime [hhmmss]" << endl;
   cerr << "         Specify stop time in format hhmmss, default is last available time"<<endl;
-  cerr << "   -xsize"<<endl;
+  cerr << "   -xsize" << endl;
   cerr << "         Use x-sizing (across the array), use of -allin highly recommended"<<endl;
-  cerr << "   -ysize"<<endl;
-  cerr << "         Use y-sizing (with the airflow)"<<endl;
-  cerr << "   -allin"<<endl;
-  cerr << "         Require particles to be fully imaged"<<endl;
-  cerr << "   -centerin"<<endl;
+  cerr << "   -ysize" << endl;
+  cerr << "         Use y-sizing (with the airflow)" << endl;
+  cerr << "   -allin" << endl;
+  cerr << "         Require particles to be fully imaged" << endl;
+  cerr << "   -centerin" << endl;
   cerr << "         Require particle center to be within array"<<endl;
-  cerr << "   -reconstruction"<<endl;
+  cerr << "   -reconstruction" << endl;
   cerr << "         Apply reconstruction for partially images particles"<<endl;
-  cerr << "   -ead"<<endl;
-  cerr << "         Apply equivelant area diamemter sizing"<<endl;
-  cerr << "   -noshattercorrect"<<endl;
-  cerr << "         Turn off shattering rejection and corrections"<<endl;
-  cerr << "   -fb #"<<endl;
-  cerr << "         Set first bin for accumulations and totals."<<endl;
-  cerr << "   -verbose"<<endl;
-  cerr << "         Send extra output to console"<<endl;;
-  cerr << "   -o file_name"<<endl;
-  cerr << "         Specify output file, instead of default output name"<<endl<<endl;;
-  cerr << "Example:  process2d myfile.2d -start 123000 -stop 140000 -xsize -allin"<<endl<<endl;
+  cerr << "   -ead" << endl;
+  cerr << "         Apply equivelant area diamemter sizing" << endl;
+  cerr << "   -noshattercorrect" << endl;
+  cerr << "         Turn off shattering rejection and corrections" << endl;
+  cerr << "   -fb #" << endl;
+  cerr << "         Set first bin for accumulations and totals." << endl;
+  cerr << "   -verbose" << endl;
+  cerr << "         Send extra output to console" << endl;;
+  cerr << "   -o file_name" << endl;
+  cerr << "         Specify output file, instead of default output name" << endl;
+  cerr << "   -z" << endl;
+  cerr << "         Turn on size distribution legacy zero bin (this pads an extra bin in front of the size dist)." << endl;
+  cerr << "         Files produced prior to 2022 had this as the default.  Probably want this if your reprocessing" << endl;
+  cerr << "         older project (and don't forget to adjust FIRST_BIN/LAST_BIN in the PMSspecs file." << endl << endl;
+  cerr << "Example:  process2d myfile.2d -start 123000 -stop 140000 -xsize -allin" <<endl<<endl;
 
   return 1;
 }
