@@ -1194,7 +1194,7 @@ int process2d(Config & cfg, netCDF & ncfile, ProbeInfo & probe)
   {
     if (!var->add_att("CellSizes", cfg.nInterarrivalBins, it_endpoints)) return netCDF::NC_ERR;
   }
-  var->put(&count_it[0][0], numtimes, 1, cfg.nInterarrivalBins+binsoffset);
+  var->put(&count_it[0][0], numtimes, 1, cfg.nInterarrivalBins+binoffset);
 
   //Concentration
   varname="C2DCA"+probe.suffix; varname[3] = probe.id[0];
