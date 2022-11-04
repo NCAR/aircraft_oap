@@ -20,6 +20,7 @@ COPYRIGHT:	University Corporation for Atmospheric Research, 2012
 #include <iomanip>
 #include <string>
 #include <unistd.h>
+#include <bitset>
 
 #include <netinet/in.h>
 
@@ -32,11 +33,12 @@ char	buffer[50000];
 class Config
 {
 public:
-  Config() : hdrOnly(false), fullHex(false), histo(false), probe(0) { }
+  Config() : hdrOnly(false), fullHex(false), histo(false), asciiArt(false), probe(0) { }
 
   bool	hdrOnly;
   bool	fullHex;
   bool	histo;
+  bool	asciiArt;
 
   int16_t probe;	// 0 means all probes.
 
@@ -66,6 +68,7 @@ void Usage()
   cerr << "  -x: Full hex dump of each record." << endl;
   cerr << "  -c: histogram count totals, per record and per second." << endl;
   cerr << "  -p ID : Output a single probe where ID is probe ID, e.g. C1, P1, C4, 3H, 3V." << endl;
+  cerr << "  -ascii or ascii art dump.\n"<< endl;
   exit(1);
 }
 
@@ -90,6 +93,9 @@ void processArgs(int argc, char *argv[])
       else
       if (strcmp(argv[aCnt], "-p") == 0)
         cfg.probe = ntohs(*((int16_t *)argv[++aCnt]));
+      else
+      if (strcmp(argv[aCnt], "-ascii") == 0)
+        cfg.asciiArt = true;
       else
         Usage();
     }
@@ -205,6 +211,19 @@ void Output(char buff[])
       for (size_t j = 0; j < bytesPerSlice; ++j)
       {
         cout << hex << setw(2) << setfill('0') << (int)p2d->data[(i*bytesPerSlice) + j];
+      }
+      cout << endl;
+    }
+  }
+  if (cfg.asciiArt)
+  {
+    size_t bytesPerSlice = nDiodes / 8;
+    size_t nSlices = 4096 / bytesPerSlice;
+    for (size_t i = 0; i < nSlices; ++i)
+    {
+      for (size_t j = 0; j < bytesPerSlice; ++j)
+      {
+        cout << setw(2) << setfill('0') << std::bitset<8>{p2d->data[(i*bytesPerSlice) + j]};
       }
       cout << endl;
     }
