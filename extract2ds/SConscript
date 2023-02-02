@@ -1,0 +1,14 @@
+# -*- python -*-
+
+env = Environment(tools = ['default', 'raf'])
+env.Append(CXXFLAGS='-g -std=c++11 -Wall')
+
+sources = Split("""
+extract2ds.cc
+config.cc
+""")
+
+tdsdump=env.Program(target = 'extract2ds', source = sources)
+env.Default(tdsdump)
+
+env.Install("$INSTALL_PREFIX/bin", 'extract2ds')
