@@ -26,12 +26,14 @@ public:
   const std::string& FlightNumber() const	{ return _flightNumber; }
   const std::string& FlightDate() const		{ return _flightDate; }
   const std::string& Type() const		{ return _type; }
+  const std::string& PacketID() const		{ return _code; }
   const std::string& SerialNumber() const	{ return _serialNumber; }
   const std::string& Suffix() const		{ return _suffix; }
   const std::string& OutputFilename() const	{ return _outputFilename; }
   int TimeOffset() const			{ return _timeOffset; }
   bool StoreCompressed() const			{ return _storeCompressed; }
 
+  int16_t PacketIDasInt() const			{ return *((int16_t *)_code.c_str()); }
   int Resolution() const			{ return _resolution; }
   int nDiodes() const				{ return _nDiodes; }
   int ClockFrequency() const			{ return _clockFreq; }
@@ -44,6 +46,7 @@ public:
   void SetFlightNumber(const std::string s)	{ _flightNumber = s; }
   void SetFlightDate(const std::string s)	{ _flightDate = s; }
   void SetType(const std::string s);
+  void SetPacketID(const std::string s)		{ _code = s; }
   void SetSerialNumber(const std::string s)	{ _serialNumber = s; }
   void SetSuffix(const std::string s)		{ _suffix = s; }
   void SetTimeOffset(const std::string s)	{ _timeOffset = atoi(s.c_str()); }
@@ -61,6 +64,7 @@ private:
   std::string _platform;
   std::string _flightNumber;
   std::string _flightDate;
+  std::string _code;
   std::string _type;
   std::string _serialNumber;
   std::string _suffix;

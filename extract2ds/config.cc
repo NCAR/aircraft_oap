@@ -24,6 +24,7 @@ void Config::SetType(std::string s)
 
   if (_type.compare("F2DS") == 0)
   {
+    _code = "SH";
     _resolution = 10;
     _nDiodes = 128;
     _clockFreq = 20;
@@ -32,6 +33,7 @@ void Config::SetType(std::string s)
 
   if (_type.compare("HVPS") == 0)
   {
+    _code = "H1";
     _resolution = 200;
     _nDiodes = 128;
     _clockFreq = 20;
