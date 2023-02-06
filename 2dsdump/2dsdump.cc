@@ -159,7 +159,7 @@ void processParticle(uint16_t *wp)
         printf("\n  %2d u 0x", sliceCnt);
         for (int j = 0; j < 8; ++j)
           for (int k = 0; k < 16; ++k)
-            printf("%d", !((wp[1+j] << k) & 0x8000));
+            printf("%d", !((wp[i+1+j] << k) & 0x8000));
       }
       i += 15;
       nBits = 0;
