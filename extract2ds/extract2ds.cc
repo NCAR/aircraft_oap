@@ -1,6 +1,16 @@
+/*
+-------------------------------------------------------------------------
+OBJECT NAME:    spec2oap.cc
+
+FULL NAME:      Translate SPEC to OAP
+
+DESCRIPTION:    Translate SPEC OAP data to RAF OAP format.
+
+COPYRIGHT:      University Corporation for Atmospheric Research, 2023
+-------------------------------------------------------------------------
+*/
 
 #include <algorithm>
-#include <cstdint>
 #include <cstdio>
 #include <cstring>
 
@@ -9,31 +19,10 @@
 #include <raf/OAP.h>
 
 #include "config.h"
+#include "spec.h"
 
 // Output OAP file version number.
 static const int FILE_VERSION = 1;
-
-
-struct imageBuf
-{
-  int16_t	year, month, dow, day, hour, minute, second, msecond;
-  char		rdf[4096];
-  uint16_t	cksum;
-};
-
-struct hkBuf
-{
-  int16_t	year, month, dow, day, hour, minute, second, msecond;
-  char		rdf[164];
-  uint16_t	cksum;
-};
-
-struct maskBuf
-{
-  int16_t	year, month, dow, day, hour, minute, second, msecond;
-  char		rdf[54];
-  uint16_t	cksum;
-};
 
 
 Config cfg;
@@ -42,6 +31,7 @@ int  recordCnt = 0;
 bool verbose = false;
 
 int findHouseKeeping(FILE *hkfp, imageBuf *imgRec);
+
 
 
 bool cksum(const uint16_t buff[], int nWords, uint16_t ckSum)
@@ -87,19 +77,45 @@ int moreData(FILE *infp, unsigned char buffer[])
 }
 
 
+void printParticleHeader(uint16_t *hdr)
+{
+  int idx = 1;
+  printf("  %x - ID=%6d nSlices=%3d ", hdr[0], hdr[3], hdr[4]);
+
+  if ((hdr[idx] & 0x0FFF) == 0)
+    ++idx;
+
+  printf("%c nWords=%4d %s",
+        idx == 1 ? 'H' : 'V',
+        hdr[idx] & 0x0fff,
+        hdr[idx] & 0x1000 ? "- NT" : "");
+}
+
+
+static unsigned char	uncompressed_h[32768];
+static unsigned char	uncompressed_v[32768];
+
+static int h_pos = 0;
+static int v_pos = 0;
+
 
 void processParticle(uint16_t *wp)
 {
   int i, nSlices = wp[4], nWords, sliceCnt = 0, nBits = 0;
+
+  unsigned char *out_buff = 0;
+  int *pos, nBytes, residualClearBits;
+
   uint16_t value, id = wp[3];
   bool timingWord = true;
   static uint16_t prevID = 0;
 
-//  printParticleHeader(wp);
+  if (verbose)
+    printParticleHeader(wp);
 
-/*
   if (id > 0 && id != prevID+1)
     printf("!!! Non sequential praticle ID : prev=%d, this=%d !!!\n", prevID, id);
+
 
   prevID = id;
 
@@ -107,11 +123,15 @@ void processParticle(uint16_t *wp)
   {
     nWords = wp[2] & 0x0FFF;
     timingWord = !(wp[2] & 0x1000);
+    out_buff = uncompressed_v;
+    pos = v_pos;
   }
   else
   {
     nWords = wp[1] & 0x0FFF;
     timingWord = !(wp[1] & 0x1000);
+    out_buff = uncompressed_h;
+    pos = h_pos;
   }
 
   wp += 5;
@@ -121,6 +141,9 @@ void processParticle(uint16_t *wp)
   {
     if (wp[i] == 0x4000)	// Fully shadowed slice.
     {
+      memset(out_buff, 0, 16);
+      pos += 16;
+
       if (asciiArt)
       {
         printf("\n  %2d 1 0x", sliceCnt);
@@ -134,15 +157,15 @@ void processParticle(uint16_t *wp)
 
     if (wp[i] == 0x7FFF)	// Uncompressed slice.
     {
-      if (verbose)
-        printf("                 -- uncomressed slice -- \n");
+      memcpy(&out_buff[pos], (char *)&wp[i+1], 16);
+      pos += 16;
 
       if (asciiArt)
       {
         printf("\n  %2d u 0x", sliceCnt);
         for (int j = 0; j < 8; ++j)
           for (int k = 0; k < 16; ++k)
-            printf("%d", !((wp[1+j] << k) & 0x8000));
+            printf("%d", !((wp[i+1+j] << k) & 0x8000));
       }
       i += 15;
       nBits = 0;
@@ -150,9 +173,12 @@ void processParticle(uint16_t *wp)
       continue;
     }
 
-    if (wp[i] & 0x4000)		// First word of slice
+    if (wp[i] & 0x4000)				// First word of slice
     {
       finishSlice(nBits);
+
+      // Initialize to clear.
+      memset(&out_buff[pos], 0xFF, 16);
 
       ++sliceCnt;
       nBits = 0;
@@ -162,6 +188,9 @@ void processParticle(uint16_t *wp)
 
     if ((value = (wp[i] & 0x007F)) > 0)		// Number of clear pixels
     {
+      pos += value / 8;
+      residualClearBits = value % 8;
+
       if (asciiArt)
       {
         for (int j = 0; j < value; ++j)
@@ -172,6 +201,39 @@ void processParticle(uint16_t *wp)
 
     if ((value = (wp[i] & 0x3F80) >> 7) > 0)	// Number of shadowed pixels
     {
+      unsigned char byte = 0xff;
+      shadedBits = 8 - residualClearBits;
+
+      if (value < shadedBits) // if the whole shaded region resides in this byte
+      {
+        byte <<= value;
+        for (int j = 0; j < shadedBits - value; ++j) {
+          byte = (byte << 1) | 0x01;
+        }
+        out_buff[pos++] = byte;
+      }
+      else	// extends through the rest of this byte.
+      {
+        byte <<= shadedBits;
+        out_buff[pos++] = byte;
+
+        int v1 = value - shadedBits;
+        nBytes = v1 / 8;
+        shadedBits = v1 % 8;
+        memset(&out_buff[pos], 0, nBytes);
+        pos += nBytes;
+        v1 -= 8 * nBytes;
+
+// Now do the residual bits in the last byte.
+        if (v1 > 0)
+        {
+          byte = 0x7f;
+          byte >>= (v1-1);
+          out_buff[pos++] = byte;
+        }
+      }
+
+
       if (asciiArt)
       {
         for (int j = 0; j < value; ++j)
@@ -179,6 +241,17 @@ void processParticle(uint16_t *wp)
       }
       nBits += value;
     }
+  }
+
+// Finish Slice needs to just make sure pos is properly incremented to % 16 and put back into h_pos or v_pos
+
+  if (wp[2] != 0)
+  {
+    v_pos += 16;
+  }
+  else
+  {
+    h_pos += 16;
   }
 
   finishSlice(nBits);
@@ -190,20 +263,24 @@ void processParticle(uint16_t *wp)
 
     printf("\n  Timing = %lu, deltaT=%lu\n", tWord, tWord - prevTimeWord);
     prevTimeWord = tWord;
+
+    memset(&out_buff[pos], 0x05, 8);
+    memcpy(&out_buff[pos+8], (unsigned char*)&wp[nWords], 8);
+    pos += 16;
   }
   else
     printf("\n  No timing word\n");
 
-  printf(" end - %d/%d words, sliceCnt = %d/%d\n\n", i, nWords, sliceCnt, nSlices);
-*/
+  if (verbose)
+    printf(" end - %d/%d words, sliceCnt = %d/%d\n\n", i, nWords, sliceCnt, nSlices);
 }
 
 
-static uint16_t	uncompressed[32768];
 
 void processImageFile(FILE *infp, FILE *hkfp, FILE *outfp)
 {
   static unsigned char	buffer[8192];
+  static uint16_t	particle[8192];
   int	imCnt = 0, nlCnt = 0, partialPos = 0;
 
   struct imageBuf *tds = (struct imageBuf *)buffer;
@@ -233,7 +310,7 @@ void processImageFile(FILE *infp, FILE *hkfp, FILE *outfp)
       continue;
     }
 
-/*
+
     for (; j < 2048; ++j)
     {
       if (wp[j] == 0x4e4c)		// NL flush buffer
@@ -292,7 +369,7 @@ void processImageFile(FILE *infp, FILE *hkfp, FILE *outfp)
         processParticle((uint16_t *)particle);
       }
     }
-*/
+
   }
 
   printf("Record cnt = %d, particle Cnt=%d nullCnt=%d\n", recordCnt, imCnt, nlCnt);
@@ -364,7 +441,7 @@ void outputXMLheader(FILE *outfp)
   fprintf(outfp, " <FlightNumber>%s</FlightNumber>\n", cfg.FlightNumber().c_str());
   fprintf(outfp, " <FlightDate>%s</FlightDate>\n", cfg.FlightDate().c_str());
 
-  fprintf(outfp, " <probe id=\"SH\"");
+  fprintf(outfp, " <probe id=\"%s\"", cfg.PacketID().c_str());
   fprintf(outfp, " type=\"%s\"", cfg.Type().c_str());
   fprintf(outfp, " resolution=\"%d\"", cfg.Resolution());
   fprintf(outfp, " nDiodes=\"%d\"", cfg.nDiodes());
