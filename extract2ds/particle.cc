@@ -20,21 +20,31 @@ void Particle::writeBuffer(FILE *out)
 
   P2d_rec output;
 
-  while (pos > 0)
+  while (_pos > 0)
   {
-    int len = std::min(pos, 4096);
+    int len = std::min(_pos, 4096);
     memset(output.data, 0, 4096);
     memcpy(output.data, uncompressed, len);
     fwrite(&output, sizeof(p2d_rec), 1, out);
-    pos -= len;
+    _pos -= len;
   }
 
   // reset buffer.
-  pos = 0;
+  _pos = 0;
+}
+
+void Particle::reset()
+{
+  _nBits = 0;
+  _pos = 0;
 
 }
 
-
+void Particle::finishSlice()
+{
+  _nBits = 0;
+  _pos += 16;
+}
 
 void Particle::printParticleHeader(uint16_t *hdr)
 {
@@ -53,7 +63,7 @@ void Particle::printParticleHeader(uint16_t *hdr)
 
 void Particle::processParticle(uint16_t *wp)
 {
-  int i, nSlices = wp[4], nWords, sliceCnt = 0, nBits = 0;
+  int i, nSlices = wp[4], nWords;
 
   int nBytes, residualClearBits;
 
@@ -69,6 +79,7 @@ void Particle::processParticle(uint16_t *wp)
 
 
   prevID = id;
+  reset();
 
   if (wp[2] != 0)
   {
@@ -89,7 +100,7 @@ void Particle::processParticle(uint16_t *wp)
     if (wp[i] == 0x4000)	// Fully shadowed slice.
     {
       memset(uncompressed, 0, 16);
-      pos += 16;
+      _pos += 16;
 
       if (verbose)
       {
@@ -97,15 +108,15 @@ void Particle::processParticle(uint16_t *wp)
         for (int j = 0; j < 128; ++j)
           printf("1");
       }
-      nBits = 0;
+      _nBits = 0;
       ++sliceCnt;
       continue;
     }
 
     if (wp[i] == 0x7FFF)	// Uncompressed slice.
     {
-      memcpy(&uncompressed[pos], (char *)&wp[i+1], 16);
-      pos += 16;
+      memcpy(&uncompressed[_pos], (char *)&wp[i+1], 16);
+      _pos += 16;
 
       if (verbose)
       {
@@ -115,27 +126,27 @@ void Particle::processParticle(uint16_t *wp)
             printf("%d", !((wp[i+1+j] << k) & 0x8000));
       }
       i += 15;
-      nBits = 0;
+      _nBits = 0;
       ++sliceCnt;
       continue;
     }
 
     if (wp[i] & 0x4000)				// First word of slice
     {
-      finishSlice(nBits);
+      finishSlice();
 
       // Initialize to clear.
-      memset(&uncompressed[pos], 0xFF, 16);
+      memset(&uncompressed[_pos], 0xFF, 16);
 
       ++sliceCnt;
-      nBits = 0;
+      _nBits = 0;
       if (verbose)
         printf("\n  %2d 0x", sliceCnt);
     }
 
     if ((value = (wp[i] & 0x007F)) > 0)		// Number of clear pixels
     {
-      pos += value / 8;
+      _pos += value / 8;
       residualClearBits = value % 8;
 
       if (verbose)
@@ -143,7 +154,7 @@ void Particle::processParticle(uint16_t *wp)
         for (int j = 0; j < value; ++j)
           printf("0");
       }
-      nBits += value;
+      _nBits += value;
     }
 
     if ((value = (wp[i] & 0x3F80) >> 7) > 0)	// Number of shadowed pixels
@@ -157,18 +168,18 @@ void Particle::processParticle(uint16_t *wp)
         for (int j = 0; j < shadedBits - value; ++j) {
           byte = (byte << 1) | 0x01;
         }
-        uncompressed[pos++] = byte;
+        uncompressed[_pos++] = byte;
       }
       else	// extends through the rest of this byte.
       {
         byte <<= shadedBits;
-        uncompressed[pos++] = byte;
+        uncompressed[_pos++] = byte;
 
         int v1 = value - shadedBits;
         nBytes = v1 / 8;
         shadedBits = v1 % 8;
-        memset(&uncompressed[pos], 0, nBytes);
-        pos += nBytes;
+        memset(&uncompressed[_pos], 0, nBytes);
+        _pos += nBytes;
         v1 -= 8 * nBytes;
 
 // Now do the residual bits in the last byte.
@@ -176,7 +187,7 @@ void Particle::processParticle(uint16_t *wp)
         {
           byte = 0x7f;
           byte >>= (v1-1);
-          uncompressed[pos++] = byte;
+          uncompressed[_pos++] = byte;
         }
       }
 
@@ -186,22 +197,12 @@ void Particle::processParticle(uint16_t *wp)
         for (int j = 0; j < value; ++j)
           printf("1");
       }
-      nBits += value;
+      _nBits += value;
     }
   }
 
-// Finish Slice needs to just make sure pos is properly incremented to % 16 and put back into h_pos or v_pos
-/*
-  if (wp[2] != 0)
-  {
-    v_pos += 16;
-  }
-  else
-  {
-    h_pos += 16;
-  }
-*/
-  finishSlice(nBits);
+
+  finishSlice();
 
   if (timingWord)
   {
@@ -211,9 +212,9 @@ void Particle::processParticle(uint16_t *wp)
     printf("\n  Timing = %lu, deltaT=%lu\n", tWord, tWord - prevTimeWord);
     prevTimeWord = tWord;
 
-    memset(&uncompressed[pos], 0x05, 8);
-    memcpy(&uncompressed[pos+8], (unsigned char*)&wp[nWords], 8);
-    pos += 16;
+    memset(&uncompressed[_pos], 0x05, 8);
+    memcpy(&uncompressed[_pos+8], (unsigned char*)&wp[nWords], 8);
+    _pos += 16;
   }
   else
     printf("\n  No timing word\n");

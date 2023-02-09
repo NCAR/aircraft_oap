@@ -83,6 +83,8 @@ void processImageFile(FILE *infp, FILE *hkfp, FILE *outfp)
   static uint16_t	particle[8192];
   int	imCnt = 0, nlCnt = 0, partialPos = 0;
 
+  Particle probe[2];
+
   struct imageBuf *tds = (struct imageBuf *)buffer;
   uint16_t *wp = ((uint16_t *)tds->rdf);
   OAP::P2d_rec outBuf;

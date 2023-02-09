@@ -12,7 +12,11 @@ public:
 
 private:
 
+  void printParticleHeader(uint16_t *hdr);
+
+  void reset();
+
   char *uncompressed;
-  int pos;
+  int _pos, _nBits;
 }
 
