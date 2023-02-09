@@ -18,5 +18,6 @@ private:
 
   char *uncompressed;
   int _pos, _nBits;
-}
+
+};
 

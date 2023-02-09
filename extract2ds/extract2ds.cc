@@ -20,6 +20,7 @@ COPYRIGHT:      University Corporation for Atmospheric Research, 2023
 
 #include "config.h"
 #include "spec.h"
+#include "particle.h"
 
 // Output OAP file version number.
 static const int FILE_VERSION = 1;
