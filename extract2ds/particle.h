@@ -1,4 +1,5 @@
 
+#include <cstdint>
 #include <cstdio>
 
 
@@ -8,11 +9,13 @@ public:
   Particle();
   ~Particle();
 
+  void processParticle(uint16_t *wp, bool verbose);
   void writeBuffer(FILE *out);
 
 private:
 
   void printParticleHeader(uint16_t *hdr);
+  void finishSlice();
 
   void reset();
 

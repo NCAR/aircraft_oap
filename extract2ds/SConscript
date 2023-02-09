@@ -6,6 +6,7 @@ env.Append(CXXFLAGS='-g -std=c++11 -Wall')
 sources = Split("""
 extract2ds.cc
 config.cc
+particle.cc
 """)
 
 tdsdump=env.Program(target = 'extract2ds', source = sources)

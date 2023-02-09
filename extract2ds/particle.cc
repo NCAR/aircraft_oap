@@ -1,8 +1,12 @@
 
+#include <algorithm>
+
 #include "particle.h"
 
+#include <raf/OAP.h>
 
-Particle::Particle() : pos(0)
+
+Particle::Particle() : _pos(0), _nBits(0)
 {
   uncompressed = new char[32768];
 
@@ -18,14 +22,14 @@ void Particle::writeBuffer(FILE *out)
 {
 // break this up into 4k chunks and into a P2d
 
-  P2d_rec output;
+  OAP::P2d_rec output;
 
   while (_pos > 0)
   {
     int len = std::min(_pos, 4096);
     memset(output.data, 0, 4096);
     memcpy(output.data, uncompressed, len);
-    fwrite(&output, sizeof(p2d_rec), 1, out);
+    fwrite(&output, sizeof(OAP::P2d_rec), 1, out);
     _pos -= len;
   }
 
@@ -61,9 +65,9 @@ void Particle::printParticleHeader(uint16_t *hdr)
 }
 
 
-void Particle::processParticle(uint16_t *wp)
+void Particle::processParticle(uint16_t *wp, bool verbose)
 {
-  int i, nSlices = wp[4], nWords;
+  int i, nSlices = wp[4], nWords, sliceCnt = 0;
 
   int nBytes, residualClearBits;
 
@@ -160,7 +164,7 @@ void Particle::processParticle(uint16_t *wp)
     if ((value = (wp[i] & 0x3F80) >> 7) > 0)	// Number of shadowed pixels
     {
       unsigned char byte = 0xff;
-      shadedBits = 8 - residualClearBits;
+      int shadedBits = 8 - residualClearBits;
 
       if (value < shadedBits) // if the whole shaded region resides in this byte
       {

@@ -169,7 +169,10 @@ void processImageFile(FILE *infp, FILE *hkfp, FILE *outfp)
 
         // OK, we can process particle
         imCnt++;
-        processParticle((uint16_t *)particle);
+        if (nh)
+          probe[0].processParticle((uint16_t *)particle, verbose);
+        else
+          probe[1].processParticle((uint16_t *)particle, verbose);
       }
     }
 
