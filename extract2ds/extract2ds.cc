@@ -49,7 +49,7 @@ bool cksum(const uint16_t buff[], int nWords, uint16_t ckSum)
 }
 
 
-int moreData(FILE *infp, unsigned char buffer[])
+int moreData(FILE *infp, unsigned char buffer[], OAP::P2d_hdr &oapHdr, FILE *hkfp)
 {
   if (verbose)
     printf("  moreData\n");
@@ -74,6 +74,16 @@ int moreData(FILE *infp, unsigned char buffer[])
 
   cksum((uint16_t *)tds->rdf, 2048, tds->cksum);
 
+  oapHdr.year = htons(tds->year);
+  oapHdr.month = htons(tds->month);
+  oapHdr.day = htons(tds->day);
+  oapHdr.hour = htons(tds->hour);
+  oapHdr.minute = htons(tds->minute);
+  oapHdr.second = htons(tds->second);
+  oapHdr.msec = htons(tds->msecond);
+
+  oapHdr.tas = findHouseKeeping(hkfp, tds);
+
   return rc;
 }
 
@@ -87,32 +97,26 @@ void processImageFile(FILE *infp, FILE *hkfp, FILE *outfp)
   Particle probe[2];
 
   struct imageBuf *tds = (struct imageBuf *)buffer;
-  uint16_t *wp = ((uint16_t *)tds->rdf);
-  OAP::P2d_rec outBuf;
+  uint16_t	*wp = ((uint16_t *)tds->rdf);
+  OAP::P2d_hdr	outHdr;
 
   printf("processImageFile\n");
 
-  while (moreData(infp, buffer) == 1)
+  while (moreData(infp, buffer, outHdr, hkfp) == 1)
   {
     int j = 0;
 
-    outBuf.year = htons(tds->year);
-    outBuf.month = htons(tds->month);
-    outBuf.day = htons(tds->day);
-    outBuf.hour = htons(tds->hour);
-    outBuf.minute = htons(tds->minute);
-    outBuf.second = htons(tds->second);
-    outBuf.msec = htons(tds->msecond);
-
-    outBuf.tas = findHouseKeeping(hkfp, tds);
-
     if (cfg.StoreCompressed())
     {
+      OAP::P2d_rec outBuf;
+      memcpy(&outBuf, &outHdr, sizeof(OAP::P2d_hdr));
       memcpy(outBuf.data, tds->rdf, 4096);
       fwrite(&outBuf, sizeof(outBuf), 1, outfp);
       continue;
     }
 
+    probe[0].setHeader(outHdr);
+    probe[1].setHeader(outHdr);
 
     for (; j < 2048; ++j)
     {
@@ -137,7 +141,9 @@ void processImageFile(FILE *infp, FILE *hkfp, FILE *outfp)
           if (verbose) printf(" short header, j=%d\n", j);
           partialPos = 2048-j;
           memcpy(particle, &wp[j], partialPos * sizeof(uint16_t));
-          moreData(infp, buffer);
+          moreData(infp, buffer, outHdr, hkfp);
+          probe[0].setHeader(outHdr);
+          probe[1].setHeader(outHdr);
           j = 0;
         }
 
@@ -157,7 +163,9 @@ void processImageFile(FILE *infp, FILE *hkfp, FILE *outfp)
           if (verbose) printf(" short image, j=%d, n=%d\n", j, n);
           partialPos = 2048-j;
           memcpy(&particle[5], &wp[j], partialPos * sizeof(uint16_t));
-          moreData(infp, buffer);
+          moreData(infp, buffer, outHdr, hkfp);
+          probe[0].setHeader(outHdr);
+          probe[1].setHeader(outHdr);
           j = 0;
           n -= partialPos;
         }
@@ -214,7 +222,8 @@ int findHouseKeeping(FILE *hkfp, imageBuf *imgRec)
         if (hkb->second < imgRec->second) break;
 
         tas = (uint32_t)((uint16_t *)&hkb->rdf)[75] << 16 | ((uint16_t *)&hkb->rdf)[76];
-        printf(" tas = %5.1f\n", *tasf);
+        if (verbose)
+          printf(" tas = %5.1f\n", *tasf);
         fseek(hkfp, -182L, SEEK_CUR);
         return((int)*tasf);
         break;
@@ -233,6 +242,8 @@ int findHouseKeeping(FILE *hkfp, imageBuf *imgRec)
   }
 
   printf("findHouseKeeping: we shouldn't hit this.  EOF?\n");
+
+  return(0);
 }
 
 

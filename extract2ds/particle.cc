@@ -3,18 +3,15 @@
 
 #include "particle.h"
 
-#include <raf/OAP.h>
-
 
 Particle::Particle() : _pos(0), _nBits(0)
 {
-  uncompressed = new char[32768];
+  _uncompressed = _output.data;
 
 }
 
 Particle::~Particle()
 {
-  delete [] uncompressed;
 
 }
 
@@ -22,14 +19,12 @@ void Particle::writeBuffer(FILE *out)
 {
 // break this up into 4k chunks and into a P2d
 
-  OAP::P2d_rec output;
-
   while (_pos > 0)
   {
     int len = std::min(_pos, 4096);
-    memset(output.data, 0, 4096);
-    memcpy(output.data, uncompressed, len);
-    fwrite(&output, sizeof(OAP::P2d_rec), 1, out);
+    memset(_output.data, 0, 4096);
+    memcpy(_output.data, _uncompressed, len);
+    fwrite(&_output, sizeof(OAP::P2d_rec), 1, out);
     _pos -= len;
   }
 
@@ -40,7 +35,7 @@ void Particle::writeBuffer(FILE *out)
 void Particle::reset()
 {
   _nBits = 0;
-  _pos = 0;
+//  _pos = 0;
 
 }
 
@@ -103,7 +98,7 @@ void Particle::processParticle(uint16_t *wp, bool verbose)
   {
     if (wp[i] == 0x4000)	// Fully shadowed slice.
     {
-      memset(uncompressed, 0, 16);
+      memset(_uncompressed, 0, 16);
       _pos += 16;
 
       if (verbose)
@@ -119,7 +114,7 @@ void Particle::processParticle(uint16_t *wp, bool verbose)
 
     if (wp[i] == 0x7FFF)	// Uncompressed slice.
     {
-      memcpy(&uncompressed[_pos], (char *)&wp[i+1], 16);
+      memcpy(&_uncompressed[_pos], (char *)&wp[i+1], 16);
       _pos += 16;
 
       if (verbose)
@@ -140,7 +135,7 @@ void Particle::processParticle(uint16_t *wp, bool verbose)
       finishSlice();
 
       // Initialize to clear.
-      memset(&uncompressed[_pos], 0xFF, 16);
+      memset(&_uncompressed[_pos], 0xFF, 16);
 
       ++sliceCnt;
       _nBits = 0;
@@ -172,17 +167,17 @@ void Particle::processParticle(uint16_t *wp, bool verbose)
         for (int j = 0; j < shadedBits - value; ++j) {
           byte = (byte << 1) | 0x01;
         }
-        uncompressed[_pos++] = byte;
+        _uncompressed[_pos++] = byte;
       }
       else	// extends through the rest of this byte.
       {
         byte <<= shadedBits;
-        uncompressed[_pos++] = byte;
+        _uncompressed[_pos++] = byte;
 
         int v1 = value - shadedBits;
         nBytes = v1 / 8;
         shadedBits = v1 % 8;
-        memset(&uncompressed[_pos], 0, nBytes);
+        memset(&_uncompressed[_pos], 0, nBytes);
         _pos += nBytes;
         v1 -= 8 * nBytes;
 
@@ -191,7 +186,7 @@ void Particle::processParticle(uint16_t *wp, bool verbose)
         {
           byte = 0x7f;
           byte >>= (v1-1);
-          uncompressed[_pos++] = byte;
+          _uncompressed[_pos++] = byte;
         }
       }
 
@@ -216,8 +211,8 @@ void Particle::processParticle(uint16_t *wp, bool verbose)
     printf("\n  Timing = %lu, deltaT=%lu\n", tWord, tWord - prevTimeWord);
     prevTimeWord = tWord;
 
-    memset(&uncompressed[_pos], 0x05, 8);
-    memcpy(&uncompressed[_pos+8], (unsigned char*)&wp[nWords], 8);
+    memset(&_uncompressed[_pos], 0x05, 8);
+    memcpy(&_uncompressed[_pos+8], (unsigned char*)&wp[nWords], 8);
     _pos += 16;
   }
   else
