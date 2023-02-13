@@ -82,7 +82,7 @@ int moreData(FILE *infp, unsigned char buffer[], OAP::P2d_hdr &oapHdr, FILE *hkf
   oapHdr.second = htons(tds->second);
   oapHdr.msec = htons(tds->msecond);
 
-  oapHdr.tas = findHouseKeeping(hkfp, tds);
+  oapHdr.tas = htons(findHouseKeeping(hkfp, tds));
 
   return rc;
 }
@@ -94,7 +94,9 @@ void processImageFile(FILE *infp, FILE *hkfp, FILE *outfp)
   static uint16_t	particle[8192];
   int	imCnt = 0, nlCnt = 0, partialPos = 0;
 
-  Particle probe[2];
+  Particle *probe[2];
+  probe[0] = new Particle("SH", outfp);
+  probe[1] = new Particle("SV", outfp);
 
   struct imageBuf *tds = (struct imageBuf *)buffer;
   uint16_t	*wp = ((uint16_t *)tds->rdf);
@@ -115,8 +117,8 @@ void processImageFile(FILE *infp, FILE *hkfp, FILE *outfp)
       continue;
     }
 
-    probe[0].setHeader(outHdr);
-    probe[1].setHeader(outHdr);
+    probe[0]->setHeader(outHdr);
+    probe[1]->setHeader(outHdr);
 
     for (; j < 2048; ++j)
     {
@@ -142,8 +144,8 @@ void processImageFile(FILE *infp, FILE *hkfp, FILE *outfp)
           partialPos = 2048-j;
           memcpy(particle, &wp[j], partialPos * sizeof(uint16_t));
           moreData(infp, buffer, outHdr, hkfp);
-          probe[0].setHeader(outHdr);
-          probe[1].setHeader(outHdr);
+          probe[0]->setHeader(outHdr);
+          probe[1]->setHeader(outHdr);
           j = 0;
         }
 
@@ -164,8 +166,8 @@ void processImageFile(FILE *infp, FILE *hkfp, FILE *outfp)
           partialPos = 2048-j;
           memcpy(&particle[5], &wp[j], partialPos * sizeof(uint16_t));
           moreData(infp, buffer, outHdr, hkfp);
-          probe[0].setHeader(outHdr);
-          probe[1].setHeader(outHdr);
+          probe[0]->setHeader(outHdr);
+          probe[1]->setHeader(outHdr);
           j = 0;
           n -= partialPos;
         }
@@ -177,15 +179,23 @@ void processImageFile(FILE *infp, FILE *hkfp, FILE *outfp)
 
         // OK, we can process particle
         imCnt++;
-        if (nh)
-          probe[0].processParticle((uint16_t *)particle, verbose);
+fflush(stdout);
+        if (particle[4] < 256)
+        {
+          if (nh)
+            probe[0]->processParticle((uint16_t *)particle, verbose);
+          else
+            probe[1]->processParticle((uint16_t *)particle, verbose);
+        }
         else
-          probe[1].processParticle((uint16_t *)particle, verbose);
+          printf(" not processing particle # %d - n=%d\n", particle[3], particle[4]);
       }
     }
 
   }
 
+  delete probe[0];
+  delete probe[1];
   printf("Record cnt = %d, particle Cnt=%d nullCnt=%d\n", recordCnt, imCnt, nlCnt);
 }
 
@@ -265,8 +275,10 @@ void outputXMLheader(FILE *outfp)
   fprintf(outfp, " clockFreq=\"%d\"", cfg.ClockFrequency());
   fprintf(outfp, " laserWaveLength=\"%d\"", cfg.WaveLength());
   fprintf(outfp, " serialnumber=\"%s\"", cfg.SerialNumber().c_str());
-  fprintf(outfp, " suffix=\"%s\"/>\n", cfg.Suffix().c_str());
+//  fprintf(outfp, " suffix=\"%s\"/>\n", cfg.Suffix().c_str());
+  fprintf(outfp, " suffix=\"%s\"/>\n", "_2H");
 
+  // Add entry for second array.  2DS is treated as two probes, horizontal and vertical.
   if (cfg.Type().compare("F2DS") == 0)
   {
     fprintf(outfp, " <probe id=\"SV\"");
@@ -276,7 +288,7 @@ void outputXMLheader(FILE *outfp)
     fprintf(outfp, " clockFreq=\"%d\"", cfg.ClockFrequency());
     fprintf(outfp, " laserWaveLength=\"%d\"", cfg.WaveLength());
     fprintf(outfp, " serialnumber=\"%s\"", cfg.SerialNumber().c_str());
-    fprintf(outfp, " suffix=\"%s\"/>\n", cfg.Suffix().c_str());
+    fprintf(outfp, " suffix=\"%s\"/>\n", "_2V");
   }
 
   fprintf(outfp, "</OAP>\n");

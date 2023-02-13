@@ -12,7 +12,7 @@ COPYRIGHT:	University Corporation for Atmospheric Research, 2023
 
 
 /* -------------------------------------------------------------------- */
-Config::Config() : _type("F2DS"), _timeOffset(0), _storeCompressed(true), _resolution(10), _nDiodes(128), _clockFreq(20), _waveLength(785)
+Config::Config() : _code("SH"), _type("F2DS"), _timeOffset(0), _storeCompressed(false), _resolution(10), _nDiodes(128), _clockFreq(20), _waveLength(785)
 
 {
 
