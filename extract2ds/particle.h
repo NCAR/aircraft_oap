@@ -8,12 +8,12 @@
 class Particle
 {
 public:
-  Particle();
+  Particle(const char code[], FILE *outFile);
   ~Particle();
 
   void processParticle(uint16_t *wp, bool verbose);
-  void setHeader(OAP::P2d_hdr &hdr)	{ memcpy(&_output, &hdr, sizeof(OAP::P2d_hdr)); }
-  void writeBuffer(FILE *out);
+  void setHeader(OAP::P2d_hdr &hdr)	{ /* writeBuffer() ? */ memcpy(&_output, &hdr, sizeof(OAP::P2d_hdr)); }
+  void writeBuffer();
 
 private:
 
@@ -22,6 +22,8 @@ private:
 
   void reset();
 
+  unsigned char _code[8];
+  FILE *_out_fp;
   OAP::P2d_rec _output;
   unsigned char *_uncompressed;
   int _pos, _nBits;
