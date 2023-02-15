@@ -459,8 +459,8 @@ void MainCanvas::drawFast2D(OAP::P2d_rec *record, Probe *probe, float version, i
     x = 0;
 */
 
-  if (_displayMode == RAW_RECORD || probe->stats.particles.size() == 0)
-    drawRawRecord(record->data, probe, ps);
+//  if (_displayMode == RAW_RECORD || probe->stats.particles.size() == 0)
+//    drawRawRecord(record->data, probe, ps);
 
 
   p = record->data;
