@@ -116,7 +116,7 @@ void processParticle(uint16_t *wp)
 
 
   if (id > 0 && id != prevID+1)
-    printf("!!! Non sequential praticle ID : prev=%d, this=%d !!!\n", prevID, id);
+    printf("!!! Non sequential particle ID : prev=%d, this=%d !!!\n", prevID, id);
 
   prevID = id;
 
