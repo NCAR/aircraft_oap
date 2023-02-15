@@ -86,8 +86,8 @@ static String fallback_resources[] =
   "*magShell.y:				25",
 
   "*magCanvas.background:		grey",
-  "*magCanvas.height:			200",
-  "*magCanvas.width:			400",
+  "*magCanvas.height:			300",
+  "*magCanvas.width:			500",
 
   "*pgButtRC.entryAlignment:		ALIGNMENT_CENTER",
   "*pgButtRC.XmPushButton.recomputeSize:	False",
