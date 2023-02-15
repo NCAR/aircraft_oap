@@ -8,6 +8,7 @@ Particle::Particle(const char code[], FILE *out) : _out_fp(out), _pos(0), _nBits
 {
   memset(_code, 0, sizeof(_code));
   memcpy(_code, code, 2);
+  memset(_output.data, 0xFF, 4096);
   _uncompressed = _output.data;
 printf("_uncom=%p\n", _uncompressed);
 }
@@ -154,7 +155,6 @@ printf(" uncompressed\n");
     {
 printf(" first word of slice, pos=%d\n", _pos);
       finishSlice();
-printf(" first word of slice, pos=%d\n", _pos);
 
       ++sliceCnt;
       _nBits = 0;
@@ -186,14 +186,13 @@ if (_output.data != _uncompressed) printf(" pp3: un != out %p - %p !!!!!!!\n", _
       _nBits += value;
       if (bN)
       {
-printf("%x %d %x\n", _uncompressed[_pos + BN], (0xff >> res), _uncompressed[_pos + BN] & (0xff >> res));
+//printf("%x %d %x\n", _uncompressed[_pos + BN], (0xff >> res), _uncompressed[_pos + BN] & (0xff >> res));
         unsigned char mask = 0xff << value;
 
         int n = std::min((int)value, res);
         for (int j = 0; j < bN; ++j)
           mask = (mask << 1) | 0x01;
         _uncompressed[_pos + BN] &= mask;
-printf("mask = %x\n", mask);
         value -= n;
         if (value > 0) ++BN;
       }
