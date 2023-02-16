@@ -5,8 +5,9 @@
 
 
 const unsigned char Particle::_syncString[] = { 0xAA, 0xAA, 0xAA };
+const unsigned long Particle::_syncWord = 0xAAAAAA0000000000;
 
-Particle::Particle(const char code[], FILE *out) : _out_fp(out), _pos(0), _nBits(0)
+Particle::Particle(const char code[], FILE *out) : _out_fp(out), _pos(0), _nBits(0), _prevID(0), _prevTimeWord(0)
 {
   memset(_code, 0, sizeof(_code));
   memcpy(_code, code, 2);
@@ -124,6 +125,12 @@ void Particle::printParticleHeader(uint16_t *hdr)
         idx == 1 ? 'H' : 'V',
         hdr[idx] & 0x0fff,
         hdr[idx] & 0x1000 ? "- NT" : "");
+
+printf(" - H = %04x, V = %04x", hdr[1], hdr[2]);
+if (hdr[1] & 0x6000) printf("\n assert: Bad H !!!!!!!!\n");
+if (hdr[2] & 0x6000) printf("\n assert: Bad V !!!!!!!!\n");
+if ((hdr[1] & 0x0fff) != 0 && (hdr[2] & 0x0fff) != 0) printf("\n assert: both H&V count greater than zero !!!\n");
+if ((hdr[1] & 0x0fff) == 0 && (hdr[2] & 0x0fff) == 0) printf("\n assert: both H&V count equal zero !!!\n");
 }
 
 
@@ -131,30 +138,31 @@ void Particle::processParticle(uint16_t *wp, bool verbose)
 {
   int i, nSlices = wp[4], nWords, sliceCnt = 0;
 
-  uint16_t value, id = wp[3];
+  uint16_t value, id = wp[3], clear, shaded;
   bool timingWord = true;
-  static uint16_t prevID = 0;
 
   if (verbose)
     printParticleHeader(wp);
 
-  if (id > 0 && id != prevID+1)
-    printf("!!! Non sequential praticle ID : prev=%d, this=%d !!!\n", prevID, id);
+  if (id > 0 && id != _prevID+1)
+    printf("!!! Non sequential praticle ID : prev=%d, this=%d !!!\n", _prevID, id);
 
 
-  prevID = id;
+  _prevID = id;
 
   if (wp[2] != 0)
   {
     nWords = wp[2] & 0x0FFF;
     timingWord = !(wp[2] & 0x1000);
 printf("\nStart particle V, pos=%d\n", _pos);
+if (nWords == 0) printf(" assert V nWords == 0, no good\n");
   }
   else
   {
     nWords = wp[1] & 0x0FFF;
     timingWord = !(wp[1] & 0x1000);
 printf("\nStart particle H, pos=%d\n", _pos);
+if (nWords == 0) printf(" assert H nWords == 0, no good\n");
   }
 
   wp += 5;
@@ -173,7 +181,7 @@ printf("\nStart particle H, pos=%d\n", _pos);
 
     if (wp[i] == 0x4000)	// Fully shadowed slice.
     {
-printf(" full shade\n");
+if (verbose) printf(" full shade, _pos = %d, i = %d\n", _pos, i);
       memset(&_uncompressed[_pos], 0, 16);
       _pos += 16;
 
@@ -190,7 +198,7 @@ printf(" full shade\n");
 
     if (wp[i] == 0x7FFF)	// Uncompressed slice.
     {
-printf(" uncompressed\n");
+if (verbose) printf(" uncompressed, _pos = %d, i = %d\n", _pos, i);
       memcpy(&_uncompressed[_pos], (char *)&wp[i+1], 16);
       _pos += 16;
 
@@ -201,7 +209,7 @@ printf(" uncompressed\n");
           for (int k = 0; k < 16; ++k)
             printf("%d", !((wp[i+1+j] << k) & 0x8000));
       }
-      i += 15;
+      i += 8;
       _nBits = 0;
       ++sliceCnt;
       continue;
@@ -209,37 +217,39 @@ printf(" uncompressed\n");
 
     if (wp[i] & 0x4000)				// First word of slice
     {
-printf(" first word of slice, pos=%d\n", _pos);
+if (verbose) printf(" first word of slice, pos=%d, i = %d", _pos, i);
       finishSlice();
 
       ++sliceCnt;
       _nBits = 0;
       if (verbose)
-        printf("\n  %2d 0x", sliceCnt);
+        printf(", sliceCnt = %d\n", sliceCnt);
     }
 
-    if ((value = (wp[i] & 0x007F)) > 0)		// Number of clear pixels
+    if ((clear = (wp[i] & 0x007F)) > 0)		// Number of clear pixels
     {
-printf(" clear=%d, pos=%d\n", value, _pos);
-      _nBits += value;
+if (verbose) printf(" clear=%d, pos=%d, i = %d\n", clear, _pos, i);
+      _nBits += clear;
 
       if (false)
       {
-        for (int j = 0; j < value; ++j)
+        for (int j = 0; j < clear; ++j)
           printf("0");
       }
     }
 
-    if ((value = (wp[i] & 0x3F80) >> 7) > 0)	// Number of shadowed pixels
+    if ((shaded = (wp[i] & 0x3F80) >> 7) > 0)	// Number of shadowed pixels
     {
       int BN = _nBits / 8;
       int bN = _nBits % 8;
       int res = 8 - bN;
-printf(" shaded=%d, pos=%d\n", value, _pos);
-printf(" nBits=%d, BN=%d, bN=%d, res=%d\n", _nBits, BN, bN, res);
+if (verbose) printf(" shaded=%d, pos=%d\n", shaded, _pos);
+if (verbose) printf(" nBits=%d, BN=%d, bN=%d, res=%d\n", _nBits, BN, bN, res);
+if (clear+shaded > 128) printf(" assert: clear+shaded = %d\n", clear+shaded);
 if (_output.data != _uncompressed) printf(" pp3: un != out %p - %p !!!!!!!\n", _output.data, _uncompressed);
 
-      _nBits += value;
+      _nBits += shaded;
+      value = shaded;
       if (bN)
       {
 //printf("%x %d %x\n", _uncompressed[_pos + BN], (0xff >> res), _uncompressed[_pos + BN] & (0xff >> res));
@@ -256,7 +266,7 @@ if (_output.data != _uncompressed) printf(" pp3: un != out %p - %p !!!!!!!\n", _
 if (_output.data != _uncompressed) printf(" pp3.1: un != out %p - %p !!!!!!!\n", _output.data, _uncompressed);
       while (value >= 8)
       {
-printf("  loop, value=%d, _pos=%d, BN=%d\n", value, _pos, BN);
+//printf("  loop, value=%d, _pos=%d, BN=%d\n", value, _pos, BN);
         _uncompressed[_pos + BN] = 0x00;
         value -= 8;
         ++BN;
@@ -279,22 +289,20 @@ if (_output.data != _uncompressed) printf(" pp3.2: un != out %p - %p !!!!!!!\n",
   }
 
 
-printf(" leaving=%d\n", _pos);
+if (verbose) printf(" leaving=%d\n", _pos);
   finishSlice();
-printf(" leaving=%d\n", _pos);
+if (verbose) printf(" leaving=%d\n", _pos);
 
   if (timingWord)
   {
-    static unsigned long sync = 0xAAAAAA0000000000;
-    static unsigned long prevTimeWord = 0;
     unsigned long tWord = ((unsigned long *)&wp[nWords])[0] & 0x0000FFFFFFFFFFFF;
 
     if (verbose)
-      printf("\n  Timing = %lu, deltaT=%lu\n", tWord, tWord - prevTimeWord);
-    prevTimeWord = tWord;
+      printf("\n  Timing = %lu, deltaT=%lu\n", tWord, tWord - _prevTimeWord);
+    _prevTimeWord = tWord;
 
 if (_pos > 4096) printf("_pos @ timeword assert!!!!!!!!!\n");
-    memcpy(&_uncompressed[_pos+8], (unsigned char*)&sync, 8);
+    memcpy(&_uncompressed[_pos+8], (unsigned char*)&_syncWord, 8);
     memcpy(&_uncompressed[_pos], (unsigned char*)&tWord, 8);
     _pos += 16;
   }
@@ -305,6 +313,6 @@ if (_pos > 4096) printf("_pos @ timeword assert!!!!!!!!!\n");
     printf(" end - %d/%d words, sliceCnt = %d/%d\n\n", i, nWords, sliceCnt, nSlices);
 
 if (_output.data != _uncompressed) printf(" pp5: un != out %p - %p !!!!!!!\n", _output.data, _uncompressed);
-printf(" leaving=%d\n", _pos);
+if (verbose) printf(" leaving=%d\n", _pos);
 }
 

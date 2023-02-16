@@ -28,7 +28,10 @@ private:
   OAP::P2d_rec _output;
   unsigned char *_uncompressed;
   int _pos, _nBits;
+  uint16_t _prevID;
+  unsigned long _prevTimeWord;
 
+  static const unsigned long _syncWord;
   static const unsigned char _syncString[3];
 
 };

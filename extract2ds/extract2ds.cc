@@ -397,6 +397,8 @@ int main(int argc, char *argv[])
       continue;
     }
 
+    printf("\n\nOpening and processing file [%s]\n", fileName);
+
     strcat(fileName, "HK");
     if ((hkfp = fopen(fileName, "rb")) == 0)
     {
