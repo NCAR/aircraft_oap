@@ -19,6 +19,7 @@ private:
 
   void printParticleHeader(uint16_t *hdr);
   void finishSlice();
+  bool diodeCountCheck();
 
   void reset();
 
@@ -27,6 +28,8 @@ private:
   OAP::P2d_rec _output;
   unsigned char *_uncompressed;
   int _pos, _nBits;
+
+  static const unsigned char _syncString[3];
 
 };
 

@@ -4,6 +4,8 @@
 #include "particle.h"
 
 
+const unsigned char Particle::_syncString[] = { 0xAA, 0xAA, 0xAA };
+
 Particle::Particle(const char code[], FILE *out) : _out_fp(out), _pos(0), _nBits(0)
 {
   memset(_code, 0, sizeof(_code));
@@ -18,14 +20,64 @@ Particle::~Particle()
 
 }
 
+
+bool Particle::diodeCountCheck()
+{
+  static const size_t nDiodes = 128;
+  static const size_t nSlices = 4096 / nDiodes;
+  static const size_t nBytes = nDiodes / 8;
+
+  bool rejectRecord = false;
+  size_t cnts[nDiodes], nParticles = 0;
+
+  memset(cnts, 0, sizeof(cnts));
+
+  for (size_t i = 0; i < nSlices; ++i)
+  {
+    if (memcmp(&_output.data[(i * nBytes) + 13], _syncString, 3) == 0)
+    {
+      ++nParticles;
+      continue;
+    }
+
+    for (size_t j = 0; j < nBytes; ++j)
+    {
+      for (size_t k = 0; k < 8; ++k)
+        if (((_output.data[i*nBytes+j] << k) & 0x80) == 0)
+          ++cnts[j*8+k];
+    }
+  }
+
+  /* Count how many diodes were active in the buffer.  The idea is if only 1
+   * diode was active, then we have a stuck bit.
+   */
+  size_t cnt = 0;
+  for (size_t i = 0; i < nDiodes; ++i) {
+    if (cnts[i] > 0)
+      ++cnt;
+  }
+
+
+//  if (cnt < nDiodes * 0.05)
+  if (cnt < 5)
+    rejectRecord = true;
+
+  return rejectRecord;
+}
+
+
 void Particle::writeBuffer()
 {
+  diodeCountCheck();
 
 if (_output.data != _uncompressed) printf("writeBuff: un != out %p - %p !!!!!!!\n", _output.data, _uncompressed);
+
   memcpy((unsigned char*)&_output.id, _code, 2);
+
 printf("%x\n", _output.id);
 printf("uncomp=%p _pos=%d\n", _uncompressed, _pos);
-  if (_pos > 0)
+
+  if (_pos > 0 && diodeCountCheck() == false)
   {
 //    memcpy(_output.data, _uncompressed, _pos);
     fwrite(&_output, sizeof(OAP::P2d_rec), 1, _out_fp);
@@ -36,12 +88,14 @@ printf("uncomp=%p _pos=%d\n", _uncompressed, _pos);
   memset(_output.data, 0xFF, 4096);
 }
 
+
 void Particle::reset()
 {
   _nBits = 0;
 //  _pos = 0;
 
 }
+
 
 void Particle::finishSlice()
 {
@@ -56,6 +110,7 @@ if (_pos % 16 != 0) fprintf(stderr, "finishSlice: _pos not %%16 !!!!");
   if (_pos >= 4096)
     writeBuffer();
 }
+
 
 void Particle::printParticleHeader(uint16_t *hdr)
 {
@@ -88,7 +143,6 @@ void Particle::processParticle(uint16_t *wp, bool verbose)
 
 
   prevID = id;
-  reset();
 
   if (wp[2] != 0)
   {
@@ -106,6 +160,8 @@ printf("\nStart particle H, pos=%d\n", _pos);
   wp += 5;
   if (timingWord) nWords -= 3;
 
+  if (_nBits != 0)
+    printf("  assert fail : nBits=%d at start of particle !!!!\n", _nBits);
 
   for (i = 0; i < nWords; ++i)
   {
