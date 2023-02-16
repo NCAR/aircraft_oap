@@ -143,7 +143,7 @@ void processImageFile(FILE *infp, FILE *hkfp, FILE *outfp)
           if (verbose) printf(" short header, j=%d\n", j);
           partialPos = 2048-j;
           memcpy(particle, &wp[j], partialPos * sizeof(uint16_t));
-          moreData(infp, buffer, outHdr, hkfp);
+          if (moreData(infp, buffer, outHdr, hkfp) != 1) break;
           probe[0]->setHeader(outHdr);
           probe[1]->setHeader(outHdr);
           j = 0;
@@ -165,7 +165,7 @@ void processImageFile(FILE *infp, FILE *hkfp, FILE *outfp)
           if (verbose) printf(" short image, j=%d, n=%d\n", j, n);
           partialPos = 2048-j;
           memcpy(&particle[5], &wp[j], partialPos * sizeof(uint16_t));
-          moreData(infp, buffer, outHdr, hkfp);
+          if (moreData(infp, buffer, outHdr, hkfp) != 1) break;
           probe[0]->setHeader(outHdr);
           probe[1]->setHeader(outHdr);
           j = 0;
@@ -188,7 +188,9 @@ fflush(stdout);
             probe[1]->processParticle((uint16_t *)particle, verbose);
         }
         else
-          printf(" not processing particle # %d - n=%d\n", particle[3], particle[4]);
+        {
+          if (verbose) printf(" not processing particle # %d - n=%d\n", particle[3], particle[4]);
+        }
       }
     }
 

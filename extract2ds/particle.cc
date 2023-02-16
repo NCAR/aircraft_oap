@@ -75,9 +75,6 @@ if (_output.data != _uncompressed) printf("writeBuff: un != out %p - %p !!!!!!!\
 
   memcpy((unsigned char*)&_output.id, _code, 2);
 
-printf("%x\n", _output.id);
-printf("uncomp=%p _pos=%d\n", _uncompressed, _pos);
-
   if (_pos > 0 && diodeCountCheck() == false)
   {
 //    memcpy(_output.data, _uncompressed, _pos);
@@ -154,14 +151,14 @@ void Particle::processParticle(uint16_t *wp, bool verbose)
   {
     nWords = wp[2] & 0x0FFF;
     timingWord = !(wp[2] & 0x1000);
-printf("\nStart particle V, pos=%d\n", _pos);
+if (verbose) printf("\nStart particle V, pos=%d\n", _pos);
 if (nWords == 0) printf(" assert V nWords == 0, no good\n");
   }
   else
   {
     nWords = wp[1] & 0x0FFF;
     timingWord = !(wp[1] & 0x1000);
-printf("\nStart particle H, pos=%d\n", _pos);
+if (verbose) printf("\nStart particle H, pos=%d\n", _pos);
 if (nWords == 0) printf(" assert H nWords == 0, no good\n");
   }
 
@@ -176,7 +173,7 @@ if (nWords == 0) printf(" assert H nWords == 0, no good\n");
     if (_pos >= 4096)
       writeBuffer();
 
-    if (_pos >= 4050)
+    if (_pos > 4080)
       printf("Warning, _pos = %d\n", _pos);
 
     if (wp[i] == 0x4000)	// Fully shadowed slice.
@@ -228,7 +225,7 @@ if (verbose) printf(" first word of slice, pos=%d, i = %d", _pos, i);
 
     if ((clear = (wp[i] & 0x007F)) > 0)		// Number of clear pixels
     {
-if (verbose) printf(" clear=%d, pos=%d, i = %d\n", clear, _pos, i);
+if (verbose) printf("  clear=%d, pos=%d, i = %d\n", clear, _pos, i);
       _nBits += clear;
 
       if (false)
@@ -243,9 +240,9 @@ if (verbose) printf(" clear=%d, pos=%d, i = %d\n", clear, _pos, i);
       int BN = _nBits / 8;
       int bN = _nBits % 8;
       int res = 8 - bN;
-if (verbose) printf(" shaded=%d, pos=%d\n", shaded, _pos);
-if (verbose) printf(" nBits=%d, BN=%d, bN=%d, res=%d\n", _nBits, BN, bN, res);
-if (clear+shaded > 128) printf(" assert: clear+shaded = %d\n", clear+shaded);
+if (verbose) printf("  shaded=%d, pos=%d\n", shaded, _pos);
+if (verbose) printf("  nBits=%d, BN=%d, bN=%d, res=%d\n", _nBits, BN, bN, res);
+if (clear+shaded > 128) printf("   assert: clear+shaded = %d\n", clear+shaded);
 if (_output.data != _uncompressed) printf(" pp3: un != out %p - %p !!!!!!!\n", _output.data, _uncompressed);
 
       _nBits += shaded;
