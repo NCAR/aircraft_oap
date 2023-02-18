@@ -271,7 +271,7 @@ void outputXMLheader(FILE *outfp)
   fprintf(outfp, " <FlightNumber>%s</FlightNumber>\n", cfg.FlightNumber().c_str());
   fprintf(outfp, " <FlightDate>%s</FlightDate>\n", cfg.FlightDate().c_str());
 
-  fprintf(outfp, " <probe id=\"%s\"", cfg.PacketID().c_str());
+  fprintf(outfp, "  <probe id=\"%s\"", cfg.PacketID().c_str());
   fprintf(outfp, " type=\"%s\"", cfg.Type().c_str());
   fprintf(outfp, " resolution=\"%d\"", cfg.Resolution());
   fprintf(outfp, " nDiodes=\"%d\"", cfg.nDiodes());
@@ -284,7 +284,7 @@ void outputXMLheader(FILE *outfp)
   // Add entry for second array.  2DS is treated as two probes, horizontal and vertical.
   if (cfg.Type().compare("F2DS") == 0)
   {
-    fprintf(outfp, " <probe id=\"SV\"");
+    fprintf(outfp, "  <probe id=\"SV\"");
     fprintf(outfp, " type=\"%s\"", cfg.Type().c_str());
     fprintf(outfp, " resolution=\"%d\"", cfg.Resolution());
     fprintf(outfp, " nDiodes=\"%d\"", cfg.nDiodes());
