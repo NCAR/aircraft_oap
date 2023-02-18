@@ -1,4 +1,4 @@
-/*
+/*  This file has been obsoleted.  See libraf:OAP for replacements.
 -------------------------------------------------------------------------
 OBJECT NAME:	process.cc
 
@@ -186,7 +186,7 @@ if (probeID[1] == '8')	// CIP
 
   if (ProbeType(record) == TWODS)
   {
-//  Add ProcessSPEC2DS();    
+//  Add ProcessSPEC2DS();
     return(output);
   }
 
@@ -452,7 +452,7 @@ printf("\n");
       if (i > 286 && p[i] == 0x5555)
         ++cntr;
       }
-  
+
     printf("fives cntr = %d 2043 @ %d\n", cntr, toft);
 */
     output.tas = -1.0;
@@ -790,7 +790,7 @@ struct OAP::recStats &ProcessCIP(P2d_rec *record, float version)
 
   for (size_t i = 0; i < nBins; ++i)
     sampleVolume[i] = output.tas * (sampleAreaC[i] * 2) * 0.001;
-  
+
 unsigned long long *o = (unsigned long long *)record->data;
 for (int j = 0; j < 512; ++j, ++o)
   printf("%llx\n",  *o);
@@ -959,7 +959,7 @@ if (debug)
 
   for (size_t i = 0; i < nBins; ++i)
     sampleVolume[i] = output.tas * (sampleAreaC[i] * 2) * 0.001;
-  
+
   // Scan record, compute tBarElapsedtime and stats.
   p = record->data;
 
@@ -970,7 +970,7 @@ if (debug)
   for (size_t i = 0; i < nSlices_64bit; ++i, p += sizeof(long long))
   {
     slice = ntohll((long long *)p);
-  
+
     /* Have particle, will travel.
      */
     if (memcmp(p, Fast2D_SyncString, 2) == 0 || memcmp(p, Fast2D_OverldString, 2) == 0)
