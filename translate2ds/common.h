@@ -278,6 +278,12 @@ namespace sp
 		Word wSecond;
 		Word wMilliseconds;
 
+		void SetValue(Word value)
+		{
+			wYear = wMonth = wDayOfWeek = wDay = wHour =
+			wMinute = wMilliseconds = value;
+		}
+
 		double TimeAsSingleValue() const
 		// in units of minutes, assuming all months have 30 days.
 		{
@@ -326,14 +332,14 @@ namespace sp
 			Compressed = false;
 			ascii_art = false;
 			TimeOffset = 0; //default to no offset
-			memset(&StartTime, 0, sizeof(StartTime)); //min date so defaults to always passing
-			memset(&EndTime, 255, sizeof(EndTime)); //max date so defaults to always passing
+			StartTime.SetValue(0);	//min date so defaults to always passing
+			EndTime.SetValue(9999);	//max date so defaults to always passing
+			EndTime.wMonth = 12;
 			EndTime.wDay = 30;
 			EndTime.wHour = 24;
 			EndTime.wMinute = 60;
-			EndTime.wMilliseconds = 1000;
-			EndTime.wMonth = 12;
 			EndTime.wSecond = 60;
+			EndTime.wMilliseconds = 1000;
 			Platform = "?";
 			Project = "?";
 			FlightNumber = "?";

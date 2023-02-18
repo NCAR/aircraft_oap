@@ -79,8 +79,8 @@ namespace sp
 			_SuffixH = SuffixH;
 			_SuffixV = SuffixV;
 
-			memset(&_MostRecentTimeStamp, 1, sizeof(_MostRecentTimeStamp));
-			memset(&_FirstTimeStamp, 1, sizeof(_FirstTimeStamp));
+			_MostRecentTimeStamp.SetValue(1);
+			_FirstTimeStamp.SetValue(1);
 			_FirstTimeStamp.wYear = 0;
 		}
 
