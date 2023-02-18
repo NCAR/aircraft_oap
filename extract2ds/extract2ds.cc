@@ -83,6 +83,7 @@ int moreData(FILE *infp, unsigned char buffer[], OAP::P2d_hdr &oapHdr, FILE *hkf
   oapHdr.msec = htons(tds->msecond);
 
   oapHdr.tas = htons(findHouseKeeping(hkfp, tds));
+  oapHdr.overld = 0;
 
   return rc;
 }
