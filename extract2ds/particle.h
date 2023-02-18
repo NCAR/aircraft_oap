@@ -23,14 +23,16 @@ private:
 
   void reset();
 
-  unsigned char _code[8];
   FILE *_out_fp;
+  unsigned char _code[8];
   OAP::P2d_rec _output;
   unsigned char *_uncompressed;
-  int _pos, _nBits;
+
+  size_t _pos, _nBits;
   uint16_t _prevID;
   unsigned long _prevTimeWord;
 
+  static const size_t _nDiodes;
   static const unsigned long _syncWord;
   static const unsigned char _syncString[3];
 
