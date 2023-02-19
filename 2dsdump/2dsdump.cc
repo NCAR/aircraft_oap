@@ -4,7 +4,7 @@
 #include <cstdio>
 #include <cstring>
 
-static const char hkTitle[] = " |  --------  Outside temperatures  --------   |           DSP_T   |  ----- Inside temperatures -----  |      -5      +5       RH   CanP   +7raw       |      ---------------   Diode Voltages   ---------------      |    Total Counts  TAS(m/s)";
+const char hkTitle[] = " |  --------  Outside temperatures  --------   |           DSP_T   |  ----- Inside temperatures -----  |      -5      +5       RH   CanP   +7raw       |      ---------------   Diode Voltages   ---------------      |    Total Counts  TAS(m/s)";
 
 struct imageBuf
 {
@@ -28,12 +28,15 @@ struct maskBuf
 };
 
 
+const uint16_t SyncWord = 0x3253;	// Particle sync word.
+const uint16_t FlushWord = 0x4e4c;	// NL Flush Buffer.
+
 // Options
 bool verbose = false;
 bool timeOnly = false;
 bool asciiArt = false;
 char fileName[512];
-int  recordCnt = 0;
+int  recordCnt = 0, totalParticleCnt = 0, totalSliceCnt = 0;
 
 
 bool cksum(const uint16_t buff[], int nWords, uint16_t ckSum)
@@ -62,16 +65,23 @@ int moreData(FILE *infp, unsigned char buffer[])
 
   ++recordCnt;
   struct imageBuf *tds = (struct imageBuf *)buffer;
-  int pCnt = 0;
+  uint16_t *wp = (uint16_t *)tds->rdf;
+  int	pCnt = 0, nSlices = 0;
 
-  for (int i = 0; i < 2048; ++i)
-    if (((uint16_t *)tds->rdf)[i] == 0x3253)
+  for (int i = 0; i < 2043; ++i)
+    if (wp[i] == SyncWord && (wp[i+1] == 0 || wp[i+2] == 0))
+    {
       ++pCnt;
+      nSlices += ((uint16_t *)tds->rdf)[i+4];
+    }
+
+  totalSliceCnt += nSlices;
+  totalParticleCnt += pCnt;
 
   if (verbose || timeOnly)
-    printf("%d/%d/%d %02d:%02d:%02d.%03d - pCnt=%d - 0x%04x\n", tds->year, tds->month,
+    printf("%d/%d/%d %02d:%02d:%02d.%03d - 0x%04x - particle cnt=%d, uncompressedSlices=%d\n", tds->year, tds->month,
 	tds->day, tds->hour, tds->minute, tds->second, tds->msecond,
-	pCnt, ((uint16_t *)tds->rdf)[0]);
+	((uint16_t *)tds->rdf)[0], pCnt, nSlices);
 
   cksum((uint16_t *)tds->rdf, 2048, tds->cksum);
 
@@ -219,10 +229,10 @@ void processImageFile(FILE *infp)
 {
   static unsigned char	buffer[8192];
   static uint16_t	particle[4096];
-  int	imCnt = 0, nlCnt = 0, partialPos = 0;
+  int	imCnt = 0, tsCnt = 0, nlCnt = 0, partialPos = 0;
 
   struct imageBuf *tds = (struct imageBuf *)buffer;
-  uint16_t *wp = ((uint16_t *)tds->rdf);
+  uint16_t *wp = (uint16_t *)tds->rdf;
 
   printf("processImageFile\n");
 
@@ -232,19 +242,22 @@ void processImageFile(FILE *infp)
 
     if (timeOnly)
     {
-      if (wp[0] == 0x4e4c)		// NL flush buffer
+      if (wp[0] == FlushWord)		// NL flush buffer
         nlCnt++;
 
-      for (; j < 2045; ++j)
-        if (wp[j] == 0x3253 && (wp[j+1] == 0 || wp[j+2] == 0))		// start particle
+      for (; j < 2043; ++j)
+        if (wp[j] == SyncWord && (wp[j+1] == 0 || wp[j+2] == 0))		// start particle
+        {
           ++imCnt;
+          tsCnt += wp[j+4];
+        }
 
       continue;
     }
 
     for (; j < 2048; ++j)
     {
-      if (wp[j] == 0x4e4c)		// NL flush buffer
+      if (wp[j] == FlushWord)		// NL flush buffer
       {
 //        printf("%x - %d %d %d %d\n", wp[j], wp[j+1], wp[j+2], wp[j+3], wp[j+4]);
         if (verbose)
@@ -254,7 +267,7 @@ void processImageFile(FILE *infp)
       }
 
 
-      if (wp[j] == 0x3253)		// start particle
+      if (wp[j] == SyncWord)		// start particle
       {
         if (verbose)
           printf(" start particle, pos=%d\n", j);
@@ -297,12 +310,15 @@ void processImageFile(FILE *infp)
 
         // OK, we can process particle
         imCnt++;
+        tsCnt += particle[4];
         processParticle((uint16_t *)particle);
       }
     }
   }
 
-  printf("Record cnt = %d, particle Cnt=%d nullCnt=%d\n", recordCnt, imCnt, nlCnt);
+  printf("Record cnt = %d, nullCnt=%d\n", recordCnt, nlCnt);
+  printf("   moreData: particle Cnt=%8d slice Cnt=%8d\n", totalParticleCnt, totalSliceCnt);
+  printf("   process : particle Cnt=%8d slice Cnt=%8d\n", imCnt, tsCnt);
 }
 
 
