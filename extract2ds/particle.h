@@ -17,7 +17,7 @@ public:
 
 private:
 
-  void printParticleHeader(uint16_t *hdr);
+  void printParticleHeader(uint16_t *hdr, int idx);
   void finishSlice();
   bool diodeCountCheck();
 
@@ -29,7 +29,7 @@ private:
   unsigned char *_uncompressed;
 
   size_t _pos, _nBits;
-  uint16_t _prevID;
+  uint16_t _prevID[2];
   unsigned long _prevTimeWord;
 
   static const size_t _nDiodes;

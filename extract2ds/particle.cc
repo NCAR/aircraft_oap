@@ -2,14 +2,16 @@
 #include <algorithm>
 
 #include "particle.h"
+#include "spec.h"
 
 
 const unsigned char Particle::_syncString[] = { 0xAA, 0xAA, 0xAA };
 const unsigned long Particle::_syncWord = 0xAAAAAA0000000000;
 const size_t Particle::_nDiodes = 128;
 
-Particle::Particle(const char code[], FILE *out) : _out_fp(out), _pos(0), _nBits(0), _prevID(0), _prevTimeWord(0)
+Particle::Particle(const char code[], FILE *out) : _out_fp(out), _pos(0), _nBits(0), _prevTimeWord(0)
 {
+  _prevID[0] = _prevID[1] = 0;
   memset(&_output, 0, sizeof(OAP::P2d_hdr));
   memset(_output.data, 0xFF, 4096);
   memcpy(_code, code, 2);
@@ -113,13 +115,9 @@ if (_pos % 16 != 0) fprintf(stderr, "finishSlice: _pos not %%16 !!!!");
 }
 
 
-void Particle::printParticleHeader(uint16_t *hdr)
+void Particle::printParticleHeader(uint16_t *hdr, int idx)
 {
-  int idx = 1;
   printf("  %x - ID=%6d nSlices=%3d ", hdr[0], hdr[3], hdr[4]);
-
-  if ((hdr[idx] & 0x0FFF) == 0)
-    ++idx;
 
   printf("%c nWords=%4d %s",
         idx == 1 ? 'H' : 'V',
@@ -136,31 +134,40 @@ if ((hdr[1] & 0x0fff) == 0 && (hdr[2] & 0x0fff) == 0) printf("\nassert: both H&V
 
 void Particle::processParticle(uint16_t *wp, bool verbose)
 {
-  int i, nSlices = wp[4], nWords, sliceCnt = 0;
+  int i, nSlices = wp[nSLICES], nWords, sliceCnt = 0;
 
-  uint16_t value, id = wp[3], clear, shaded;
+  uint16_t value, id = wp[PID], clear, shaded;
   bool timingWord = true;
+  int idx = 1;
+
+  if ((wp[idx] & 0x0FFF) == 0)  // this is H vs V
+    ++idx;
 
   if (verbose)
-    printParticleHeader(wp);
+    printParticleHeader(wp, idx);
 
-  if (id > 0 && id != _prevID+1)
-    printf("!!! Non sequential praticle ID : prev=%d, this=%d !!!\n", _prevID, id);
-
-
-  _prevID = id;
-
-  if (wp[2] != 0)
+  if (id > 0)
   {
-    nWords = wp[2] & 0x0FFF;
-    timingWord = !(wp[2] & 0x1000);
+    if (id == _prevID[idx-1])
+      printf(" : multi packet particle\n");
+    else
+    if (id != _prevID[idx-1]+1)
+      printf("!!! Non sequential particle ID : prev=%d, this=%d !!!\n", _prevID[idx-1], id);
+  }
+
+  _prevID[idx-1] = id;
+
+  if (wp[V_CHN] != 0)
+  {
+    nWords = wp[V_CHN] & 0x0FFF;
+    timingWord = !(wp[V_CHN] & 0x1000);
 if (verbose) printf("\nStart particle V, pos=%lu\n", _pos);
 if (nWords == 0) printf("assert V nWords == 0, no good\n");
   }
   else
   {
-    nWords = wp[1] & 0x0FFF;
-    timingWord = !(wp[1] & 0x1000);
+    nWords = wp[H_CHN] & 0x0FFF;
+    timingWord = !(wp[H_CHN] & 0x1000);
 if (verbose) printf("\nStart particle H, pos=%lu\n", _pos);
 if (nWords == 0) printf("assert H nWords == 0, no good\n");
   }

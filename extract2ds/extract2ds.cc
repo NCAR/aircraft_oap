@@ -31,6 +31,10 @@ Config cfg;
 int  recordCnt = 0;
 bool verbose = false;
 
+const uint16_t SyncWord = 0x3253;       // Particle sync word.
+const uint16_t FlushWord = 0x4e4c;      // NL Flush Buffer.
+
+
 int findHouseKeeping(FILE *hkfp, imageBuf *imgRec);
 
 
@@ -64,7 +68,7 @@ int moreData(FILE *infp, unsigned char buffer[], OAP::P2d_hdr &oapHdr, FILE *hkf
   int pCnt = 0;
 
   for (int i = 0; i < 2048; ++i)
-    if (((uint16_t *)tds->rdf)[i] == 0x3253)
+    if (((uint16_t *)tds->rdf)[i] == SyncWord)
       ++pCnt;
 
   if (verbose)
@@ -123,7 +127,7 @@ void processImageFile(FILE *infp, FILE *hkfp, FILE *outfp)
 
     for (; j < 2048; ++j)
     {
-      if (wp[j] == 0x4e4c)		// NL flush buffer
+      if (wp[j] == FlushWord)		// NL flush buffer
       {
 //        printf("%x - %d %d %d %d\n", wp[j], wp[j+1], wp[j+2], wp[j+3], wp[j+4]);
         if (verbose)
@@ -133,7 +137,7 @@ void processImageFile(FILE *infp, FILE *hkfp, FILE *outfp)
       }
 
 
-      if (wp[j] == 0x3253)		// start particle
+      if (wp[j] == SyncWord)		// start particle
       {
         if (verbose)
           printf(" start particle, pos=%d\n", j);
@@ -151,8 +155,8 @@ void processImageFile(FILE *infp, FILE *hkfp, FILE *outfp)
         }
 
         memcpy(&particle[partialPos], &wp[j], (5-partialPos) * sizeof(uint16_t));
-        uint16_t nh = particle[1] & 0x0FFF;
-        uint16_t nv = particle[2] & 0x0FFF;
+        uint16_t nh = particle[H_CHN] & 0x0FFF;
+        uint16_t nv = particle[V_CHN] & 0x0FFF;
         if (nh > 0 && nv > 0)	// One of these must be zero.
           continue;
 
@@ -181,7 +185,7 @@ void processImageFile(FILE *infp, FILE *hkfp, FILE *outfp)
         // OK, we can process particle
         imCnt++;
 fflush(stdout);
-        if (particle[4] < 256)
+        if (particle[nSLICES] < 256)
         {
           if (nh)
             probe[0]->processParticle((uint16_t *)particle, verbose);

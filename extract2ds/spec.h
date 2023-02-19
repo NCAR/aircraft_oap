@@ -34,3 +34,6 @@ struct maskBuf
   uint16_t      cksum;
 };
 
+// This is the index into the particle packet.
+enum PKT_IDX { H_CHN=1, V_CHN=2, PID=3, nSLICES=4 };
+
