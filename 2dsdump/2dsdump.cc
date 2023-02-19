@@ -39,6 +39,7 @@ char fileName[512];
 int  recordCnt = 0, totalParticleCnt = 0, totalSliceCnt = 0;
 
 
+/* ------------------------------------------------------------------------ */
 bool cksum(const uint16_t buff[], int nWords, uint16_t ckSum)
 {
   uint16_t sum = 0;
@@ -52,7 +53,7 @@ bool cksum(const uint16_t buff[], int nWords, uint16_t ckSum)
   return sum == ckSum;
 }
 
-
+/* ------------------------------------------------------------------------ */
 int moreData(FILE *infp, unsigned char buffer[])
 {
   if (verbose)
@@ -79,7 +80,7 @@ int moreData(FILE *infp, unsigned char buffer[])
   totalParticleCnt += pCnt;
 
   if (verbose || timeOnly)
-    printf("%d/%d/%d %02d:%02d:%02d.%03d - 0x%04x - particle cnt=%d, uncompressedSlices=%d\n", tds->year, tds->month,
+    printf("%d/%d/%d %02d:%02d:%02d.%03d - 0x%04x - particle cnt=%3d, uncompressedSlices=%4d\n", tds->year, tds->month,
 	tds->day, tds->hour, tds->minute, tds->second, tds->msecond,
 	((uint16_t *)tds->rdf)[0], pCnt, nSlices);
 
@@ -88,7 +89,7 @@ int moreData(FILE *infp, unsigned char buffer[])
   return rc;
 }
 
-
+/* ------------------------------------------------------------------------ */
 void finishSlice(int nBits)
 {
   if (asciiArt)
@@ -99,7 +100,7 @@ void finishSlice(int nBits)
   }
 }
 
-
+/* ------------------------------------------------------------------------ */
 void printParticleHeader(uint16_t *hdr)
 {
   int idx = 1;
@@ -114,7 +115,7 @@ void printParticleHeader(uint16_t *hdr)
 	hdr[idx] & 0x1000 ? "- NT" : "");
 }
 
-
+/* ------------------------------------------------------------------------ */
 void processParticle(uint16_t *wp)
 {
   int i, nSlices = wp[4], nWords, sliceCnt = 0, nBits = 0;
@@ -125,8 +126,14 @@ void processParticle(uint16_t *wp)
   printParticleHeader(wp);
 
 
-  if (id > 0 && id != prevID+1)
-    printf("!!! Non sequential particle ID : prev=%d, this=%d !!!\n", prevID, id);
+  if (id > 0)
+  {
+    if (id == prevID)
+      printf(" : multi packet particle\n");
+    else
+    if (id != prevID+1)
+      printf("!!! Non sequential particle ID : prev=%d, this=%d !!!\n", prevID, id);
+  }
 
   prevID = id;
 
@@ -224,7 +231,7 @@ void processParticle(uint16_t *wp)
   printf(" end - %d/%d words, sliceCnt = %d/%d\n\n", i, nWords, sliceCnt, nSlices);
 }
 
-
+/* ------------------------------------------------------------------------ */
 void processImageFile(FILE *infp)
 {
   static unsigned char	buffer[8192];
@@ -321,7 +328,7 @@ void processImageFile(FILE *infp)
   printf("   process : particle Cnt=%8d slice Cnt=%8d\n", imCnt, tsCnt);
 }
 
-
+/* ------------------------------------------------------------------------ */
 void processHouseKeepingFile(FILE *infp)
 {
   char	buffer[1024];
@@ -386,7 +393,7 @@ void processHouseKeepingFile(FILE *infp)
   printf("hkCnt=%d maskCnt=%d otherCnt=%d\n", hkCnt, mkCnt, oCnt);
 }
 
-
+/* ------------------------------------------------------------------------ */
 void processArgs(int argc, char *argv[])
 {
 
@@ -413,6 +420,7 @@ void processArgs(int argc, char *argv[])
 }
 
 
+/* ------------------------------------------------------------------------ */
 int main(int argc, char *argv[])
 {
   FILE *infp;
