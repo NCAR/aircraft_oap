@@ -28,6 +28,9 @@ struct maskBuf
 };
 
 
+// This is the index into the particle packet.
+enum PKT_IDX { H_CHN=1, V_CHN=2, PID=3, nSLICES=4 };
+
 const uint16_t SyncWord = 0x3253;	// Particle sync word.
 const uint16_t FlushWord = 0x4e4c;	// NL Flush Buffer.
 
@@ -70,10 +73,10 @@ int moreData(FILE *infp, unsigned char buffer[])
   int	pCnt = 0, nSlices = 0;
 
   for (int i = 0; i < 2043; ++i)
-    if (wp[i] == SyncWord && (wp[i+1] == 0 || wp[i+2] == 0))
+    if (wp[i] == SyncWord && (wp[i+H_CHN] == 0 || wp[i+V_CHN] == 0))
     {
       ++pCnt;
-      nSlices += ((uint16_t *)tds->rdf)[i+4];
+      nSlices += ((uint16_t *)tds->rdf)[i+nSLICES];
     }
 
   totalSliceCnt += nSlices;
@@ -101,16 +104,12 @@ void finishSlice(int nBits)
 }
 
 /* ------------------------------------------------------------------------ */
-void printParticleHeader(uint16_t *hdr)
+void printParticleHeader(uint16_t *hdr, int idx)
 {
-  int idx = 1;
-  printf("  %x - ID=%6d nSlices=%3d ", hdr[0], hdr[3], hdr[4]);
-
-  if ((hdr[idx] & 0x0FFF) == 0)
-    ++idx;
+  printf("  %x - ID=%6d nSlices=%3d ", hdr[0], hdr[PID], hdr[nSLICES]);
 
   printf("%c nWords=%4d %s",
-	idx == 1 ? 'H' : 'V',
+	idx == H_CHN ? 'H' : 'V',
 	hdr[idx] & 0x0fff,
 	hdr[idx] & 0x1000 ? "- NT" : "");
 }
@@ -118,34 +117,37 @@ void printParticleHeader(uint16_t *hdr)
 /* ------------------------------------------------------------------------ */
 void processParticle(uint16_t *wp)
 {
-  int i, nSlices = wp[4], nWords, sliceCnt = 0, nBits = 0;
-  uint16_t value, id = wp[3];
+  int i, nSlices = wp[nSLICES], nWords, sliceCnt = 0, nBits = 0;
+  uint16_t value, id = wp[PID];
   bool timingWord = true;
-  static uint16_t prevID = 0;
+  static uint16_t prevID[2] = { 0, 0 };
+  int idx = 1;
 
-  printParticleHeader(wp);
+  if ((wp[idx] & 0x0FFF) == 0)	// this is H vs V
+    ++idx;
 
+  printParticleHeader(wp, idx);
 
   if (id > 0)
   {
-    if (id == prevID)
+    if (id == prevID[idx-1])
       printf(" : multi packet particle\n");
     else
-    if (id != prevID+1)
-      printf("!!! Non sequential particle ID : prev=%d, this=%d !!!\n", prevID, id);
+    if (id != prevID[idx-1]+1)
+      printf("!!! Non sequential particle ID : prev=%d, this=%d !!!\n", prevID[idx-1], id);
   }
 
-  prevID = id;
+  prevID[idx-1] = id;
 
-  if (wp[2] != 0)
+  if (wp[V_CHN] != 0)
   {
-    nWords = wp[2] & 0x0FFF;
-    timingWord = !(wp[2] & 0x1000);
+    nWords = wp[V_CHN] & 0x0FFF;
+    timingWord = !(wp[V_CHN] & 0x1000);
   }
   else
   {
-    nWords = wp[1] & 0x0FFF;
-    timingWord = !(wp[1] & 0x1000);
+    nWords = wp[H_CHN] & 0x0FFF;
+    timingWord = !(wp[H_CHN] & 0x1000);
   }
 
   wp += 5;
