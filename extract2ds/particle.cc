@@ -195,7 +195,7 @@ void Particle::processParticle(uint16_t *wp, bool verbose)
       printf(" : multi packet particle\n");
     else
     if (id != _prevID+1)
-      printf("!!! Non sequential particle ID : prev=%d, this=%d !!!\n", _prevID, id);
+      printf("!!! Non sequential particle ID %c : prev=%d, this=%d !!!\n", _code[1], _prevID, id);
   }
 
   _prevID = id;

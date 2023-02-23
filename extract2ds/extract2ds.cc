@@ -106,6 +106,7 @@ void processImageFile(FILE *infp, FILE *hkfp, FILE *outfp)
   static unsigned char	buffer[8192];
   static uint16_t	particle[8192];
   int	imCnt = 0, nlCnt = 0, partialPos = 0;
+  int	rejectTooLong = 0, wrapsRecord = 0;
 
   if (probe[0] == 0)
   {
@@ -157,6 +158,7 @@ void processImageFile(FILE *infp, FILE *hkfp, FILE *outfp)
         if (j > 2043)	// want particle 5 byte header
         {
           if (verbose) printf(" short header, j=%d\n", j);
+          ++wrapsRecord;
           partialPos = 2048-j;
           memcpy(particle, &wp[j], partialPos * sizeof(uint16_t));
           if (moreData(infp, buffer, outHdr, hkfp) != 1) break;
@@ -167,7 +169,10 @@ void processImageFile(FILE *infp, FILE *hkfp, FILE *outfp)
         uint16_t nh = particle[H_CHN] & 0x0FFF;
         uint16_t nv = particle[V_CHN] & 0x0FFF;
         if (nh > 0 && nv > 0)	// One of these must be zero.
+        {
+          if (verbose) printf(" passing up on syncWord, nh&nv > 0\n");
           continue;
+        }
 
         int n = std::max(nh, nv);
 //printf("    %d %d %d\n", partialPos, j, n);
@@ -177,6 +182,7 @@ void processImageFile(FILE *infp, FILE *hkfp, FILE *outfp)
         if (j + n > 2048)
         {
           if (verbose) printf(" short image, j=%d, n=%d\n", j, n);
+          ++wrapsRecord;
           partialPos = 2048-j;
           memcpy(&particle[5], &wp[j], partialPos * sizeof(uint16_t));
           if (moreData(infp, buffer, outHdr, hkfp) != 1) break;
@@ -191,7 +197,6 @@ void processImageFile(FILE *infp, FILE *hkfp, FILE *outfp)
 
         // OK, we can process particle
         imCnt++;
-fflush(stdout);
         if (particle[nSLICES] < 256)
         {
           if (nh)
@@ -201,13 +206,16 @@ fflush(stdout);
         }
         else
         {
+          ++rejectTooLong;
           if (verbose) printf(" not processing particle # %d - n=%d\n", particle[3], particle[4]);
         }
       }
     }
   }
 
-  printf("Record cnt = %d, particle Cnt=%d nullCnt=%d\n", recordCnt, imCnt, nlCnt);
+  printf("Record cnt = %d, particle Cnt=%d, nullCnt=%d\n", recordCnt, imCnt, nlCnt);
+  printf("                 rejected too long=%d, particle wraps to next record headers=%d\n",
+		rejectTooLong, wrapsRecord);
 }
 
 
