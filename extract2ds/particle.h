@@ -5,6 +5,12 @@
 #include <raf/OAP.h>
 
 
+/**
+ * Class to decompress SPEC run length encoded data, place it in the RAF OAP
+ * format and write that buffer out when it fills the 4k.  There is one instance
+ * of this class for each probe array.  So one for an HVPS, but two for the
+ * 2DS, on for H channel and on for V channel.
+ */
 class Particle
 {
 public:
@@ -12,25 +18,31 @@ public:
   ~Particle();
 
   void processParticle(uint16_t *wp, bool verbose);
-  void setHeader(OAP::P2d_hdr &hdr)	{ /* writeBuffer() ? */ memcpy(&_output, &hdr, sizeof(OAP::P2d_hdr)); }
+
+  /**
+   * Set timestamp.  This should be the stamp from the previous record, which
+   * would coorespond to the start of the upcoming record.  We will then ADD
+   * time words to get a final time stamp.
+   */
+  void setHeader(const OAP::P2d_hdr &hdr);
   void writeBuffer();
 
 private:
 
-  void printParticleHeader(uint16_t *hdr, int idx);
+  void particleHeaderSanityCheck(const uint16_t *hdr);
+  void printParticleHeader(const uint16_t *hdr) const;
   void finishSlice();
+  void fixupTimeStamp();
   bool diodeCountCheck();
 
-  void reset();
-
   FILE *_out_fp;
-  unsigned char _code[8];
+  unsigned char _code[8];	// only really need 2 bytes
   OAP::P2d_rec _output;
   unsigned char *_uncompressed;
 
   size_t _pos, _nBits;
-  uint16_t _prevID[2];
-  unsigned long _prevTimeWord;
+  uint16_t _prevID;
+  unsigned long _firstTimeWord, _lastTimeWord;
 
   static const size_t _nDiodes;
   static const unsigned long _syncWord;

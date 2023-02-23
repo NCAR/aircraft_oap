@@ -34,6 +34,7 @@ bool verbose = false;
 const uint16_t SyncWord = 0x3253;       // Particle sync word.
 const uint16_t FlushWord = 0x4e4c;      // NL Flush Buffer.
 
+Particle *probe[2] = { 0, 0 };
 
 int findHouseKeeping(FILE *hkfp, imageBuf *imgRec);
 
@@ -68,8 +69,12 @@ int moreData(FILE *infp, unsigned char buffer[], OAP::P2d_hdr &oapHdr, FILE *hkf
   int pCnt = 0;
 
   for (int i = 0; i < 2048; ++i)
+  {
     if (((uint16_t *)tds->rdf)[i] == SyncWord)
+    {
       ++pCnt;
+    }
+  }
 
   if (verbose)
     printf("%d/%02d/%02d %02d:%02d:%02d.%03d - pCnt=%d - 0x%04x\n", tds->year, tds->month,
@@ -89,6 +94,9 @@ int moreData(FILE *infp, unsigned char buffer[], OAP::P2d_hdr &oapHdr, FILE *hkf
   oapHdr.tas = htons(findHouseKeeping(hkfp, tds));
   oapHdr.overld = 0;
 
+  probe[0]->setHeader(oapHdr);
+  probe[1]->setHeader(oapHdr);
+
   return rc;
 }
 
@@ -99,9 +107,11 @@ void processImageFile(FILE *infp, FILE *hkfp, FILE *outfp)
   static uint16_t	particle[8192];
   int	imCnt = 0, nlCnt = 0, partialPos = 0;
 
-  Particle *probe[2];
-  probe[0] = new Particle("SH", outfp);
-  probe[1] = new Particle("SV", outfp);
+  if (probe[0] == 0)
+  {
+    probe[0] = new Particle("SH", outfp);
+    probe[1] = new Particle("SV", outfp);
+  }
 
   struct imageBuf *tds = (struct imageBuf *)buffer;
   uint16_t	*wp = ((uint16_t *)tds->rdf);
@@ -109,21 +119,22 @@ void processImageFile(FILE *infp, FILE *hkfp, FILE *outfp)
 
   printf("processImageFile\n");
 
-  while (moreData(infp, buffer, outHdr, hkfp) == 1)
+  moreData(infp, buffer, outHdr, hkfp);	// get first record, need to use timestamp and discard
+
+  while (1)
   {
+    if (moreData(infp, buffer, outHdr, hkfp) != 1) break;
+
     int j = 0;
 
     if (cfg.StoreCompressed())
     {
       OAP::P2d_rec outBuf;
       memcpy(&outBuf, &outHdr, sizeof(OAP::P2d_hdr));
-      memcpy(outBuf.data, tds->rdf, 4096);
+      memcpy(outBuf.data, tds->rdf, OAP::OAP_BUFF_SIZE);
       fwrite(&outBuf, sizeof(outBuf), 1, outfp);
       continue;
     }
-
-    probe[0]->setHeader(outHdr);
-    probe[1]->setHeader(outHdr);
 
     for (; j < 2048; ++j)
     {
@@ -149,8 +160,6 @@ void processImageFile(FILE *infp, FILE *hkfp, FILE *outfp)
           partialPos = 2048-j;
           memcpy(particle, &wp[j], partialPos * sizeof(uint16_t));
           if (moreData(infp, buffer, outHdr, hkfp) != 1) break;
-          probe[0]->setHeader(outHdr);
-          probe[1]->setHeader(outHdr);
           j = 0;
         }
 
@@ -171,8 +180,6 @@ void processImageFile(FILE *infp, FILE *hkfp, FILE *outfp)
           partialPos = 2048-j;
           memcpy(&particle[5], &wp[j], partialPos * sizeof(uint16_t));
           if (moreData(infp, buffer, outHdr, hkfp) != 1) break;
-          probe[0]->setHeader(outHdr);
-          probe[1]->setHeader(outHdr);
           j = 0;
           n -= partialPos;
         }
@@ -198,11 +205,8 @@ fflush(stdout);
         }
       }
     }
-
   }
 
-  delete probe[0];
-  delete probe[1];
   printf("Record cnt = %d, particle Cnt=%d nullCnt=%d\n", recordCnt, imCnt, nlCnt);
 }
 
@@ -393,6 +397,7 @@ int main(int argc, char *argv[])
 
 
   outputXMLheader(outfp);
+  putenv((char *)"TZ=UTC");
 
   for (; indx < argc; ++indx)
   {

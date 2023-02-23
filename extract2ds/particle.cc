@@ -1,5 +1,8 @@
 
 #include <algorithm>
+#include <ctime>
+#include <arpa/inet.h>
+
 
 #include "particle.h"
 #include "spec.h"
@@ -9,11 +12,11 @@ const unsigned char Particle::_syncString[] = { 0xAA, 0xAA, 0xAA };
 const unsigned long Particle::_syncWord = 0xAAAAAA0000000000;
 const size_t Particle::_nDiodes = 128;
 
-Particle::Particle(const char code[], FILE *out) : _out_fp(out), _pos(0), _nBits(0), _prevTimeWord(0)
+
+Particle::Particle(const char code[], FILE *out) : _out_fp(out), _pos(0), _nBits(0), _prevID(0), _firstTimeWord(0), _lastTimeWord(0)
 {
-  _prevID[0] = _prevID[1] = 0;
   memset(&_output, 0, sizeof(OAP::P2d_hdr));
-  memset(_output.data, 0xFF, 4096);
+  memset(_output.data, 0xFF, OAP::OAP_BUFF_SIZE);
   memcpy(_code, code, 2);
   _uncompressed = _output.data;
 printf("_uncom=%p\n", _uncompressed);
@@ -24,10 +27,53 @@ Particle::~Particle()
 
 }
 
+/* ------------------------------------------------------------------------ */
+void Particle::setHeader(const OAP::P2d_hdr &hdr)
+{
+  memcpy(&_output, &hdr, sizeof(OAP::P2d_hdr));
+  _firstTimeWord = _lastTimeWord = 0;
+}
 
+/* ------------------------------------------------------------------------ */
+void Particle::fixupTimeStamp()
+{
+  unsigned long deltaT = (_lastTimeWord - _firstTimeWord) / 20000;	// milliseconds
+
+  struct tm tor, *tor_out;
+  time_t thisT;
+  uint16_t msec;
+
+  tor.tm_year = ntohs(_output.year);
+  tor.tm_mon = ntohs(_output.month)-1;
+  tor.tm_mday = ntohs(_output.day);
+  tor.tm_hour = ntohs(_output.hour);
+  tor.tm_min = ntohs(_output.minute);
+  tor.tm_sec = ntohs(_output.second);
+  msec = ntohs(_output.msec);
+
+//printf("  %04u/%02u/%02u %02u:%02u:%02u.%03u - %lu\n", tor.tm_year, tor.tm_mon, tor.tm_mday, tor.tm_hour, tor.tm_min, tor.tm_sec, msec, deltaT);
+
+  msec += deltaT;
+  thisT = mktime(&tor);
+  thisT += (int)(msec / 1000);
+  msec = msec % 1000;
+  tor_out = gmtime(&thisT);
+
+//printf("  %04u/%02u/%02u %02u:%02u:%02u.%03u\n", tor_out->tm_year, tor_out->tm_mon, tor_out->tm_mday, tor_out->tm_hour, tor_out->tm_min, tor_out->tm_sec, msec);
+
+  _output.year = htons(tor_out->tm_year);
+  _output.month = htons(tor_out->tm_mon);
+  _output.day = htons(tor_out->tm_mday+1);
+  _output.hour = htons(tor_out->tm_hour);
+  _output.minute = htons(tor_out->tm_min);
+  _output.second = htons(tor_out->tm_sec);
+  _output.msec = htons(msec);
+}
+
+/* ------------------------------------------------------------------------ */
 bool Particle::diodeCountCheck()
 {
-  static const size_t nSlices = 4096 / _nDiodes;
+  static const size_t nSlices = OAP::OAP_BUFF_SIZE / _nDiodes;
   static const size_t nBytes = _nDiodes / 8;
 
   bool rejectRecord = false;
@@ -71,7 +117,7 @@ bool Particle::diodeCountCheck()
   return rejectRecord;
 }
 
-
+/* ------------------------------------------------------------------------ */
 void Particle::writeBuffer()
 {
   diodeCountCheck();
@@ -82,80 +128,77 @@ if (_output.data != _uncompressed) printf("writeBuff: un != out %p - %p !!!!!!!\
 
   if (_pos > 0 && diodeCountCheck() == false)
   {
-//    memcpy(_output.data, _uncompressed, _pos);
+    fixupTimeStamp();
     fwrite(&_output, sizeof(OAP::P2d_rec), 1, _out_fp);
   }
 
   // reset buffer.
   _pos = 0;
-  memset(_output.data, 0xFF, 4096);
+  memset(_output.data, 0xFF, OAP::OAP_BUFF_SIZE);
 }
 
-
-void Particle::reset()
-{
-  _nBits = 0;
-//  _pos = 0;
-
-}
-
-
+/* ------------------------------------------------------------------------ */
 void Particle::finishSlice()
 {
   if (_nBits > 0)
     _pos += 16;
   _nBits = 0;
-if (_pos % 16 != 0) fprintf(stderr, "finishSlice: _pos not %%16 !!!!");
 
-//  if (_pos % 16)
-//    _pos += 16 - (_pos % 16);
+  if (_pos % 16 != 0) fprintf(stderr, "finishSlice: _pos not %%16 !!!!");
 
-  if (_pos >= 4096)
+  if (_pos >= OAP::OAP_BUFF_SIZE)
     writeBuffer();
 }
 
-
-void Particle::printParticleHeader(uint16_t *hdr, int idx)
+/* ------------------------------------------------------------------------ */
+void Particle::printParticleHeader(const uint16_t *hdr) const
 {
+  int idx = 1;
+
+  if ((hdr[idx] & 0x0FFF) == 0)  // this is H vs V
+    ++idx;
+
   printf("  %x - ID=%6d nSlices=%3d ", hdr[0], hdr[3], hdr[4]);
 
   printf("%c nWords=%4d %s",
         idx == 1 ? 'H' : 'V',
         hdr[idx] & 0x0fff,
         hdr[idx] & 0x1000 ? "- NT" : "");
-
-printf(" - H = %04x, V = %04x", hdr[1], hdr[2]);
-if (hdr[1] & 0x6000) printf("\nassert: Bad H !!!!!!!!\n");
-if (hdr[2] & 0x6000) printf("\nassert: Bad V !!!!!!!!\n");
-if ((hdr[1] & 0x0fff) != 0 && (hdr[2] & 0x0fff) != 0) printf("\nassert: both H&V count greater than zero !!!\n");
-if ((hdr[1] & 0x0fff) == 0 && (hdr[2] & 0x0fff) == 0) printf("\nassert: both H&V count equal zero !!!\n");
 }
 
+/* ------------------------------------------------------------------------ */
+void Particle::particleHeaderSanityCheck(const uint16_t *hdr)
+{
+//printf(" - H = %04x, V = %04x", hdr[1], hdr[2]);
+  if (hdr[1] & 0x6000) printf("\nassert: Bad H !!!!!!!!\n");
+  if (hdr[2] & 0x6000) printf("\nassert: Bad V !!!!!!!!\n");
+  if ((hdr[1] & 0x0fff) != 0 && (hdr[2] & 0x0fff) != 0) printf("\nassert: both H&V count greater than zero !!!\n");
+  if ((hdr[1] & 0x0fff) == 0 && (hdr[2] & 0x0fff) == 0) printf("\nassert: both H&V count equal zero !!!\n");
+}
 
+/* ------------------------------------------------------------------------ */
 void Particle::processParticle(uint16_t *wp, bool verbose)
 {
   int i, nSlices = wp[nSLICES], nWords, sliceCnt = 0;
 
   uint16_t value, id = wp[PID], clear, shaded;
   bool timingWord = true;
-  int idx = 1;
 
-  if ((wp[idx] & 0x0FFF) == 0)  // this is H vs V
-    ++idx;
+  particleHeaderSanityCheck(wp);
 
   if (verbose)
-    printParticleHeader(wp, idx);
+    printParticleHeader(wp);
 
   if (id > 0)
   {
-    if (id == _prevID[idx-1])
+    if (id == _prevID)
       printf(" : multi packet particle\n");
     else
-    if (id != _prevID[idx-1]+1)
-      printf("!!! Non sequential particle ID : prev=%d, this=%d !!!\n", _prevID[idx-1], id);
+    if (id != _prevID+1)
+      printf("!!! Non sequential particle ID : prev=%d, this=%d !!!\n", _prevID, id);
   }
 
-  _prevID[idx-1] = id;
+  _prevID = id;
 
   if (wp[V_CHN] != 0)
   {
@@ -180,7 +223,7 @@ if (nWords == 0) printf("assert H nWords == 0, no good\n");
 
   for (i = 0; i < nWords; ++i)
   {
-    if (_pos >= 4096)
+    if (_pos >= OAP::OAP_BUFF_SIZE)
       writeBuffer();
 
     if (_pos > 4080)
@@ -300,17 +343,18 @@ if (_output.data != _uncompressed) printf(" pp3.2: un != out %p - %p !!!!!!!\n",
   }
 
 
-if (verbose) printf(" leaving=%lu\n", _pos);
   finishSlice();
-if (verbose) printf(" leaving=%lu\n", _pos);
 
   if (timingWord)
   {
     unsigned long tWord = ((unsigned long *)&wp[nWords])[0] & 0x0000FFFFFFFFFFFF;
 
     if (verbose)
-      printf("\n  Timing = %lu, deltaT=%lu\n", tWord, tWord - _prevTimeWord);
-    _prevTimeWord = tWord;
+      printf("\n  Timing = %lu, deltaT=%lu\n", tWord, tWord - _lastTimeWord);
+    _lastTimeWord = tWord;
+
+    if (_firstTimeWord == 0)
+      _firstTimeWord = tWord;
 
     memcpy(&_uncompressed[_pos+8], (unsigned char*)&_syncWord, 8);
     memcpy(&_uncompressed[_pos], (unsigned char*)&tWord, 8);
@@ -323,6 +367,5 @@ if (verbose) printf(" leaving=%lu\n", _pos);
     printf(" end - %d/%d words, sliceCnt = %d/%d\n\n", i, nWords, sliceCnt, nSlices);
 
 if (_output.data != _uncompressed) printf(" pp5: un != out %p - %p !!!!!!!\n", _output.data, _uncompressed);
-if (verbose) printf(" leaving=%lu\n", _pos);
 }
 
