@@ -3,8 +3,14 @@
 #include <cstdint>
 #include <cstdio>
 #include <cstring>
+#include <ctime>
 
 const char hkTitle[] = " |  --------  Outside temperatures  --------   |           DSP_T   |  ----- Inside temperatures -----  |      -5      +5       RH   CanP   +7raw       |      ---------------   Diode Voltages   ---------------      |    Total Counts  TAS(m/s)";
+
+struct recHdr
+{
+  int16_t	year, month, dow, day, hour, minute, second, msecond;
+};
 
 struct imageBuf
 {
@@ -57,11 +63,39 @@ bool cksum(const uint16_t buff[], int nWords, uint16_t ckSum)
 }
 
 /* ------------------------------------------------------------------------ */
+float diffTimeStamps(struct recHdr &prevHdr, struct recHdr *thisHdr)
+{
+  struct tm tmp;
+  double tpf, ttf;
+
+  tmp.tm_year = prevHdr.year - 1900;
+  tmp.tm_mon = prevHdr.month-1;
+  tmp.tm_mday = prevHdr.day;
+  tmp.tm_hour = prevHdr.hour;
+  tmp.tm_min = prevHdr.minute;
+  tmp.tm_sec = prevHdr.second;
+  tpf = (double)mktime(&tmp) + (double)prevHdr.msecond / 1000.0;
+
+  tmp.tm_year = thisHdr->year - 1900;
+  tmp.tm_mon = thisHdr->month-1;
+  tmp.tm_mday = thisHdr->day;
+  tmp.tm_hour = thisHdr->hour;
+  tmp.tm_min = thisHdr->minute;
+  tmp.tm_sec = thisHdr->second;
+  ttf = (double)mktime(&tmp) + (double)thisHdr->msecond / 1000.0;
+
+  return(ttf-tpf);
+}
+
+/* ------------------------------------------------------------------------ */
 int moreData(FILE *infp, unsigned char buffer[])
 {
+  static struct recHdr prevHdr;
+
   if (verbose)
     printf("  moreData\n");
 
+  memcpy((void *)&prevHdr, buffer, sizeof(struct recHdr));
   int rc = fread(buffer, 4114, 1, infp);
 
   if (rc != 1)
@@ -83,8 +117,9 @@ int moreData(FILE *infp, unsigned char buffer[])
   totalParticleCnt += pCnt;
 
   if (verbose || timeOnly)
-    printf("%d/%d/%d %02d:%02d:%02d.%03d - 0x%04x - particle cnt=%3d, uncompressedSlices=%4d\n", tds->year, tds->month,
-	tds->day, tds->hour, tds->minute, tds->second, tds->msecond,
+    printf("%d/%d/%d %02d:%02d:%02d.%03d dt=%6.3f - 0x%04x - particle cnt=%3d, uncompressedSlices=%4d\n",
+	tds->year, tds->month, tds->day, tds->hour,
+	tds->minute, tds->second, tds->msecond, diffTimeStamps(prevHdr, (struct recHdr *)buffer),
 	((uint16_t *)tds->rdf)[0], pCnt, nSlices);
 
   cksum((uint16_t *)tds->rdf, 2048, tds->cksum);
@@ -180,7 +215,7 @@ void processParticle(uint16_t *wp)
           for (int k = 0; k < 16; ++k)
             printf("%d", !((wp[i+1+j] << k) & 0x8000));
       }
-      i += 15;
+      i += 7;
       nBits = 0;
       ++sliceCnt;
       continue;
@@ -224,7 +259,7 @@ void processParticle(uint16_t *wp)
     static unsigned long prevTimeWord = 0;
     unsigned long tWord = ((unsigned long *)&wp[nWords])[0] & 0x0000FFFFFFFFFFFF;
 
-    printf("\n  Timing = %lu, deltaT=%lu\n", tWord, tWord - prevTimeWord);
+    printf("\n  Timing = %lu, deltaT=%lu\t - %.6fsec\n", tWord, tWord - prevTimeWord, (float)(tWord-prevTimeWord)/20000000);
     prevTimeWord = tWord;
   }
   else
@@ -443,6 +478,8 @@ int main(int argc, char *argv[])
     fprintf(stderr, "Can't open %s.\n", fileName);
     return(1);
   }
+
+  putenv((char *)"TZ=UTC");
 
   if (strstr(fileName, "F2DSHK") )
     processHouseKeepingFile(infp);
