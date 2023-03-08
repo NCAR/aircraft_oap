@@ -62,8 +62,8 @@ void Particle::fixupTimeStamp()
 //printf("  %04u/%02u/%02u %02u:%02u:%02u.%03u\n", tor_out->tm_year, tor_out->tm_mon, tor_out->tm_mday, tor_out->tm_hour, tor_out->tm_min, tor_out->tm_sec, msec);
 
   _output.year = htons(tor_out->tm_year);
-  _output.month = htons(tor_out->tm_mon);
-  _output.day = htons(tor_out->tm_mday+1);
+  _output.month = htons(tor_out->tm_mon+1);
+  _output.day = htons(tor_out->tm_mday);
   _output.hour = htons(tor_out->tm_hour);
   _output.minute = htons(tor_out->tm_min);
   _output.second = htons(tor_out->tm_sec);
