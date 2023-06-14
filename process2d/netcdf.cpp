@@ -63,7 +63,7 @@ void netCDF::InitVarDB()
   }
 
   char file[1024];
-  sprintf(file, "%s/Configuration/VarDB", proj_dir);
+  snprintf(file, 1024, "%s/Configuration/VarDB", proj_dir);
 
   if (InitializeVarDB(file) == ERR)
   {
@@ -121,7 +121,7 @@ void netCDF::CreateNetCDFfile(const Config & cfg)
     _file->add_att("FlightDate", cfg.flightDate.c_str());
     _file->add_att("date_created", dateProcessed().c_str());
     char tmp[128];
-    sprintf(tmp, "%02d:%02d:%02d-%02d:%02d:%02d",
+    snprintf(tmp, 128, "%02d:%02d:%02d-%02d:%02d:%02d",
 	st.tm_hour, st.tm_min, st.tm_sec, et.tm_hour, et.tm_min, et.tm_sec);
     _file->add_att("TimeInterval", tmp);
     _file->add_att("ReconstructionMethod", cfg.eawmethod);
@@ -261,7 +261,7 @@ NcVar *netCDF::addTimeVariable(const Config & cfg, int size)
   gmtime_r(&cfg.starttime, &st);
 
   sscanf(cfg.flightDate.c_str(), "%d/%d/%d", &month, &day, &year);
-  sprintf(timeunits,"seconds since %04d-%02d-%02d %02d:%02d:%02d +0000", year,month,day,st.tm_hour,st.tm_min,st.tm_sec);
+  snprintf(timeunits, 70, "seconds since %04d-%02d-%02d %02d:%02d:%02d +0000", year,month,day,st.tm_hour,st.tm_min,st.tm_sec);
   _timevar = _file->add_var("Time", ncInt, _timedim);
 
   if (_timevar == 0)
@@ -289,9 +289,9 @@ void netCDF::CreateDimensions(int numtimes, ProbeInfo &probe, const Config &cfg)
   // Define the dimensions.
   _timedim = addDimension("Time", numtimes);
   _spsdim = addDimension("sps1", 1);
-  sprintf(tmp, "Vector%d", probe.numBins);
+  snprintf(tmp, 1024, "Vector%d", probe.numBins);
   _bindim = addDimension(tmp, probe.numBins);
-  sprintf(tmp, "Vector%d", probe.numBins+1);
+  snprintf(tmp, 1024, "Vector%d", probe.numBins+1);
   _bindim_plusone = addDimension(tmp, probe.numBins+1);
   _intbindim = addDimension("interarrival_endpoints", cfg.nInterarrivalBins);
 //  _intbindim = addDimension("interarrival_endpoints", cfg.nInterarrivalBins+1);

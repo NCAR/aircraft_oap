@@ -31,12 +31,12 @@ void Hex::Update(size_t nBuffs, OAP::P2d_rec sets[])
     const char *p = (char *)&sets[j].id;
 
     if (((char *)&sets[j].id)[1] >= 'A')	// 128 diode (2DS)
-      sprintf(&buffer[strlen(buffer)], "               %c%c                ", p[0], p[1]);
+      snprintf(&buffer[strlen(buffer)], 36, "               %c%c                ", p[0], p[1]);
     else
     if (((char *)&sets[j].id)[1] >= '4')	// 64 diode data, hex long-long
-      sprintf(&buffer[strlen(buffer)], "       %c%c        ", p[0], p[1]);
+      snprintf(&buffer[strlen(buffer)], 36, "       %c%c        ", p[0], p[1]);
     else					// 32 diode data, hex long.
-      sprintf(&buffer[strlen(buffer)], "   %c%c    ", p[0], p[1]);
+      snprintf(&buffer[strlen(buffer)], 36, "   %c%c    ", p[0], p[1]);
   }
 
   strcat(buffer, "\n");
@@ -51,7 +51,7 @@ void Hex::Update(size_t nBuffs, OAP::P2d_rec sets[])
    */
   for (size_t i = 0; i < 1024; ++i)
   {
-    sprintf(buffer, "%4zu  ", i);
+    snprintf(buffer, 16, "%4zu  ", i);
 
     for (size_t j = 0; j < nBuffs; ++j)
     {
@@ -61,7 +61,7 @@ void Hex::Update(size_t nBuffs, OAP::P2d_rec sets[])
       if (i < nSlices)
       {
         for (size_t k = 0; k < nBytes; ++k)
-          sprintf(&buffer[strlen(buffer)], "%02X",
+          snprintf(&buffer[strlen(buffer)], 4, "%02X",
 		sets[j].data[(i*nBytes)+k]);
         strcat(buffer, " ");
       }

@@ -47,9 +47,9 @@ void DataPlot::ToggleFreeze()
 
 /* -------------------------------------------------------------------- */
 void DataPlot::timerEvent(QTimerEvent *)
-{   
+{
   if (freeze || file->NextPMS2dRecord(&hvpsRecord) == false)
-    return;    
+    return;
 
   Hdr_blk	*hdr = (Hdr_blk *)&hvpsRecord;
   ushort	*data = (ushort *)hvpsRecord.data;
@@ -61,7 +61,7 @@ void DataPlot::timerEvent(QTimerEvent *)
   double	xVal1[300], xVal2[300], yVal1[300], yVal2[300];
   int		rCnt, gCnt;
 
-  sprintf(buffer, "UTC (%02d:%02d:%02d)",
+  snprintf(buffer, 32, "UTC (%02d:%02d:%02d)",
 	ntohs(hdr->hour), ntohs(hdr->minute), ntohs(hdr->second));
   setAxisTitle(QwtPlot::xBottom, buffer);
 

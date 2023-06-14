@@ -168,7 +168,7 @@ trc = XmCreateRowColumn(Window(), (char *)"trc", args, 0);
     char name[256];
 
     n = 0;
-    sprintf(name, "conc%zu", i);
+    snprintf(name, 256, "conc%zu", i);
     cncB[i] = XmCreateToggleButton(RC[2], name, NULL, 0);
     XtAddCallback(cncB[i], XmNvalueChangedCallback,
                   (XtCallbackProc)SetConcentration, (XtPointer)i);
@@ -299,7 +299,7 @@ void ControlWindow::UpdateStartTime(OAP::P2d_rec *buff)
 {
   char	tmpSpace[16];
 
-  sprintf(tmpSpace, "%02d:%02d:%02d", buff->hour, buff->minute, buff->second);
+  snprintf(tmpSpace, 16, "%02d:%02d:%02d", buff->hour, buff->minute, buff->second);
   XmTextFieldSetString(timeText, tmpSpace);
 
 }	/* END UPDATESTARTTIME */
@@ -311,7 +311,7 @@ void ControlWindow::SetUserDensity()
 
   p = XmTextFieldGetString(densTxt);
   density[3].density = atof(p);
-  sprintf(tmp, "%4.2f", density[3].density);
+  snprintf(tmp, 16, "%4.2f", density[3].density);
   XmTextFieldSetString(densTxt, tmp);
 
 }

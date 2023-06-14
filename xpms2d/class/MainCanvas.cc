@@ -183,7 +183,7 @@ memset(part1, 0, sizeof(part1));
     else pen->SetColor(color->GetColor(RED));
     }
 
-  sprintf(buffer, "%02d:%02d:%02d.%03d",
+  snprintf(buffer, 256, "%02d:%02d:%02d.%03d",
 	record->hour, record->minute, record->second, record->msec);
 
   if (ps) {
@@ -195,7 +195,7 @@ memset(part1, 0, sizeof(part1));
     pen->SetColor(color->GetColor(BLACK));
     }
 
-  sprintf(buffer, ", TAS=%5.1f, overLoad=", probe->stats.tas);
+  snprintf(buffer, 256, ", TAS=%5.1f, overLoad=", probe->stats.tas);
   if (ps) { ps->MoveTo(283, 750-(y+50)); ps->ShowStr(buffer); }
   else pen->DrawText(Surface(), 283, y+50, buffer);
 
@@ -204,7 +204,7 @@ memset(part1, 0, sizeof(part1));
     else pen->SetColor(color->GetColor(RED));
     }
 
-  sprintf(buffer, "%.3f,", (float)overLoad / 1000);
+  snprintf(buffer, 256, "%.3f,", (float)overLoad / 1000);
   if (ps) {
     ps->MoveTo(445, 750-(y+50)); ps->ShowStr(buffer);
     ps->SetColor(color->GetColorPS(BLACK));
@@ -214,7 +214,7 @@ memset(part1, 0, sizeof(part1));
     pen->SetColor(color->GetColor(BLACK));
     }
 
-  sprintf(buffer, "nParticles = %d, elapsed time = ", probe->stats.nTimeBars);
+  snprintf(buffer, 256, "nParticles = %d, elapsed time = ", probe->stats.nTimeBars);
   if (ps) { ps->MoveTo(490, 750-(y+50)); ps->ShowStr(buffer); }
   else pen->DrawText(Surface(), 490, y+50, buffer);
 
@@ -222,10 +222,10 @@ memset(part1, 0, sizeof(part1));
     if (ps) ps->SetColor(color->GetColorPS(RED));
     else pen->SetColor(color->GetColor(RED));
 
-    sprintf(buffer, "%6u", probe->stats.DASelapsedTime / 1000);
+    snprintf(buffer, 256, "%6u", probe->stats.DASelapsedTime / 1000);
     }
   else {
-    sprintf(buffer, "%6.3f", (float)probe->stats.DASelapsedTime / 1000);
+    snprintf(buffer, 256, "%6.3f", (float)probe->stats.DASelapsedTime / 1000);
     }
 
   if (ps) { ps->MoveTo(706, 750-(y+50)); ps->ShowStr(buffer); }
@@ -234,13 +234,13 @@ memset(part1, 0, sizeof(part1));
   if (ps) ps->SetColor(color->GetColorPS(BLACK));
   else pen->SetColor(color->GetColor(BLACK));
 
-  sprintf(buffer,", timeBarTotal = %6.3f", (float)probe->stats.tBarElapsedtime / 1000);
+  snprintf(buffer, 256, ", timeBarTotal = %6.3f", (float)probe->stats.tBarElapsedtime / 1000);
   if (ps) { ps->MoveTo(750, 750-(y+50)); ps->ShowStr(buffer); }
   else pen->DrawText(Surface(), 750, y+50, buffer);
 
 
   if (probe->stats.DASelapsedTime == 0.0)
-    sprintf(buffer, "%.1f%% %.1f%%", 0.0, 0.0);
+    snprintf(buffer, 256, "%.1f%% %.1f%%", 0.0, 0.0);
   else
     {
     float olap = (float)(probe->stats.tBarElapsedtime+overLoad) /
@@ -251,7 +251,7 @@ memset(part1, 0, sizeof(part1));
       else pen->SetColor(color->GetColor(RED));
       }
 
-    sprintf(buffer, "%.1f%% %.1f%%",
+    snprintf(buffer, 256, "%.1f%% %.1f%%",
 	(float)probe->stats.tBarElapsedtime / probe->stats.DASelapsedTime * 100, olap);
     }
 
@@ -270,7 +270,7 @@ memset(part1, 0, sizeof(part1));
     {
     case RAW_RECORD:
     case NORMAL:
-      sprintf(buffer,
+      snprintf(buffer, 256,
 	"sv = %.3lfL, area = %.2fmm2, conc = %.3lfN/L, lw = %.3lfg/M3, z = %.3lfdb",
 	probe->stats.SampleVolume / 1000, res2 * probe->stats.area,
 	probe->stats.concentration, probe->stats.lwc, probe->stats.dbz);
@@ -280,7 +280,7 @@ memset(part1, 0, sizeof(part1));
       break;
 
     case DIAGNOSTIC:
-      sprintf(buffer, "freq = %f,  mean=%u min=%u max=%u",
+      snprintf(buffer, 256, "freq = %f,  mean=%u min=%u max=%u",
 	probe->stats.frequency * 1000, probe->stats.meanBar, probe->stats.minBar, probe->stats.maxBar);
 
       if (ps) { ps->MoveTo(505, 750-(y+62)); ps->ShowStr(buffer); }
@@ -346,7 +346,7 @@ void MainCanvas::drawPMS2D(OAP::P2d_rec *record, Probe *probe, float version, in
 
       if (timeWord >= probe->stats.DASelapsedTime)
         {
-        sprintf(buffer, "%u", timeWord);
+        snprintf(buffer, 256, "%u", timeWord);
 
         if (ps) {
           ps->SetColor(color->GetColorPS(RED));

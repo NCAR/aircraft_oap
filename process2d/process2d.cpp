@@ -1297,7 +1297,7 @@ void ReadBlankOuts(Config & cfg, vector<ProbeInfo> & probe_list)
   if ((proj_dir = getenv("PROJ_DIR")) == 0)
     return;
 
-  sprintf(filename, "%s/%s/%s/Production/BlankOAP.%s", proj_dir, cfg.project.c_str(),
+  snprintf(filename, 512, "%s/%s/%s/Production/BlankOAP.%s", proj_dir, cfg.project.c_str(),
 	cfg.platform.c_str(), cfg.flightNumber.c_str());
 
   TextFile blanks(filename);

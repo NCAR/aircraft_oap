@@ -130,7 +130,7 @@ std::string DateStamp(const PADS_rec& pads_rec)
 {
   std::string s;
   char msg[1024];
-  sprintf(msg, "%04d/%02d/%02d", pads_rec.year, pads_rec.month, pads_rec.day);
+  snprintf(msg, 1024, "%04d/%02d/%02d", pads_rec.year, pads_rec.month, pads_rec.day);
   s = msg;
   return s;
 }
@@ -140,7 +140,7 @@ std::string TimeStamp(const PADS_rec& pads_rec)
 {
   std::string s;
   char msg[1024];
-  sprintf(msg, "%02d:%02d:%02d.%d", pads_rec.hour, pads_rec.minute, pads_rec.second, pads_rec.msec);
+  snprintf(msg, 1024, "%02d:%02d:%02d.%d", pads_rec.hour, pads_rec.minute, pads_rec.second, pads_rec.msec);
   s = msg;
   return s;
 }

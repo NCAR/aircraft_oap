@@ -81,7 +81,7 @@ namespace sp
 			char buffer[100];
 
 			int v = val;
-			sprintf(buffer, "%i", v);
+			snprintf(buffer, 100, "%i", v);
 			return std::string(buffer);
 		}
 

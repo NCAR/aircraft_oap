@@ -55,7 +55,7 @@ void Enchilada::AddLineItem(int cnt, OAP::Particle *cp)
   s = cp->time - (h*3600) - (m*60);
 
   // Particle #, time stamp, timeword, reject, h, w, a
-  sprintf(buffer, "%03d %02d:%02d:%02d.%03ld  %8lu %3zu %3zu %3zu %6u %2d %2d\n",
+  snprintf(buffer, 512, "%03d %02d:%02d:%02d.%03ld  %8lu %3zu %3zu %3zu %6u %2d %2d\n",
         cnt, h, m, s, cp->msec, cp->timeWord, cp->h, cp->w, cp->area,
 	cp->deltaTime, cp->reject, cp->dofReject);
 

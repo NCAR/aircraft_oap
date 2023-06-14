@@ -126,7 +126,7 @@ void SaveText2(Widget w, XtPointer client, XtPointer call)
   if ((fp = fopen(dataFile, "w")) == NULL)
     {
     char buffer[256];
-    sprintf(buffer, "SaveText: can't open %s.", dataFile);
+    snprintf(buffer, 256, "SaveText: can't open %s.", dataFile);
     ErrorMsg(buffer);
     return;
     }

@@ -126,7 +126,7 @@ static void PrintPS(Widget w, XtPointer client, XtPointer call)
 
   PostScript pen(PSoutFile, "xpms2d", title.str().c_str(), 0.72);
   pen.SetFont(40);
-  sprintf(buffer, "%d (%s) stringwidth pop 2 div sub %d moveto\n",
+  snprintf(buffer, 256, "%d (%s) stringwidth pop 2 div sub %d moveto\n",
                 550, title.str().c_str(), (int)(800 * printerSetup->HeightRatio()));
   pen.Issue(buffer);
   pen.ShowStr(title.str().c_str());
@@ -160,7 +160,7 @@ static void SavePS(Widget w, XtPointer client, XtPointer call)
 
   if (access(PSoutFile, F_OK) == 0)
     {
-    sprintf(buffer, "Overwrite file %s", PSoutFile);
+    snprintf(buffer, 256, "Overwrite file %s", PSoutFile);
     WarnMsg(buffer, PrintPS, NULL);
     }
   else
@@ -215,7 +215,7 @@ void confirmPNG(Widget w, XtPointer client, XtPointer call)
 
   if (access(pngOutFile, F_OK) == 0)
     {
-    sprintf(buffer, "Overwrite file %s", pngOutFile);
+    snprintf(buffer, 256, "Overwrite file %s", pngOutFile);
     new XmWarn(application->Shell(), buffer, SavePNG_OK, NULL);
     }
   else

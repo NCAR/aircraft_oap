@@ -19,7 +19,7 @@ void Histogram::AddLineItem(OAP::P2d_rec * record, struct OAP::recStats & stats)
 {
   char buffer[2000];
 
-  sprintf(buffer, "%c%c %02d:%02d:%02d.%03d  ",
+  snprintf(buffer, 2000, "%c%c %02d:%02d:%02d.%03d  ",
         ((char *)&record->id)[0], ((char *)&record->id)[1],
         record->hour, record->minute, record->second, record->msec
 	);
@@ -29,9 +29,9 @@ void Histogram::AddLineItem(OAP::P2d_rec * record, struct OAP::recStats & stats)
 
   for (size_t i = 1; i <= n; ++i)
   {
-    sprintf(buffer, "%4d", stats.accum[i]);
+    snprintf(buffer, 2000, "%4d", stats.accum[i]);
     Append(buffer);
   }
-  sprintf(buffer, ", total=%6d, accepted=%6d\n", stats.nTimeBars, stats.nonRejectParticles);
+  snprintf(buffer, 2000, ", total=%6d, accepted=%6d\n", stats.nTimeBars, stats.nonRejectParticles);
   Append(buffer);
 }

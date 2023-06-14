@@ -222,7 +222,7 @@ void ADS_DataFile::initADS3(const char *hdrString, UserConfig *cfg)
     int version = 1;
     if (p)
       version = atoi(strstr((char *)hdrString, "<OAP version")+14);
-    sprintf(_version, "5.%d", version);
+    snprintf(_version, 16, "5.%d", version);
     }
 
   if (endHdr == 0)
