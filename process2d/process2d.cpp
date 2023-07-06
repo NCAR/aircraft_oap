@@ -1193,6 +1193,7 @@ int process2d(Config & cfg, netCDF & ncfile, ProbeInfo & probe)
   if ((var = ncfile.addHistogram(varname, probe.serialNumber)))
   {
     if (!var->add_att("CellSizes", cfg.nInterarrivalBins, it_endpoints)) return netCDF::NC_ERR;
+    if (!var->add_att("CellSizeUnits", "seconds")) return netCDF::NC_ERR;
   }
   var->put(&count_it[0][0], numtimes, 1, cfg.nInterarrivalBins+binoffset);
 
