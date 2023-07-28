@@ -169,7 +169,7 @@ void Output(char buff[])
     case 0x5038:	// DMT PIP
       nDiodes = 64;
       break;
-//    case 0x4831:	// HVPS
+    case 0x4831:	// HVPS
 //    case 0x4832:
     case 0x3348:	// 3V-CPI / 2DS Horizontal.
     case 0x3356:	// 3V-CPI / 2DS Vertical.
