@@ -22,6 +22,8 @@ void Config::SetType(std::string s)
 {
   _type = s;
 
+  printf("Setting SPEC probe type to %s\n", s.c_str());
+
   if (_type.compare("F2DS") == 0)
   {
     _code = "SH";

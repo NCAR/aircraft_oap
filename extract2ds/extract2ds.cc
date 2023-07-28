@@ -33,10 +33,12 @@ bool verbose = false;
 
 const uint16_t SyncWord = 0x3253;       // Particle sync word.
 const uint16_t FlushWord = 0x4e4c;      // NL Flush Buffer.
+const uint16_t HousekeepWord = 0x484b;      // NL Flush Buffer.
 
 Particle *probe[2] = { 0, 0 };
 
-int findHouseKeeping(FILE *hkfp, imageBuf *imgRec);
+int findHouseKeeping32(imageBuf *imgRec);
+int findHouseKeeping48(FILE *hkfp, imageBuf *imgRec);
 
 
 
@@ -91,11 +93,13 @@ int moreData(FILE *infp, unsigned char buffer[], OAP::P2d_hdr &oapHdr, FILE *hkf
   oapHdr.second = htons(tds->second);
   oapHdr.msec = htons(tds->msecond);
 
-  oapHdr.tas = htons(findHouseKeeping(hkfp, tds));
+  if (hkfp)	// If F2DS - type48
+    oapHdr.tas = htons(findHouseKeeping48(hkfp, tds));
+
   oapHdr.overld = 0;
 
-  probe[0]->setHeader(oapHdr);
-  probe[1]->setHeader(oapHdr);
+  if (probe[0]) probe[0]->setHeader(oapHdr);
+  if (probe[1]) probe[1]->setHeader(oapHdr);
 
   return rc;
 }
@@ -110,8 +114,13 @@ void processImageFile(FILE *infp, FILE *hkfp, FILE *outfp)
 
   if (probe[0] == 0)
   {
-    probe[0] = new Particle("SH", outfp);
-    probe[1] = new Particle("SV", outfp);
+    if (cfg.Type().compare("F2DS") == 0)
+    {
+      probe[0] = new Particle("SV", outfp);
+      probe[1] = new Particle("SH", outfp);
+    }
+    else
+      probe[0] = new Particle("H1", outfp);
   }
 
   struct imageBuf *tds = (struct imageBuf *)buffer;
@@ -145,6 +154,17 @@ void processImageFile(FILE *infp, FILE *hkfp, FILE *outfp)
         if (verbose)
           printf("NL Flush, pos = %d\n", j);
         nlCnt++;
+        break;
+      }
+      if (wp[j] == HousekeepWord)		// HK buffer
+      {
+        struct hk32Buf *hkb = (struct hk32Buf *)buffer;
+        uint32_t tas;
+        float *tasf = (float *)&tas;
+        tas = (uint32_t)((uint16_t *)&hkb->rdf)[49] << 16 | ((uint16_t *)&hkb->rdf)[50];
+        outHdr.tas = (int)*tasf;
+        if (verbose)
+          printf(" tas = %5.1f\n", *tasf);
         break;
       }
 
@@ -199,7 +219,7 @@ void processImageFile(FILE *infp, FILE *hkfp, FILE *outfp)
         imCnt++;
         if (particle[nSLICES] < 256)
         {
-          if (nh)
+          if (nv)
             probe[0]->processParticle((uint16_t *)particle, verbose);
           else
             probe[1]->processParticle((uint16_t *)particle, verbose);
@@ -219,15 +239,15 @@ void processImageFile(FILE *infp, FILE *hkfp, FILE *outfp)
 }
 
 
-int findHouseKeeping(FILE *hkfp, imageBuf *imgRec)
+int findHouseKeeping48(FILE *hkfp, imageBuf *imgRec)
 {
   char	buffer[1024];
   uint32_t tas;
   float *tasf = (float *)&tas;
 
-  struct hkBuf *hkb = (struct hkBuf *)buffer;
+  struct hk48Buf *hkb = (struct hk48Buf *)buffer;
   struct maskBuf *mkb = (struct maskBuf *)buffer;
-
+printf("BETTER NOT BE IN HERE!!!!!! %lu\n", (unsigned long)hkfp);
   while (fread(buffer, 18, 1, hkfp) == 1)
   {
     if (verbose)
@@ -270,7 +290,7 @@ int findHouseKeeping(FILE *hkfp, imageBuf *imgRec)
     }
   }
 
-  printf("findHouseKeeping: we shouldn't hit this.  EOF?\n");
+  printf("findHouseKeeping48: we shouldn't hit this.  EOF?\n");
 
   return(0);
 }
@@ -295,11 +315,11 @@ void outputXMLheader(FILE *outfp)
   fprintf(outfp, " laserWaveLength=\"%d\"", cfg.WaveLength());
   fprintf(outfp, " serialnumber=\"%s\"", cfg.SerialNumber().c_str());
 //  fprintf(outfp, " suffix=\"%s\"/>\n", cfg.Suffix().c_str());
-  fprintf(outfp, " suffix=\"%s\"/>\n", "_2H");
 
   // Add entry for second array.  2DS is treated as two probes, horizontal and vertical.
   if (cfg.Type().compare("F2DS") == 0)
   {
+    fprintf(outfp, " suffix=\"%s\"/>\n", "_2H");
     fprintf(outfp, "  <probe id=\"SV\"");
     fprintf(outfp, " type=\"%s\"", cfg.Type().c_str());
     fprintf(outfp, " resolution=\"%d\"", cfg.Resolution());
@@ -309,6 +329,8 @@ void outputXMLheader(FILE *outfp)
     fprintf(outfp, " serialnumber=\"%s\"", cfg.SerialNumber().c_str());
     fprintf(outfp, " suffix=\"%s\"/>\n", "_2V");
   }
+  else
+    fprintf(outfp, " suffix=\"%s\"/>\n", "_H1");
 
   fprintf(outfp, "</OAP>\n");
 }
@@ -317,6 +339,10 @@ void outputXMLheader(FILE *outfp)
 int processArgs(int argc, char *argv[])
 {
   int i;
+
+  char *p = strstr(argv[argc-1], ".");
+  if (p)	// ...and this should equal HVPS or F2DS
+    cfg.SetType(p+1);
 
   for (i = 1; i < argc && argv[i][0] == '-'; ++i)
   {
@@ -374,7 +400,7 @@ int processArgs(int argc, char *argv[])
 
 int main(int argc, char *argv[])
 {
-  FILE *infp, *hkfp, *outfp;
+  FILE *infp, *hkfp = 0, *outfp;
   char fileName[512];
   int indx;
 
@@ -419,12 +445,13 @@ int main(int argc, char *argv[])
 
     printf("\n\nOpening and processing file [%s]\n", fileName);
 
-    strcat(fileName, "HK");
-    if ((hkfp = fopen(fileName, "rb")) == 0)
+    if (cfg.Type() == "F2DS")
     {
-      fprintf(stderr, "Can't open file %s, continuing without housekeeping (for TAS).\n", fileName);
-//      fclose(infp);
-//      continue;
+      strcat(fileName, "HK");
+      if ((hkfp = fopen(fileName, "rb")) == 0)
+      {
+        fprintf(stderr, "Can't open file %s, continuing without housekeeping (for TAS).\n", fileName);
+      }
     }
 
     processImageFile(infp, hkfp, outfp);
