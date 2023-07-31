@@ -31,13 +31,13 @@ Config cfg;
 int  recordCnt = 0;
 bool verbose = false;
 
-const uint16_t SyncWord = 0x3253;       // Particle sync word.
-const uint16_t FlushWord = 0x4e4c;      // NL Flush Buffer.
-const uint16_t HousekeepWord = 0x484b;      // NL Flush Buffer.
+const uint16_t SyncWord = 0x3253;	// Particle sync word.
+const uint16_t MaskData = 0x4d4b;	// MK Flush Buffer.
+const uint16_t FlushWord = 0x4e4c;	// NL Flush Buffer.
+const uint16_t HousekeepWord = 0x484b;	// HK Flush Buffer.
 
 Particle *probe[2] = { 0, 0 };
 
-int findHouseKeeping32(imageBuf *imgRec);
 int findHouseKeeping48(FILE *hkfp, imageBuf *imgRec);
 
 
@@ -152,23 +152,37 @@ void processImageFile(FILE *infp, FILE *hkfp, FILE *outfp)
       {
 //        printf("%x - %d %d %d %d\n", wp[j], wp[j+1], wp[j+2], wp[j+3], wp[j+4]);
         if (verbose)
-          printf("NL Flush, pos = %d\n", j);
+          printf(" NL Flush, pos = %d\n", j);
         nlCnt++;
-        break;
+        j = 2048;	// bail out, we are done with this record.
       }
-      if (wp[j] == HousekeepWord)		// HK buffer
+      else
+      if (wp[j] == MaskData)		// MK buffer
       {
-        struct hk32Buf *hkb = (struct hk32Buf *)buffer;
-        uint32_t tas;
-        float *tasf = (float *)&tas;
-        tas = (uint32_t)((uint16_t *)&hkb->rdf)[49] << 16 | ((uint16_t *)&hkb->rdf)[50];
-        outHdr.tas = (int)*tasf;
+        // ignoring MK at this time.
         if (verbose)
-          printf(" tas = %5.1f\n", *tasf);
-        break;
+          printf(" MK, pos = %d\n", j);
+        j += 22;
       }
+      else
+      if (wp[j] == HousekeepWord)	// HK buffer
+      {
+        if (j + 50 < 2048)
+        {
+          uint32_t tas;
+          float *tasf = (float *)&tas;
+          tas = (uint32_t)(wp[j+49] << 16) | wp[j+50];
+          outHdr.tas = htons((uint16_t)*tasf);
+          if (verbose)
+            printf(" HK found, tas = %5.1f %d\n", *tasf, (int)*tasf);
+        }
+        else
+          if (verbose)
+            printf(" HK : tas location exceeds end of this record\n");
 
-
+        j += 52;
+      }
+      else
       if (wp[j] == SyncWord)		// start particle
       {
         if (verbose)
@@ -230,6 +244,9 @@ void processImageFile(FILE *infp, FILE *hkfp, FILE *outfp)
           if (verbose) printf(" not processing particle # %d - n=%d\n", particle[3], particle[4]);
         }
       }
+      else
+        if (verbose)
+          printf("Nothing found, j += 1\n");
     }
   }
 
