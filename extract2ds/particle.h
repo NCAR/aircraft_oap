@@ -9,7 +9,7 @@
  * Class to decompress SPEC run length encoded data, place it in the RAF OAP
  * format and write that buffer out when it fills the 4k.  There is one instance
  * of this class for each probe array.  So one for an HVPS, but two for the
- * 2DS, on for H channel and on for V channel.
+ * 2DS, one for H channel and one for V channel.
  */
 class Particle
 {
