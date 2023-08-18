@@ -12,6 +12,8 @@ def OAP_utils(env):
     env.Require(['prefixoptions'])
  
 env = Environment(GLOBAL_TOOLS = [OAP_utils])
+env['PUBLISH_PREFIX'] = '/net/www/docs/raf/Software'
+
 
 env.Require('vardb')
 
@@ -23,3 +25,7 @@ for subdir in subdirs:
 variables = env.GlobalVariables()
 variables.Update(env)
 Help(variables.GenerateHelpText(env))
+
+if "publish" in COMMAND_LINE_TARGETS:
+   pub = env.Install('$PUBLISH_PREFIX', ["doc/OAPfiles.html"])
+   env.Alias('publish', pub)
