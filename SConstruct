@@ -29,3 +29,9 @@ Help(variables.GenerateHelpText(env))
 if "publish" in COMMAND_LINE_TARGETS:
    pub = env.Install('$PUBLISH_PREFIX', ["doc/OAPfiles.html"])
    env.Alias('publish', pub)
+
+env.SetHelp()
+env.AddHelp("""
+Targets:
+publish:  Copy html documentation to EOL web space : $PUBLISH_PREFIX.
+""")
