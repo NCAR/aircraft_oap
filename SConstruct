@@ -9,6 +9,9 @@ import eol_scons
 
 
 def OAP_utils(env):
+    if env['PLATFORM'] == 'darwin' and env['HOST_ARCH'] == 'arm64':
+        env['DEFAULT_OPT_PREFIX']='/opt/homebrew'
+
     env.Require(['prefixoptions'])
  
 env = Environment(GLOBAL_TOOLS = [OAP_utils])
