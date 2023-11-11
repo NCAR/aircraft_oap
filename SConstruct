@@ -29,6 +29,9 @@ variables = env.GlobalVariables()
 variables.Update(env)
 Help(variables.GenerateHelpText(env))
 
+if "xpms2d" in COMMAND_LINE_TARGETS:
+   subdirs = ['xpms2d']
+
 if "publish" in COMMAND_LINE_TARGETS:
    pub = env.Install('$PUBLISH_PREFIX', ["doc/OAPfiles.html"])
    env.Alias('publish', pub)
