@@ -1,5 +1,9 @@
 pipeline {
-  agent any
+  agent {
+     node {
+        label 'CentOS9'
+        }
+  }
   triggers {
     pollSCM('H/15 7-20 * * *')
   }
