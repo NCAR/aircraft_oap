@@ -66,8 +66,4 @@ libboost-regex-dev
  ```
 All programs will be installed in /usr/local on MacOS, otherwise /opt/local.  You may override the install directory, e.g. "scons INSTALL_DIRECTORY=/home/local install" and the binaries will be place in /home/local/bin.
 
-If you just want xpms2d, then edit SConstruct file:
- * Comment out line with Requires('vardb')
- * Change subdirs list to only include xpms2d
-
-The only dependencies for xpms2d are the openmotif and fonts listed above.
+If you just want xpms2d, you can type '**scons xpms2d**'.  The only dependencies for xpms2d are the openmotif and fonts listed above.

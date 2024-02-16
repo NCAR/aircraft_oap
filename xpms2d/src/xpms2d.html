@@ -32,7 +32,7 @@ span.comment { background-color: #88FF88; font-style: italic; }
 
 
 <h1 align=CENTER>XPMS2D User's Guide</h1>
-<h1 align=CENTER>Version 3.0.2</h1>
+<h1 align=CENTER>Version 3.0.3</h1>
 <hr>
 <h1 align=CENTER>Table Of Contents</h1>
 <ol type=A>
@@ -81,10 +81,10 @@ span.comment { background-color: #88FF88; font-style: italic; }
 <h1 align=CENTER>Overview</h1>
 <b>xpms2d</b> is an interactive diagnostic and plotting tool for Unix/Linux workstations.  <b>xpms2d</b> allows the user to view PMS-2D, 64 bit Fast2DC, 2DS, HVPS1, and CIP/PIP images and computed quantitative information on a per record basis.
 <p>
-The primary file format supported is here <a href="http://www.eol.ucar.edu/raf/software/OAPfiles.html">http://www.eol.ucar.edu/raf/software/OAPfiles.html</a>.  We use translators (pads2oap and translate2ds) to convert SPEC and DMT probe data to this format.  These translators are available as part of the github repository listed below.
+The primary file format supported is here <a href="https:://www.eol.ucar.edu/raf/software/OAPfiles.html">https:://www.eol.ucar.edu/raf/software/OAPfiles.html</a>.  We use translators (pads2oap and translate2ds) to convert SPEC and DMT probe data to this format.  These translators are available as part of the github repository listed below.
 <p>
-<b>xpms2d</b> was written at the <a href="http://www.eol.ucar.edu">Research
-Aviation Facility</a> of <a href="http://www.ncar.ucar.edu/">The National Center for Atmospheric Research</a> to view and perform quality control of our PMS-2D data.  
+<b>xpms2d</b> was written at the <a href="https:://www.eol.ucar.edu">Research
+Aviation Facility</a> of <a href="https:://www.ncar.ucar.edu/">The National Center for Atmospheric Research</a> to view and perform quality control of our PMS-2D data.  
 Every effort has been made to make it "what you see is what you get" between
 the screen and printouts.
 
@@ -109,7 +109,7 @@ For single user, place the binary in ~/bin (Make sure ~/bin is in your
 <dt><h3>Environment</h3>
 <dd><b>xpms2d</b> is written in C++, requiring X11/R6 and Motif 2.0 (or later).
 Specifically it was developed on Redhat Enterprise Linux, using
-the GNU compiler <a href="http://gcc.gnu.org/">gcc</a>.  <b>xpms2d</b> has
+the GNU compiler <a href="https:://gcc.gnu.org/">gcc</a>.  <b>xpms2d</b> has
 been successfully compiled on Mac OS X, this does require, XCode and XQuartz.  See
 Makefile for more details.
 <p>
@@ -136,7 +136,7 @@ called <b>DATA_DIR</b> as the default directory to locate data files.
 <hr>
 <h2 align=CENTER>Probe Selection Window</h2>
 <p>
-<img src="http://www.eol.ucar.edu/raf/Software/x2dpsw.png" align=center>
+<img src="x2dpsw.png" align=center>
 <p align=center>Figure 1.  xpms2d Control Window.
 
 <h3>Moving around the file</h3>
@@ -166,11 +166,11 @@ Sync and timing word legend:
         <li><font color=black>Black</font> = not detected by software
 </ul>
 <p>
-<img src="http://www.eol.ucar.edu/raf/Software/x2ddata.png">
+<img src="x2ddata.png">
 <p align=center>Figure 2.  Sample data from xpms2d of traditional 32 diode 2d data.
 
 <p>
-<img src="http://www.eol.ucar.edu/raf/Software/xf2ddata.png">
+<img src="xf2ddata.png">
 <p align=center>Figure 3.  Sample data from xpms2d of new 64 diode Fast2D data.
 
 <h4>First line of text</h4>
@@ -218,7 +218,8 @@ Particle height (<b>iy</b>) is used for sizing.
 <p>
 <dt><b>Center-in</b>
 <dd>Any particle who's center is within the diode array is kept, with the size being the
-greater of <b>ix</b> and <b>iy</b>.
+greater of <b>ix</b> and <b>iy</b>.  This is used in our size distribution algorithm and
+a good all around choice.
 <p>
 <dt><b>Reconstruction</b>
 <dd>Particles where <b>iy</b> is at least 20% of <b>ix</b> are kept.
@@ -235,7 +236,7 @@ by computed area based on diameter (max x, y).
 </dl>
 </blockquote>
 
-<img src="http://www.eol.ucar.edu/raf/Software/2d_sv.png" align=center>
+<img src="2d_sv.png" align=center>
 <p>
         <font color=green>Green</font> = Reconstruction,
         <font color=blue>Blue</font> = Center-in,
@@ -253,6 +254,13 @@ Heymsfield, A. J., Parrish, J. L., 1978: A Computational Technique for Increasin
 Different densities may be selected based on what you believe the aircraft was
 flying through.  This affects the Liquid Water Content calculation.
 
+<p>
+
+<h3>Reject Ratio</h3>
+This is the area ratio rejection percentage.  Use 10% to 20% for general mixed
+phase data and 50% for rain.  This is the number of shaded diodes in the
+bounding box divided by the area of the bounding box.  Bounding box is particle
+height and length.
 <p>
 
 <!--------------------------------------------------------------------------- ABS -->
@@ -299,7 +307,7 @@ black and white.</dd>
  <dt><h4>Print</h4></dt>
  <dd>This opens a pipe and sends PostScript commands to <b>lp(1)</b>.</dd>
 <p>
- <dt><h4>Save <a href="http://www.libpng.org/pub/png/">PNG</a></h4></dt>
+ <dt><h4>Save <a href="https:://www.libpng.org/pub/png/">PNG</a></h4></dt>
  <dd>This option allows you to save the plot image as a graphics file, which
 can then be used in web pages, etc.  You can adjust the size of the image
 saved by first sizing the plot canvas.</dd>
@@ -313,7 +321,7 @@ saved by first sizing the plot canvas.</dd>
  <dt><h4>View Histograms</h4>
  <dd>Pops up a seperate window with ASCII bin count histogram data per 2D record.
 <p>
-<img src="http://www.eol.ucar.edu/raf/Software/x2dhisto.png">
+<img src="x2dhisto.png">
 <p align=center>Figure 5.  Histogram for each record.  There are 64 columns for resolution(i) from 1 to 64.
 
  <dt><h4>View Particle Data</h4></dt>
@@ -350,6 +358,7 @@ saved by first sizing the plot canvas.</dd>
 <hr>
 <h1>Known Problems</h1>
 <ul>
+<li>Using the window manager X to close or dismiss a window will cause a core dump.  Use 'Dimiss' buttons.
 <li>If the menu and button text shows up as squares, then some fonts are missing.
 'yum install "xorg-x11-fonts-ISO8859-1*"' should solve the problem.
 <li>Invalid data files may cause a core dump.
@@ -365,6 +374,6 @@ Research Aviation Facility.<br>
 <hr>
 <font size=2>
 Last update:
-Wed Mar 10 09:00:00 MDT 2021
+Fri Nov 17 14:52:24 MST 2023
 </body>
 </html>
