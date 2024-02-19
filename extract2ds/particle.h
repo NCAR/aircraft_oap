@@ -40,7 +40,8 @@ private:
   OAP::P2d_rec _output;
   unsigned char *_uncompressed;
 
-  size_t _pos, _nBits;
+  size_t _pos;		// write position into output buffer.
+  size_t _nBits;
   uint16_t _prevID;
   unsigned long _firstTimeWord, _lastTimeWord;
 

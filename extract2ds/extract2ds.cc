@@ -31,7 +31,7 @@ Config cfg;
 int  recordCnt = 0;
 bool verbose = false;
 
-const uint16_t SyncWord = 0x3253;	// Particle sync word.
+const uint16_t SyncWord = 0x3253;	// Particle sync word '2S'.
 const uint16_t MaskData = 0x4d4b;	// MK Flush Buffer.
 const uint16_t FlushWord = 0x4e4c;	// NL Flush Buffer.
 const uint16_t HousekeepWord = 0x484b;	// HK Flush Buffer.
@@ -50,7 +50,7 @@ bool cksum(const uint16_t buff[], int nWords, uint16_t ckSum)
     sum += buff[i];
 
   if (sum != ckSum)
-    printf("Checksum mis-match %u %u\n", sum, ckSum);
+    printf("Checksum mis-match %u %u, record #%d\n", sum, ckSum, recordCnt);
 
   return sum == ckSum;
 }
@@ -264,7 +264,7 @@ int findHouseKeeping48(FILE *hkfp, imageBuf *imgRec)
 
   struct hk48Buf *hkb = (struct hk48Buf *)buffer;
   struct maskBuf *mkb = (struct maskBuf *)buffer;
-printf("BETTER NOT BE IN HERE!!!!!! %lu\n", (unsigned long)hkfp);
+
   while (fread(buffer, 18, 1, hkfp) == 1)
   {
     if (verbose)
