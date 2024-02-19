@@ -20,7 +20,7 @@ struct imageBuf
   uint16_t      cksum;
 };
 
-struct hkBuf
+struct hk48Buf
 {
   int16_t       year, month, dow, day, hour, minute, second, msecond;
   char          rdf[164];

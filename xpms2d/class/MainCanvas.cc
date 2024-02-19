@@ -141,7 +141,8 @@ memset(part1, 0, sizeof(part1));
     drawFast2D(record, probe, version, probeNum, ps);
   else
   if (OAP::probeType((unsigned char *)record) == HVPS_T)
-    drawHVPS(record, probe, version, probeNum, ps);
+    drawFast2D(record, probe, version, probeNum, ps);
+//    drawHVPS(record, probe, version, probeNum, ps);
   else
   if (OAP::probeType((unsigned char *)record) == CIP_T)
     drawCIP(record, probe, version, probeNum, ps);

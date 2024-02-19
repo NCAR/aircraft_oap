@@ -1,6 +1,7 @@
 
 #include <algorithm>
 #include <ctime>
+#include <cctype>
 #include <arpa/inet.h>
 
 
@@ -126,7 +127,8 @@ if (_output.data != _uncompressed) printf("writeBuff: un != out %p - %p !!!!!!!\
 
   memcpy((unsigned char*)&_output.id, _code, 2);
 
-  if (_pos > 0 && diodeCountCheck() == false)
+//  if (_pos > 0 && diodeCountCheck() == false)
+  if (_pos > 0 )
   {
     fixupTimeStamp();
     fwrite(&_output, sizeof(OAP::P2d_rec), 1, _out_fp);
@@ -216,7 +218,13 @@ if (nWords == 0) printf("assert H nWords == 0, no good\n");
   }
 
   wp += 5;
-  if (timingWord) nWords -= 3;
+  if (timingWord)
+  {
+    if (_code[0] == 'H' && isdigit(_code[1]))
+      nWords -= 2;	// Type32 (HVPS)
+    else
+      nWords -= 3;	// Type48 (F2DS)
+  }
 
   if (_nBits != 0)
     printf("assert fail : nBits=%lu at start of particle !!!!\n", _nBits);
