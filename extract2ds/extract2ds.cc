@@ -36,6 +36,7 @@ const uint16_t MaskData = 0x4d4b;	// MK Flush Buffer.
 const uint16_t FlushWord = 0x4e4c;	// NL Flush Buffer.
 const uint16_t HousekeepWord = 0x484b;	// HK Flush Buffer.
 
+
 Particle *probe[2] = { 0, 0 };
 
 int findHouseKeeping48(FILE *hkfp, imageBuf *imgRec);
@@ -53,6 +54,45 @@ bool cksum(const uint16_t buff[], int nWords, uint16_t ckSum)
     printf("Checksum mis-match %u %u, record #%d\n", sum, ckSum, recordCnt);
 
   return sum == ckSum;
+}
+
+
+int findLastTimeWord(uint16_t *p)
+{
+  int pCnt = 0;
+  unsigned long lastWord = 0;
+
+  for (int i = 0; i < 2048; ++i)
+  {
+    if (p[i] == SyncWord)
+    {
+      uint16_t n = 0, test = 0;
+      if (p[i+1] > 0) { ++test; n = p[i+1]; }
+      if (p[i+2] > 0) { ++test; n = p[i+2]; }
+
+      if (test != 1)
+        { printf("bad particle = 0\n"); continue; }
+
+      ++pCnt;
+
+
+      if (i < 2043)
+      {
+        // grab last timingWord.
+        if ((n & 0x1000) == 0)
+        {
+          n &= 0x0fff;
+printf("ID=%u - i=%d + 5=5 + n=%d = %d\n", p[i+3], i, n, i+5+n);
+          if (i + 5 + n < 2048)
+            lastWord = ((unsigned long *)&p[i+5+n-3])[0] & 0x0000FFFFFFFFFFFF;
+
+          printf(" lastTWord=%lu\n", lastWord);
+        }
+      }
+    }
+  }
+
+  return(pCnt);
 }
 
 
