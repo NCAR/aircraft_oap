@@ -18,6 +18,8 @@ class Config
 {
 public:
 
+  enum PacketFormatType { Type32, Type48 };
+
   Config();
 
   const std::string& ProjectDirectory() const	{ return _projectDirectory; }
@@ -38,6 +40,8 @@ public:
   int nDiodes() const				{ return _nDiodes; }
   int ClockFrequency() const			{ return _clockFreq; }
   int WaveLength() const			{ return _waveLength; }
+  PacketFormatType DataFormat() const		{ return _dataFormat; }
+  uint64_t TimingWordMask() const		{ return _timingMask; }
 
 
   void SetProjectDirectory(const std::string s)	{ _projectDirectory = s; }
@@ -56,6 +60,7 @@ public:
   void SetDiodes(int n)				{ _nDiodes = n; }
   void SetWaveLength(int l)			{ _waveLength = l; }
   void SetClockFreq(int f)			{ _clockFreq = f; }
+
 
 private:
 
@@ -78,6 +83,10 @@ private:
   int _nDiodes;
   int _clockFreq;
   int _waveLength;
+
+  PacketFormatType _dataFormat;
+
+  uint64_t _timingMask;
 
 };
 
