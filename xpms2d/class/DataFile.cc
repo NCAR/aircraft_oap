@@ -195,12 +195,15 @@ printf("ADS2 hdr length = %d\n", _hdr->HeaderLength());
       PMS2D *p = new PMS2D(cfg, _hdr, (Pms2 *)blk, ++Ccnt);
       _probeList[*(uint16_t *)p->Code()] = p;
       }
+/*	We only flew this once or twice.  The HVPS class does not support
+ *	this older probe anymore.
     else
     if (name[3] == 'H')
       {
       HVPS *p = new HVPS(cfg, _hdr, (Pms2 *)blk, ++Hcnt);
       _probeList[*(uint16_t *)p->Code()] = p;
       }
+*/
     }
 }
 
@@ -280,9 +283,11 @@ void ADS_DataFile::AddToProbeList(const char *id, UserConfig *cfg)
     case PMS2D_T:
       _probeList[*(uint16_t *)id] = new PMS2D(cfg, id);
       break;
+/*
     case HVPS_T:
       _probeList[*(uint16_t *)id] = new HVPS(cfg, id);
       break;
+*/
     case CIP_T:
       _probeList[*(uint16_t *)id] = new CIP(cfg, id);
       break;

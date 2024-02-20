@@ -1,4 +1,9 @@
-/*  This file has been obsoleted.  See libraf:OAP for replacements.
+/*
+ *
+ * This file has been obsoleted.  See libraf:OAP for replacements.
+ *
+ */
+/*
 -------------------------------------------------------------------------
 OBJECT NAME:	process.cc
 
