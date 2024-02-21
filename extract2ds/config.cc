@@ -11,9 +11,6 @@ COPYRIGHT:	University Corporation for Atmospheric Research, 2023
 #include <cstdio>
 
 
-const uint64_t Config::Type32_TimingWordMask = 0x00000000FFFFFFFFL;
-const uint64_t Config::Type48_TimingWordMask = 0x0000FFFFFFFFFFFFL;
-
 
 /* -------------------------------------------------------------------- */
 Config::Config() : _code("SH"), _type("F2DS"), _timeOffset(0), _storeCompressed(false), _resolution(10), _nDiodes(128), _clockFreq(20), _waveLength(785)
@@ -36,7 +33,6 @@ void Config::SetType(std::string s)
     _clockFreq = 20;
     _waveLength = 785;
     _dataFormat = Type48;
-    _timingMask = Type48_TimingWordMask;
   }
 
   if (_type.compare("HVPS") == 0)
@@ -47,7 +43,6 @@ void Config::SetType(std::string s)
     _clockFreq = 20;
     _waveLength = 785;
     _dataFormat = Type32;
-    _timingMask = Type32_TimingWordMask;
   }
 
 }

@@ -36,6 +36,9 @@ const uint16_t MaskData = 0x4d4b;	// MK Flush Buffer.
 const uint16_t FlushWord = 0x4e4c;	// NL Flush Buffer.
 const uint16_t HousekeepWord = 0x484b;	// HK Flush Buffer.
 
+const uint64_t Config::Type32_TimingWordMask = 0x00000000FFFFFFFFL; // do I need this?
+const uint64_t Config::Type48_TimingWordMask = 0x0000FFFFFFFFFFFFL;
+
 
 Particle *probe[2] = { 0, 0 };
 
@@ -64,6 +67,9 @@ int findLastTimeWord(uint16_t *p)
 
   for (int i = 0; i < 2048; ++i)
   {
+    if (p[i] == FlushWord)
+      break;
+
     if (p[i] == SyncWord)
     {
       uint16_t n = 0, test = 0;
@@ -78,18 +84,25 @@ int findLastTimeWord(uint16_t *p)
 
       if (i < 2043)
       {
-        // grab last timingWord.
-        if ((n & 0x1000) == 0)
+        // grab timingWord.
+        if ((n & 0x1000) == 0)	// bit 12 not set
         {
           n &= 0x0fff;
 printf("ID=%u - i=%d + 5=5 + n=%d = %d\n", p[i+3], i, n, i+5+n);
           if (i + 5 + n < 2048)
-            lastWord = ((unsigned long *)&p[i+5+n-3])[0] & 0x0000FFFFFFFFFFFF;
+          {
+            if (cfg.DataFormat() == Type48)
+              lastWord = ((uint64_t *)&p[i+5+n-3])[0] & Type48_TimingWordMask;
+            else
+              lastWord = ((uint32_t *)&p[i+5+n-2])[0];
+          }
 
           printf(" lastTWord=%lu\n", lastWord);
         }
+        i += 5 + n - 1;	// -1 bacause +1 will happen as loop increments.
       }
     }
+    else printf("skipping %d\n", i);
   }
 
   return(pCnt);
@@ -108,15 +121,8 @@ int moreData(FILE *infp, unsigned char buffer[], OAP::P2d_hdr &oapHdr, FILE *hkf
 
   ++recordCnt;
   struct imageBuf *tds = (struct imageBuf *)buffer;
-  int pCnt = 0;
+  int pCnt = findLastTimeingWord( (uint16_t *)tds->rdf );
 
-  for (int i = 0; i < 2048; ++i)
-  {
-    if (((uint16_t *)tds->rdf)[i] == SyncWord)
-    {
-      ++pCnt;
-    }
-  }
 
   if (verbose)
     printf("%d/%02d/%02d %02d:%02d:%02d.%03d - pCnt=%d - 0x%04x\n", tds->year, tds->month,

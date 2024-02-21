@@ -41,7 +41,6 @@ public:
   int ClockFrequency() const			{ return _clockFreq; }
   int WaveLength() const			{ return _waveLength; }
   PacketFormatType DataFormat() const		{ return _dataFormat; }
-  uint64_t TimingWordMask() const		{ return _timingMask; }
 
 
   void SetProjectDirectory(const std::string s)	{ _projectDirectory = s; }
@@ -85,8 +84,6 @@ private:
   int _waveLength;
 
   PacketFormatType _dataFormat;
-
-  uint64_t _timingMask;
 
 };
 
