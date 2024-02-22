@@ -1,8 +1,14 @@
 
+
+#ifndef _PARTICLE_H_
+#define _PARTICLE_H_
+
 #include <cstdint>
 #include <cstdio>
 
 #include <raf/OAP.h>
+
+#include "spec.h"
 
 
 /**
@@ -17,7 +23,7 @@ public:
   Particle(const char code[], FILE *outFile);
   ~Particle();
 
-  void processParticle(uint16_t *wp, bool verbose);
+  void processParticle(uint16_t *wp, PacketFormatType fileType, bool verbose);
 
   /**
    * Set timestamp.  This should be the stamp from the previous record, which
@@ -43,11 +49,12 @@ private:
   size_t _pos;		// write position into output buffer.
   size_t _nBits;
   uint16_t _prevID;
-  unsigned long _firstTimeWord, _lastTimeWord;
+  uint64_t _firstTimeWord, _lastTimeWord;
 
   static const size_t _nDiodes;
-  static const unsigned long _syncWord;
+  static const uint64_t _syncWord;
   static const unsigned char _syncString[3];
 
 };
 
+#endif

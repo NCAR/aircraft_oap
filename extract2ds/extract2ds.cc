@@ -31,14 +31,6 @@ Config cfg;
 int  recordCnt = 0;
 bool verbose = false;
 
-const uint16_t SyncWord = 0x3253;	// Particle sync word '2S'.
-const uint16_t MaskData = 0x4d4b;	// MK Flush Buffer.
-const uint16_t FlushWord = 0x4e4c;	// NL Flush Buffer.
-const uint16_t HousekeepWord = 0x484b;	// HK Flush Buffer.
-
-const uint64_t Type32_TimingWordMask = 0x00000000FFFFFFFFL; // do I need this?
-const uint64_t Type48_TimingWordMask = 0x0000FFFFFFFFFFFFL;
-
 
 Particle *probe[2] = { 0, 0 };
 
@@ -63,7 +55,7 @@ bool cksum(const uint16_t buff[], int nWords, uint16_t ckSum)
 int findLastTimeWord(uint16_t *p)
 {
   int pCnt = 0;
-  unsigned long lastWord = 0;
+  uint64_t lastWord = 0;
 
   for (int i = 0; i < 2048; ++i)
   {
@@ -91,7 +83,7 @@ int findLastTimeWord(uint16_t *p)
 printf("ID=%u - i=%d + 5=5 + n=%d = %d\n", p[i+3], i, n, i+5+n);
           if (i + 5 + n < 2048)
           {
-            if (cfg.DataFormat() == Config::Type48)
+            if (cfg.DataFormat() == Type48)
               lastWord = ((uint64_t *)&p[i+5+n-3])[0] & Type48_TimingWordMask;
             else
               lastWord = ((uint32_t *)&p[i+5+n-2])[0];
@@ -211,7 +203,7 @@ void processImageFile(FILE *infp, FILE *hkfp, FILE *outfp)
         j += 22;
       }
       else
-      if (wp[j] == HousekeepWord)	// HK buffer
+      if (wp[j] == HousekeepWord)	// HK buffer - this should only happen with Typ32
       {
         if (j + 50 < 2048)
         {
@@ -280,9 +272,9 @@ void processImageFile(FILE *infp, FILE *hkfp, FILE *outfp)
         if (particle[nSLICES] < 256)
         {
           if (nv)
-            probe[0]->processParticle((uint16_t *)particle, verbose);
+            probe[0]->processParticle((uint16_t *)particle, cfg.DataFormat(), verbose);
           else
-            probe[1]->processParticle((uint16_t *)particle, verbose);
+            probe[1]->processParticle((uint16_t *)particle, cfg.DataFormat(), verbose);
         }
         else
         {

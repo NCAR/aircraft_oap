@@ -6,12 +6,13 @@
 
 
 #include "particle.h"
-#include "spec.h"
 
 
+// These are output SyncWords as opposed to input SyncWord in extract2ds.cc
 const unsigned char Particle::_syncString[] = { 0xAA, 0xAA, 0xAA };
-const unsigned long Particle::_syncWord = 0xAAAAAA0000000000;
+const uint64_t Particle::_syncWord = 0xAAAAAA0000000000;
 const size_t Particle::_nDiodes = 128;
+
 
 
 Particle::Particle(const char code[], FILE *out) : _out_fp(out), _pos(0), _nBits(0), _prevID(0), _firstTimeWord(0), _lastTimeWord(0)
@@ -38,7 +39,7 @@ void Particle::setHeader(const OAP::P2d_hdr &hdr)
 /* ------------------------------------------------------------------------ */
 void Particle::fixupTimeStamp()
 {
-  unsigned long deltaT = (_lastTimeWord - _firstTimeWord) / 20000;	// milliseconds
+  uint64_t deltaT = (_lastTimeWord - _firstTimeWord) / 20000;	// milliseconds @TODO not Mhz counter, TAS counter
 
   struct tm tor, *tor_out;
   time_t thisT;
@@ -179,7 +180,7 @@ void Particle::particleHeaderSanityCheck(const uint16_t *hdr)
 }
 
 /* ------------------------------------------------------------------------ */
-void Particle::processParticle(uint16_t *wp, bool verbose)
+void Particle::processParticle(uint16_t *wp, PacketFormatType fileType, bool verbose)
 {
   int i, nSlices = wp[nSLICES], nWords, sliceCnt = 0;
 
@@ -355,7 +356,11 @@ if (_output.data != _uncompressed) printf(" pp3.2: un != out %p - %p !!!!!!!\n",
 
   if (timingWord)
   {
-    unsigned long tWord = ((unsigned long *)&wp[nWords])[0] & 0x0000FFFFFFFFFFFF;
+    uint64_t tWord;
+    if (fileType == Type48)
+      tWord = ((uint64_t *)&wp[nWords])[0] & Type48_TimingWordMask;
+    else
+      tWord = ((uint32_t *)&wp[nWords])[0];
 
     if (verbose)
       printf("\n  Timing = %lu, deltaT=%lu\n", tWord, tWord - _lastTimeWord);

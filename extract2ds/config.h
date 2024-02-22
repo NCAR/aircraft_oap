@@ -13,12 +13,11 @@ COPYRIGHT:	University Corporation for Atmospheric Research, 2023
 #define _config_h_
 
 #include <string>
+#include "spec.h"
 
 class Config
 {
 public:
-
-  enum PacketFormatType { Type32, Type48 };
 
   Config();
 
