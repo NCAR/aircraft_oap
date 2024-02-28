@@ -62,6 +62,17 @@ int findLastTimeWord(uint16_t *p)
     if (p[i] == FlushWord)
       break;
 
+    if (p[i] == HousekeepWord) {
+      i += 52;	// Type32 housekeep size.  Type48 is in separate file.
+      continue;
+    }
+
+    if (p[i] == MaskData) {
+      i += 22;	// Type32 mask packet size.
+      continue;
+    }
+
+
     if (p[i] == SyncWord)
     {
       uint16_t n = 0, test = 0;
@@ -94,7 +105,7 @@ printf("ID=%u - i=%d + 5=5 + n=%d = %d\n", p[i+3], i, n, i+5+n);
         i += 5 + n - 1;	// -1 bacause +1 will happen as loop increments.
       }
     }
-    else printf("skipping %d\n", i);
+    else printf("skipping %d - 0x%04x\n", i, p[i]);
   }
 
   return(pCnt);
@@ -203,7 +214,7 @@ void processImageFile(FILE *infp, FILE *hkfp, FILE *outfp)
         j += 22;
       }
       else
-      if (wp[j] == HousekeepWord)	// HK buffer - this should only happen with Typ32
+      if (wp[j] == HousekeepWord)	// HK buffer - this should only happen with Type32
       {
         if (j + 50 < 2048)
         {
