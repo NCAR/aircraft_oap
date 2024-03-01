@@ -52,9 +52,9 @@ bool cksum(const uint16_t buff[], int nWords, uint16_t ckSum)
 }
 
 
-int findLastTimeWord(uint16_t *p)
+uint64_t findLastTimeWord(uint16_t *p, size_t *pCnt)
 {
-  int pCnt = 0;
+  *pCnt = 0;
   uint64_t lastWord = 0;
 
   for (int i = 0; i < 2048; ++i)
@@ -82,7 +82,7 @@ int findLastTimeWord(uint16_t *p)
       if (test != 1)
         { printf("bad particle = 0\n"); continue; }
 
-      ++pCnt;
+      (*pCnt)++;
 
 
       if (i < 2043)
@@ -108,7 +108,7 @@ printf("ID=%u - i=%d + 5=5 + n=%d = %d\n", p[i+3], i, n, i+5+n);
     else printf("skipping %d - 0x%04x\n", i, p[i]);
   }
 
-  return(pCnt);
+  return(lastWord);
 }
 
 
@@ -124,11 +124,12 @@ int moreData(FILE *infp, unsigned char buffer[], OAP::P2d_hdr &oapHdr, FILE *hkf
 
   ++recordCnt;
   struct imageBuf *tds = (struct imageBuf *)buffer;
-  int pCnt = findLastTimeWord( (uint16_t *)tds->rdf );
+  size_t pCnt;
+  uint64_t lastTimeWord = findLastTimeWord( (uint16_t *)tds->rdf, &pCnt );
 
 
   if (verbose)
-    printf("%d/%02d/%02d %02d:%02d:%02d.%03d - pCnt=%d - 0x%04x\n", tds->year, tds->month,
+    printf("%d/%02d/%02d %02d:%02d:%02d.%03d - pCnt=%lu - 0x%04x\n", tds->year, tds->month,
 	tds->day, tds->hour, tds->minute, tds->second, tds->msecond,
 	pCnt, ((uint16_t *)tds->rdf)[0]);
 
@@ -147,8 +148,8 @@ int moreData(FILE *infp, unsigned char buffer[], OAP::P2d_hdr &oapHdr, FILE *hkf
 
   oapHdr.overld = 0;
 
-  if (probe[0]) probe[0]->setHeader(oapHdr);
-  if (probe[1]) probe[1]->setHeader(oapHdr);
+  if (probe[0]) probe[0]->setHeader(oapHdr, lastTimeWord);
+  if (probe[1]) probe[1]->setHeader(oapHdr, lastTimeWord);
 
   return rc;
 }
@@ -165,11 +166,11 @@ void processImageFile(FILE *infp, FILE *hkfp, FILE *outfp)
   {
     if (cfg.Type().compare("F2DS") == 0)
     {
-      probe[0] = new Particle("SV", outfp);
-      probe[1] = new Particle("SH", outfp);
+      probe[0] = new Particle("SV", outfp, &cfg);
+      probe[1] = new Particle("SH", outfp, &cfg);
     }
     else
-      probe[0] = new Particle("H1", outfp);
+      probe[0] = new Particle("H1", outfp, &cfg);
   }
 
   struct imageBuf *tds = (struct imageBuf *)buffer;
@@ -283,9 +284,9 @@ void processImageFile(FILE *infp, FILE *hkfp, FILE *outfp)
         if (particle[nSLICES] < 256)
         {
           if (nv)
-            probe[0]->processParticle((uint16_t *)particle, cfg.DataFormat(), verbose);
+            probe[0]->processParticle((uint16_t *)particle, verbose);
           else
-            probe[1]->processParticle((uint16_t *)particle, cfg.DataFormat(), verbose);
+            probe[1]->processParticle((uint16_t *)particle, verbose);
         }
         else
         {
@@ -316,11 +317,12 @@ int findHouseKeeping48(FILE *hkfp, imageBuf *imgRec)
 
   while (fread(buffer, 18, 1, hkfp) == 1)
   {
+/*
     if (verbose)
-      printf("%d/%02d/%02d %02d:%02d:%02d.%03d - 0x%04x len=%d\n", hkb->year,
+      printf("HK %d/%02d/%02d %02d:%02d:%02d.%03d - 0x%04x len=%d\n", hkb->year,
 	hkb->month, hkb->day, hkb->hour, hkb->minute, hkb->second, hkb->msecond,
 	((uint16_t *)&hkb->rdf)[0], ((uint16_t *)&hkb->rdf)[1]);
-
+*/
 
     switch (((uint16_t *)&hkb->rdf)[0])
     {

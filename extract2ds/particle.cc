@@ -4,7 +4,7 @@
 #include <cctype>
 #include <arpa/inet.h>
 
-
+#include "config.h"
 #include "particle.h"
 
 
@@ -15,7 +15,7 @@ const size_t Particle::_nDiodes = 128;
 
 
 
-Particle::Particle(const char code[], FILE *out) : _out_fp(out), _pos(0), _nBits(0), _prevID(0), _firstTimeWord(0), _lastTimeWord(0)
+Particle::Particle(const char code[], FILE *out, Config *cfg) : _config(cfg), _out_fp(out), _pos(0), _nBits(0), _prevID(0), _lastTimeWord(0)
 {
   memset(&_output, 0, sizeof(OAP::P2d_hdr));
   memset(_output.data, 0xFF, OAP::OAP_BUFF_SIZE);
@@ -30,38 +30,57 @@ Particle::~Particle()
 }
 
 /* ------------------------------------------------------------------------ */
-void Particle::setHeader(const OAP::P2d_hdr &hdr)
+void Particle::setHeader(const OAP::P2d_hdr &hdr, uint64_t ltw)
 {
+printf("setHeader --- %d/%02d/%02d %02d:%02d:%02d.%03d\n", ntohs(_compressedTime.year),
+	ntohs(_compressedTime.month), ntohs(_compressedTime.day), ntohs(_compressedTime.hour),
+	ntohs(_compressedTime.minute), ntohs(_compressedTime.second), ntohs(_compressedTime.msec));
+
+  memcpy(&_compressedTime, &hdr, sizeof(OAP::P2d_hdr));
   memcpy(&_output, &hdr, sizeof(OAP::P2d_hdr));
-  _firstTimeWord = _lastTimeWord = 0;
+  _lastTimeWord = ltw;
 }
 
 /* ------------------------------------------------------------------------ */
 void Particle::fixupTimeStamp()
 {
-  uint64_t deltaT = (_lastTimeWord - _firstTimeWord) / 20000;	// milliseconds @TODO not Mhz counter, TAS counter
+  double freq = (double)_config->Resolution() / (1.0e+6 * ntohs(_compressedTime.tas));
+  uint64_t deltaT = _lastTimeWord;
+printf("\n");
+
+  if (_lastTimeWord < _thisTimeWord && _config->DataFormat() == Type32)
+  {
+    deltaT += 4294967295;	// Rolled over
+    printf("tWord rollover = %lu %lu %lu\n", _thisTimeWord, _lastTimeWord, deltaT);
+  }
+
+  if (_lastTimeWord == _thisTimeWord)
+    deltaT = 256;	// Most likely multi-packet particle w/ no timing word
+  else
+    deltaT -= _thisTimeWord;
+
+  double timeInt = (double)deltaT * freq;
 
   struct tm tor, *tor_out;
-  time_t thisT;
-  uint16_t msec;
+  tor.tm_year = ntohs(_compressedTime.year);
+  tor.tm_mon = ntohs(_compressedTime.month)-1;
+  tor.tm_mday = ntohs(_compressedTime.day);
+  tor.tm_hour = ntohs(_compressedTime.hour);
+  tor.tm_min = ntohs(_compressedTime.minute);
+  tor.tm_sec = ntohs(_compressedTime.second);
+  int16_t msec = ntohs(_compressedTime.msec);
 
-  tor.tm_year = ntohs(_output.year);
-  tor.tm_mon = ntohs(_output.month)-1;
-  tor.tm_mday = ntohs(_output.day);
-  tor.tm_hour = ntohs(_output.hour);
-  tor.tm_min = ntohs(_output.minute);
-  tor.tm_sec = ntohs(_output.second);
-  msec = ntohs(_output.msec);
+printf("fix in %04u/%02u/%02u %02u:%02u:%02u.%03u - %lu\n", tor.tm_year, tor.tm_mon, tor.tm_mday, tor.tm_hour, tor.tm_min, tor.tm_sec, msec, deltaT);
 
-//printf("  %04u/%02u/%02u %02u:%02u:%02u.%03u - %lu\n", tor.tm_year, tor.tm_mon, tor.tm_mday, tor.tm_hour, tor.tm_min, tor.tm_sec, msec, deltaT);
+  time_t tor_tm = mktime(&tor);
+  double thisT = (double)tor_tm + ((double)msec / 1000) - timeInt;
+printf("fix In Time - thisT %lf = %lu %d %lf\n", thisT, tor_tm, msec, timeInt);
+  msec = (int16_t) ((thisT - (long)thisT) * 1000.0);
+  time_t tm_out = (time_t)thisT;
+  tor_out = gmtime(&tm_out);
+printf("fix tWord = %lu %lu %d %lu\n", _thisTimeWord, _lastTimeWord, msec, tor_out);
 
-  msec += deltaT;
-  thisT = mktime(&tor);
-  thisT += (int)(msec / 1000);
-  msec = msec % 1000;
-  tor_out = gmtime(&thisT);
-
-//printf("  %04u/%02u/%02u %02u:%02u:%02u.%03u\n", tor_out->tm_year, tor_out->tm_mon, tor_out->tm_mday, tor_out->tm_hour, tor_out->tm_min, tor_out->tm_sec, msec);
+printf("fix io %04u/%02u/%02u %02u:%02u:%02u.%03u\n", tor_out->tm_year, tor_out->tm_mon, tor_out->tm_mday, tor_out->tm_hour, tor_out->tm_min, tor_out->tm_sec, msec);
 
   _output.year = htons(tor_out->tm_year);
   _output.month = htons(tor_out->tm_mon+1);
@@ -180,7 +199,7 @@ void Particle::particleHeaderSanityCheck(const uint16_t *hdr)
 }
 
 /* ------------------------------------------------------------------------ */
-void Particle::processParticle(uint16_t *wp, PacketFormatType fileType, bool verbose)
+void Particle::processParticle(uint16_t *wp, bool verbose)
 {
   int i, nSlices = wp[nSLICES], nWords, sliceCnt = 0;
 
@@ -357,17 +376,14 @@ if (_output.data != _uncompressed) printf(" pp3.2: un != out %p - %p !!!!!!!\n",
   if (timingWord)
   {
     uint64_t tWord;
-    if (fileType == Type48)
+    if (_config->DataFormat() == Type48)
       tWord = ((uint64_t *)&wp[nWords])[0] & Type48_TimingWordMask;
     else
       tWord = ((uint32_t *)&wp[nWords])[0];
 
     if (verbose)
       printf("\n  Timing = %lu, deltaT=%lu\n", tWord, tWord - _lastTimeWord);
-    _lastTimeWord = tWord;
-
-    if (_firstTimeWord == 0)
-      _firstTimeWord = tWord;
+    _thisTimeWord = tWord;
 
     memcpy(&_uncompressed[_pos+8], (unsigned char*)&_syncWord, 8);
     memcpy(&_uncompressed[_pos], (unsigned char*)&tWord, 8);

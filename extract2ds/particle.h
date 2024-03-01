@@ -11,6 +11,8 @@
 #include "spec.h"
 
 
+class Config;
+
 /**
  * Class to decompress SPEC run length encoded data, place it in the RAF OAP
  * format and write that buffer out when it fills the 4k.  There is one instance
@@ -20,18 +22,19 @@
 class Particle
 {
 public:
-  Particle(const char code[], FILE *outFile);
+  Particle(const char code[], FILE *outFile, Config *cfg);
   ~Particle();
 
-  void processParticle(uint16_t *wp, PacketFormatType fileType, bool verbose);
+  void processParticle(uint16_t *wp, bool verbose);
 
   /**
    * Set timestamp.  This should be the stamp from the previous record, which
    * would coorespond to the start of the upcoming record.  We will then ADD
    * time words to get a final time stamp.
    */
-  void setHeader(const OAP::P2d_hdr &hdr);
+  void setHeader(const OAP::P2d_hdr &hdr, uint64_t ltw);
   void writeBuffer();
+
 
 private:
 
@@ -41,15 +44,20 @@ private:
   void fixupTimeStamp();
   bool diodeCountCheck();
 
+  Config *_config;
+
   FILE *_out_fp;
   unsigned char _code[8];	// only really need 2 bytes
-  OAP::P2d_rec _output;
+  OAP::P2d_rec _compressedTime;	// Header/timestamp from current compressed record.
+  OAP::P2d_rec _output;		//   ...which gets compied into here and modified.
   unsigned char *_uncompressed;
 
   size_t _pos;		// write position into output buffer.
   size_t _nBits;
   uint16_t _prevID;
-  uint64_t _firstTimeWord, _lastTimeWord;
+  uint64_t _thisTimeWord, _lastTimeWord;
+
+  size_t _resolution;
 
   static const size_t _nDiodes;
   static const uint64_t _syncWord;
