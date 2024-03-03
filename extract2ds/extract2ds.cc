@@ -87,10 +87,12 @@ uint64_t findLastTimeWord(uint16_t *p, size_t *pCnt)
 
       if (i < 2043)
       {
+        bool timingWord = !(n & 0x1000);
+        n &= 0x0fff;
+
         // grab timingWord.
-        if ((n & 0x1000) == 0)	// bit 12 not set
+        if (timingWord)
         {
-          n &= 0x0fff;
 printf("ID=%u - i=%d + 5=5 + n=%d = %d\n", p[i+3], i, n, i+5+n);
           if (i + 5 + n < 2048)
           {
@@ -102,6 +104,7 @@ printf("ID=%u - i=%d + 5=5 + n=%d = %d\n", p[i+3], i, n, i+5+n);
 
           printf(" lastTWord=%lu\n", lastWord);
         }
+
         i += 5 + n - 1;	// -1 bacause +1 will happen as loop increments.
       }
     }
@@ -115,7 +118,7 @@ printf("ID=%u - i=%d + 5=5 + n=%d = %d\n", p[i+3], i, n, i+5+n);
 int moreData(FILE *infp, unsigned char buffer[], OAP::P2d_hdr &oapHdr, FILE *hkfp)
 {
   if (verbose)
-    printf("  moreData\n");
+    printf("---  moreData  ---\n");
 
   int rc = fread(buffer, 4114, 1, infp);
 
@@ -126,7 +129,6 @@ int moreData(FILE *infp, unsigned char buffer[], OAP::P2d_hdr &oapHdr, FILE *hkf
   struct imageBuf *tds = (struct imageBuf *)buffer;
   size_t pCnt;
   uint64_t lastTimeWord = findLastTimeWord( (uint16_t *)tds->rdf, &pCnt );
-
 
   if (verbose)
     printf("%d/%02d/%02d %02d:%02d:%02d.%03d - pCnt=%lu - 0x%04x\n", tds->year, tds->month,
