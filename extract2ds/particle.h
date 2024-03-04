@@ -54,8 +54,23 @@ private:
 
   size_t _pos;		// write position into output buffer.
   size_t _nBits;
+
+  // Previous particle ID or seq number.  For determining multi-packet particles
   uint16_t _prevID;
-  uint64_t _thisTimeWord, _lastTimeWord;
+  // Timing word of current particle we are processing
+  uint64_t _thisTimeWord;
+  // Last timing word in the _compressedBuffer
+  uint64_t _lastTimeWord;
+
+  // positions in output buffer of first and last timing words...so can add padding
+  // to deltaT of leading and trailing slices.
+  int  _posFTW, _posLTW;
+
+
+  // Previous and this time stamps by datasystem.  Providing bounding start
+  // and end time records we generate.
+  time_t _prevDAQtime, _thisDAQtime;
+  int _prevMsec, _thisMsec;
 
   size_t _resolution;
 

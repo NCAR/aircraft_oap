@@ -45,8 +45,8 @@ bool cksum(const uint16_t buff[], int nWords, uint16_t ckSum)
   for (int i = 0; i < nWords; ++i)
     sum += buff[i];
 
-  if (sum != ckSum)
-    printf("Checksum mis-match %u %u, record #%d\n", sum, ckSum, recordCnt);
+//  if (sum != ckSum)
+//    printf("Checksum mis-match %u %u, record #%d\n", sum, ckSum, recordCnt);
 
   return sum == ckSum;
 }
@@ -102,7 +102,7 @@ printf("ID=%u - i=%d + 5=5 + n=%d = %d\n", p[i+3], i, n, i+5+n);
               lastWord = ((uint32_t *)&p[i+5+n-2])[0];
           }
 
-          printf(" lastTWord=%lu\n", lastWord);
+          printf(" lastTWord=%10lu\n", lastWord);
         }
 
         i += 5 + n - 1;	// -1 bacause +1 will happen as loop increments.
