@@ -31,10 +31,6 @@ Config cfg;
 int  recordCnt = 0;
 bool verbose = false;
 
-const uint16_t SyncWord = 0x3253;	// Particle sync word '2S'.
-const uint16_t MaskData = 0x4d4b;	// MK Flush Buffer.
-const uint16_t FlushWord = 0x4e4c;	// NL Flush Buffer.
-const uint16_t HousekeepWord = 0x484b;	// HK Flush Buffer.
 
 Particle *probe[2] = { 0, 0 };
 
@@ -49,17 +45,80 @@ bool cksum(const uint16_t buff[], int nWords, uint16_t ckSum)
   for (int i = 0; i < nWords; ++i)
     sum += buff[i];
 
-  if (sum != ckSum)
-    printf("Checksum mis-match %u %u, record #%d\n", sum, ckSum, recordCnt);
+//  if (sum != ckSum)
+//    printf("Checksum mis-match %u %u, record #%d\n", sum, ckSum, recordCnt);
 
   return sum == ckSum;
+}
+
+
+uint64_t findLastTimeWord(uint16_t *p, size_t *pCnt)
+{
+  *pCnt = 0;
+  uint64_t lastWord = 0;
+
+  for (int i = 0; i < 2048; ++i)
+  {
+    if (p[i] == FlushWord)
+      break;
+
+    if (p[i] == HousekeepWord) {
+      i += 52;	// Type32 housekeep size.  Type48 is in separate file.
+      continue;
+    }
+
+    if (p[i] == MaskData) {
+      i += 22;	// Type32 mask packet size.
+      continue;
+    }
+
+
+    if (p[i] == SyncWord)
+    {
+      uint16_t n = 0, test = 0;
+      if (p[i+1] > 0) { ++test; n = p[i+1]; }
+      if (p[i+2] > 0) { ++test; n = p[i+2]; }
+
+      if (test != 1)
+        { printf("bad particle = 0\n"); continue; }
+
+      (*pCnt)++;
+
+
+      if (i < 2043)
+      {
+        bool timingWord = !(n & 0x1000);
+        n &= 0x0fff;
+
+        // grab timingWord.
+        if (timingWord)
+        {
+printf("ID=%u - i=%d + 5=5 + n=%d = %d\n", p[i+3], i, n, i+5+n);
+          if (i + 5 + n < 2048)
+          {
+            if (cfg.DataFormat() == Type48)
+              lastWord = ((uint64_t *)&p[i+5+n-3])[0] & Type48_TimingWordMask;
+            else
+              lastWord = ((uint32_t *)&p[i+5+n-2])[0];
+          }
+
+          printf(" lastTWord=%10lu\n", lastWord);
+        }
+
+        i += 5 + n - 1;	// -1 bacause +1 will happen as loop increments.
+      }
+    }
+    else printf("skipping %d - 0x%04x\n", i, p[i]);
+  }
+
+  return(lastWord);
 }
 
 
 int moreData(FILE *infp, unsigned char buffer[], OAP::P2d_hdr &oapHdr, FILE *hkfp)
 {
   if (verbose)
-    printf("  moreData\n");
+    printf("---  moreData  ---\n");
 
   int rc = fread(buffer, 4114, 1, infp);
 
@@ -68,18 +127,11 @@ int moreData(FILE *infp, unsigned char buffer[], OAP::P2d_hdr &oapHdr, FILE *hkf
 
   ++recordCnt;
   struct imageBuf *tds = (struct imageBuf *)buffer;
-  int pCnt = 0;
-
-  for (int i = 0; i < 2048; ++i)
-  {
-    if (((uint16_t *)tds->rdf)[i] == SyncWord)
-    {
-      ++pCnt;
-    }
-  }
+  size_t pCnt;
+  uint64_t lastTimeWord = findLastTimeWord( (uint16_t *)tds->rdf, &pCnt );
 
   if (verbose)
-    printf("%d/%02d/%02d %02d:%02d:%02d.%03d - pCnt=%d - 0x%04x\n", tds->year, tds->month,
+    printf("%d/%02d/%02d %02d:%02d:%02d.%03d - pCnt=%lu - 0x%04x\n", tds->year, tds->month,
 	tds->day, tds->hour, tds->minute, tds->second, tds->msecond,
 	pCnt, ((uint16_t *)tds->rdf)[0]);
 
@@ -98,8 +150,8 @@ int moreData(FILE *infp, unsigned char buffer[], OAP::P2d_hdr &oapHdr, FILE *hkf
 
   oapHdr.overld = 0;
 
-  if (probe[0]) probe[0]->setHeader(oapHdr);
-  if (probe[1]) probe[1]->setHeader(oapHdr);
+  if (probe[0]) probe[0]->setHeader(oapHdr, lastTimeWord);
+  if (probe[1]) probe[1]->setHeader(oapHdr, lastTimeWord);
 
   return rc;
 }
@@ -116,11 +168,11 @@ void processImageFile(FILE *infp, FILE *hkfp, FILE *outfp)
   {
     if (cfg.Type().compare("F2DS") == 0)
     {
-      probe[0] = new Particle("SV", outfp);
-      probe[1] = new Particle("SH", outfp);
+      probe[0] = new Particle("SV", outfp, &cfg);
+      probe[1] = new Particle("SH", outfp, &cfg);
     }
     else
-      probe[0] = new Particle("H1", outfp);
+      probe[0] = new Particle("H1", outfp, &cfg);
   }
 
   struct imageBuf *tds = (struct imageBuf *)buffer;
@@ -165,7 +217,7 @@ void processImageFile(FILE *infp, FILE *hkfp, FILE *outfp)
         j += 22;
       }
       else
-      if (wp[j] == HousekeepWord)	// HK buffer
+      if (wp[j] == HousekeepWord)	// HK buffer - this should only happen with Type32
       {
         if (j + 50 < 2048)
         {
@@ -267,11 +319,12 @@ int findHouseKeeping48(FILE *hkfp, imageBuf *imgRec)
 
   while (fread(buffer, 18, 1, hkfp) == 1)
   {
+/*
     if (verbose)
-      printf("%d/%02d/%02d %02d:%02d:%02d.%03d - 0x%04x len=%d\n", hkb->year,
+      printf("HK %d/%02d/%02d %02d:%02d:%02d.%03d - 0x%04x len=%d\n", hkb->year,
 	hkb->month, hkb->day, hkb->hour, hkb->minute, hkb->second, hkb->msecond,
 	((uint16_t *)&hkb->rdf)[0], ((uint16_t *)&hkb->rdf)[1]);
-
+*/
 
     switch (((uint16_t *)&hkb->rdf)[0])
     {

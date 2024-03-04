@@ -11,6 +11,7 @@ COPYRIGHT:	University Corporation for Atmospheric Research, 2023
 #include <cstdio>
 
 
+
 /* -------------------------------------------------------------------- */
 Config::Config() : _code("SH"), _type("F2DS"), _timeOffset(0), _storeCompressed(false), _resolution(10), _nDiodes(128), _clockFreq(20), _waveLength(785)
 
@@ -31,6 +32,7 @@ void Config::SetType(std::string s)
     _nDiodes = 128;
     _clockFreq = 20;
     _waveLength = 785;
+    _dataFormat = Type48;
   }
 
   if (_type.compare("HVPS") == 0)
@@ -40,6 +42,7 @@ void Config::SetType(std::string s)
     _nDiodes = 128;
     _clockFreq = 20;
     _waveLength = 785;
+    _dataFormat = Type32;
   }
 
 }

@@ -4,17 +4,18 @@
 #include <cctype>
 #include <arpa/inet.h>
 
-
+#include "config.h"
 #include "particle.h"
-#include "spec.h"
 
 
+// These are output SyncWords as opposed to input SyncWord in extract2ds.cc
 const unsigned char Particle::_syncString[] = { 0xAA, 0xAA, 0xAA };
-const unsigned long Particle::_syncWord = 0xAAAAAA0000000000;
+const uint64_t Particle::_syncWord = 0xAAAAAA0000000000;
 const size_t Particle::_nDiodes = 128;
 
 
-Particle::Particle(const char code[], FILE *out) : _out_fp(out), _pos(0), _nBits(0), _prevID(0), _firstTimeWord(0), _lastTimeWord(0)
+
+Particle::Particle(const char code[], FILE *out, Config *cfg) : _config(cfg), _out_fp(out), _pos(0), _nBits(0), _prevID(0), _lastTimeWord(0)
 {
   memset(&_output, 0, sizeof(OAP::P2d_hdr));
   memset(_output.data, 0xFF, OAP::OAP_BUFF_SIZE);
@@ -29,38 +30,71 @@ Particle::~Particle()
 }
 
 /* ------------------------------------------------------------------------ */
-void Particle::setHeader(const OAP::P2d_hdr &hdr)
+void Particle::setHeader(const OAP::P2d_hdr &hdr, uint64_t ltw)
 {
+printf("setHeader --- %d/%02d/%02d %02d:%02d:%02d.%03d\n", ntohs(_compressedTime.year),
+	ntohs(_compressedTime.month), ntohs(_compressedTime.day), ntohs(_compressedTime.hour),
+	ntohs(_compressedTime.minute), ntohs(_compressedTime.second), ntohs(_compressedTime.msec));
+
+  _prevDAQtime = _thisDAQtime;
+  _prevMsec = _thisMsec;
+
+  memcpy(&_compressedTime, &hdr, sizeof(OAP::P2d_hdr));
   memcpy(&_output, &hdr, sizeof(OAP::P2d_hdr));
-  _firstTimeWord = _lastTimeWord = 0;
+  _lastTimeWord = ltw;	// last timing word in the new record
+
+
+  struct tm tor;
+  tor.tm_year = ntohs(_compressedTime.year);
+  tor.tm_mon = ntohs(_compressedTime.month)-1;
+  tor.tm_mday = ntohs(_compressedTime.day);
+  tor.tm_hour = ntohs(_compressedTime.hour);
+  tor.tm_min = ntohs(_compressedTime.minute);
+  tor.tm_sec = ntohs(_compressedTime.second);
+  _thisDAQtime = mktime(&tor);
+  _thisMsec = ntohs(_compressedTime.msec);
 }
 
 /* ------------------------------------------------------------------------ */
 void Particle::fixupTimeStamp()
 {
-  unsigned long deltaT = (_lastTimeWord - _firstTimeWord) / 20000;	// milliseconds
+printf("\n");
+//  double freq = (double)_config->Resolution() / (1.0e+6 * ntohs(_compressedTime.tas));	// seconds
+  double freq = (double)_config->Resolution() / (1.0e+3 * ntohs(_compressedTime.tas));	// msec
+//  double freq = (double)_config->Resolution() / (ntohs(_compressedTime.tas));	// usec
 
-  struct tm tor, *tor_out;
-  time_t thisT;
-  uint16_t msec;
 
-  tor.tm_year = ntohs(_output.year);
-  tor.tm_mon = ntohs(_output.month)-1;
-  tor.tm_mday = ntohs(_output.day);
-  tor.tm_hour = ntohs(_output.hour);
-  tor.tm_min = ntohs(_output.minute);
-  tor.tm_sec = ntohs(_output.second);
-  msec = ntohs(_output.msec);
+  uint64_t deltaT = _lastTimeWord;
 
-//printf("  %04u/%02u/%02u %02u:%02u:%02u.%03u - %lu\n", tor.tm_year, tor.tm_mon, tor.tm_mday, tor.tm_hour, tor.tm_min, tor.tm_sec, msec, deltaT);
+  if (_lastTimeWord < _thisTimeWord && _config->DataFormat() == Type32)
+  {
+    deltaT += 4294967295;	// Rolled over
+    printf("tWord rollover = %10lu %10lu %lu\n", _thisTimeWord, _lastTimeWord, deltaT);
+  }
 
-  msec += deltaT;
-  thisT = mktime(&tor);
-  thisT += (int)(msec / 1000);
-  msec = msec % 1000;
-  tor_out = gmtime(&thisT);
+  deltaT -= _thisTimeWord;
+  deltaT += _posFTW + _posLTW;	// add leading and trailing slices before/after timing words
 
-//printf("  %04u/%02u/%02u %02u:%02u:%02u.%03u\n", tor_out->tm_year, tor_out->tm_mon, tor_out->tm_mday, tor_out->tm_hour, tor_out->tm_min, tor_out->tm_sec, msec);
+
+  time_t tm_out = _thisDAQtime;
+  int msec = (int)(freq * deltaT);
+
+  if (msec <= _thisMsec)
+    msec = _thisMsec - msec;
+  else
+  {
+    msec -= _thisMsec;
+    tm_out = _thisDAQtime - 1 - (msec / 1000);
+    msec = 1000 - (msec % 1000);
+  }
+
+//printf("fix in %04u/%02u/%02u %02u:%02u:%02u.%03u - %lu\n", tor.tm_year, tor.tm_mon, tor.tm_mday, tor.tm_hour, tor.tm_min, tor.tm_sec, msec, deltaT);
+
+  struct tm *tor_out = gmtime(&tm_out);
+printf("fix time_t = %lu.%03d %lu.%03d %lu.%03d\n", _prevDAQtime, _prevMsec, tm_out, msec, _thisDAQtime, _thisMsec);
+printf("fix tWord = %10lu %10lu %d\n", _thisTimeWord, _lastTimeWord, msec );
+
+printf("fix io %04u/%02u/%02u %02u:%02u:%02u.%03u\n", tor_out->tm_year, tor_out->tm_mon, tor_out->tm_mday, tor_out->tm_hour, tor_out->tm_min, tor_out->tm_sec, msec);
 
   _output.year = htons(tor_out->tm_year);
   _output.month = htons(tor_out->tm_mon+1);
@@ -136,6 +170,7 @@ if (_output.data != _uncompressed) printf("writeBuff: un != out %p - %p !!!!!!!\
 
   // reset buffer.
   _pos = 0;
+  _posFTW = _posLTW = 0;
   memset(_output.data, 0xFF, OAP::OAP_BUFF_SIZE);
 }
 
@@ -184,8 +219,8 @@ void Particle::processParticle(uint16_t *wp, bool verbose)
   int i, nSlices = wp[nSLICES], nWords, sliceCnt = 0;
 
   uint16_t value, id = wp[PID], clear, shaded;
-  bool timingWord = true;
-
+  bool timingWord = true, oflow = false;
+  if (verbose) printf(" --- processParticle ---\n");
   particleHeaderSanityCheck(wp);
 
   if (verbose)
@@ -194,10 +229,10 @@ void Particle::processParticle(uint16_t *wp, bool verbose)
   if (id > 0)
   {
     if (id == _prevID)
-      printf(" : multi packet particle\n");
+      printf("  : multi packet particle\n");
     else
     if (id != _prevID+1)
-      printf("!!! Non sequential particle ID %c : prev=%d, this=%d !!!\n", _code[1], _prevID, id);
+      printf("Non sequential particle ID %c : prev=%d, this=%d !!!\n", _code[1], _prevID, id);
   }
 
   _prevID = id;
@@ -206,6 +241,7 @@ void Particle::processParticle(uint16_t *wp, bool verbose)
   {
     nWords = wp[V_CHN] & 0x0FFF;
     timingWord = !(wp[V_CHN] & 0x1000);
+    oflow = wp[V_CHN] & 0x8000;
 if (verbose) printf("\nStart particle V, pos=%lu\n", _pos);
 if (nWords == 0) printf("assert V nWords == 0, no good\n");
   }
@@ -213,6 +249,7 @@ if (nWords == 0) printf("assert V nWords == 0, no good\n");
   {
     nWords = wp[H_CHN] & 0x0FFF;
     timingWord = !(wp[H_CHN] & 0x1000);
+    oflow = wp[H_CHN] & 0x8000;
 if (verbose) printf("\nStart particle H, pos=%lu\n", _pos);
 if (nWords == 0) printf("assert H nWords == 0, no good\n");
   }
@@ -353,26 +390,32 @@ if (_output.data != _uncompressed) printf(" pp3.2: un != out %p - %p !!!!!!!\n",
 
   finishSlice();
 
+  if (_posFTW == 0)
+    _posFTW = _pos / 16;
+
   if (timingWord)
   {
-    unsigned long tWord = ((unsigned long *)&wp[nWords])[0] & 0x0000FFFFFFFFFFFF;
+    uint64_t tWord;
+    if (_config->DataFormat() == Type48)
+      tWord = ((uint64_t *)&wp[nWords])[0] & Type48_TimingWordMask;
+    else
+      tWord = ((uint32_t *)&wp[nWords])[0];
 
-    if (verbose)
-      printf("\n  Timing = %lu, deltaT=%lu\n", tWord, tWord - _lastTimeWord);
-    _lastTimeWord = tWord;
-
-    if (_firstTimeWord == 0)
-      _firstTimeWord = tWord;
+//    if (verbose)
+      printf("\n   Timing = %10lu, deltaT=%lu\n", tWord, tWord - _lastTimeWord);
+    _thisTimeWord = tWord;
 
     memcpy(&_uncompressed[_pos+8], (unsigned char*)&_syncWord, 8);
     memcpy(&_uncompressed[_pos], (unsigned char*)&tWord, 8);
     _pos += 16;
   }
   else
-    printf("\n  No timing word\n");
+    if (verbose) printf("\n   No timing word\n");
+
+  _posLTW = (4096 - _pos) / 16;
 
   if (verbose)
-    printf(" end - %d/%d words, sliceCnt = %d/%d\n\n", i, nWords, sliceCnt, nSlices);
+    printf("   end - %d/%d words, sliceCnt = %d/%d\n\n", i, nWords, sliceCnt, nSlices);
 
 if (_output.data != _uncompressed) printf(" pp5: un != out %p - %p !!!!!!!\n", _output.data, _uncompressed);
 }
