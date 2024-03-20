@@ -93,16 +93,16 @@ uint64_t findLastTimeWord(uint16_t *p, size_t *pCnt)
         // grab timingWord.
         if (timingWord)
         {
-printf("ID=%u - i=%d + 5=5 + n=%d = %d\n", p[i+3], i, n, i+5+n);
+//printf("ID=%u - i=%d + 5=5 + n=%d = %d\n", p[i+3], i, n, i+5+n);
           if (i + 5 + n < 2048)
           {
             if (cfg.DataFormat() == Type48)
               lastWord = ((uint64_t *)&p[i+5+n-3])[0] & Type48_TimingWordMask;
             else
-              lastWord = ((uint32_t *)&p[i+5+n-2])[0];
+              lastWord = ((uint64_t)p[i+5+n-2] << 16) + p[i+5+n-1];
           }
 
-          printf(" lastTWord=%10lu\n", lastWord);
+//          printf(" lastTWord=%10lu\n", lastWord);
         }
 
         i += 5 + n - 1;	// -1 bacause +1 will happen as loop increments.

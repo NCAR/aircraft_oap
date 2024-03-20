@@ -32,9 +32,9 @@ Particle::~Particle()
 /* ------------------------------------------------------------------------ */
 void Particle::setHeader(const OAP::P2d_hdr &hdr, uint64_t ltw)
 {
-printf("setHeader --- %d/%02d/%02d %02d:%02d:%02d.%03d\n", ntohs(_compressedTime.year),
-	ntohs(_compressedTime.month), ntohs(_compressedTime.day), ntohs(_compressedTime.hour),
-	ntohs(_compressedTime.minute), ntohs(_compressedTime.second), ntohs(_compressedTime.msec));
+//  printf("setHeader --- %d/%02d/%02d %02d:%02d:%02d.%03d\n", ntohs(_compressedTime.year),
+//	ntohs(_compressedTime.month), ntohs(_compressedTime.day), ntohs(_compressedTime.hour),
+//	ntohs(_compressedTime.minute), ntohs(_compressedTime.second), ntohs(_compressedTime.msec));
 
   _prevDAQtime = _thisDAQtime;
   _prevMsec = _thisMsec;
@@ -58,7 +58,6 @@ printf("setHeader --- %d/%02d/%02d %02d:%02d:%02d.%03d\n", ntohs(_compressedTime
 /* ------------------------------------------------------------------------ */
 void Particle::fixupTimeStamp()
 {
-printf("\n");
 //  double freq = (double)_config->Resolution() / (1.0e+6 * ntohs(_compressedTime.tas));	// seconds
   double freq = (double)_config->Resolution() / (1.0e+3 * ntohs(_compressedTime.tas));	// msec
 //  double freq = (double)_config->Resolution() / (ntohs(_compressedTime.tas));	// usec
@@ -91,10 +90,10 @@ printf("\n");
 //printf("fix in %04u/%02u/%02u %02u:%02u:%02u.%03u - %lu\n", tor.tm_year, tor.tm_mon, tor.tm_mday, tor.tm_hour, tor.tm_min, tor.tm_sec, msec, deltaT);
 
   struct tm *tor_out = gmtime(&tm_out);
-printf("fix time_t = %lu.%03d %lu.%03d %lu.%03d\n", _prevDAQtime, _prevMsec, tm_out, msec, _thisDAQtime, _thisMsec);
-printf("fix tWord = %10lu %10lu %d\n", _thisTimeWord, _lastTimeWord, msec );
+//printf("fix time_t = %lu.%03d %lu.%03d %lu.%03d\n", _prevDAQtime, _prevMsec, tm_out, msec, _thisDAQtime, _thisMsec);
+//printf("fix tWord = %10lu %10lu %d\n", _thisTimeWord, _lastTimeWord, msec );
 
-printf("fix io %04u/%02u/%02u %02u:%02u:%02u.%03u\n", tor_out->tm_year, tor_out->tm_mon, tor_out->tm_mday, tor_out->tm_hour, tor_out->tm_min, tor_out->tm_sec, msec);
+//printf("fix io %04u/%02u/%02u %02u:%02u:%02u.%03u\n", tor_out->tm_year, tor_out->tm_mon, tor_out->tm_mday, tor_out->tm_hour, tor_out->tm_min, tor_out->tm_sec, msec);
 
   _output.year = htons(tor_out->tm_year);
   _output.month = htons(tor_out->tm_mon+1);
@@ -399,10 +398,10 @@ if (_output.data != _uncompressed) printf(" pp3.2: un != out %p - %p !!!!!!!\n",
     if (_config->DataFormat() == Type48)
       tWord = ((uint64_t *)&wp[nWords])[0] & Type48_TimingWordMask;
     else
-      tWord = ((uint32_t *)&wp[nWords])[0];
+      tWord = ((uint64_t)wp[nWords] << 16) + wp[nWords+1];
 
-//    if (verbose)
-      printf("\n   Timing = %10lu, deltaT=%lu\n", tWord, tWord - _lastTimeWord);
+    if (verbose)
+      printf("\n   Timing = %10lu, deltaT=%lu\n", tWord, (tWord - _lastTimeWord));
     _thisTimeWord = tWord;
 
     memcpy(&_uncompressed[_pos+8], (unsigned char*)&_syncWord, 8);
