@@ -662,10 +662,10 @@ int process2d(Config & cfg, netCDF & ncfile, ProbeInfo & probe)
   ifstream input_file;
   string line;
   int slice_count=0;
-  unsigned long long slice, firsttimeline=0, lasttimeline=0, timeline, difftimeline;
-  double lastbuffertime, buffertime = 0, nextit = 0;
+  uint64_t slice, firsttimeline=0, lasttimeline=0, timeline, difftimeline;
+  double lastbuffertime, buffertime = 0, nextit = 0, freq;
   bool firsttimeflag = true;
-  float wc = 1.0;
+  float wc = 1.0, tas = 0.1;
   long last_time1hz=0, itime=0, iit;
   Particle particle;
   vector<Particle> particle_stack;
@@ -806,7 +806,7 @@ int process2d(Config & cfg, netCDF & ncfile, ProbeInfo & probe)
         bool syncWord = false;
         bool dofReject = false;
 
-        if (probetype == '3' || probetype == 'S')		// 3V-CPI / 2D-S
+        if (probetype == '3' || probetype == 'S' || probetype == 'H')	// SPEC
         {
            slice = *(unsigned long long *)&image_buff[islice*bytesPerSlice];
 
@@ -851,15 +851,26 @@ int process2d(Config & cfg, netCDF & ncfile, ProbeInfo & probe)
 
            // Look for negative interarrival time, set to zero instead
            if (timeline < firsttimeline) difftimeline = 0;
-           else difftimeline=timeline-firsttimeline;
+           else difftimeline = timeline - firsttimeline;
+
+           freq = probe.resolution / (1.0e6 * tas);
+           if (probe.clockType == ProbeInfo::FIXED)
+             difftimeline /= probe.clockMhz;
+           else
+             difftimeline *= freq;
 
            // Process the roi
-           long time1hz = min((long)(lastbuffertime + (difftimeline / probe.clockMhz)), (long)buffertime);
+           long time1hz = min((long)(lastbuffertime + difftimeline), (long)buffertime);
 
            if (time1hz >= cfg.starttime) {
-              particle=findsize(roi, slice_count, probe.nDiodes, probe.resolution, cfg.smethod);
-              particle.holearea=fillholes2(roi, slice_count, probe.nDiodes);
-              particle.inttime=(timeline - lasttimeline) / probe.clockMhz;
+              particle = findsize(roi, slice_count, probe.nDiodes, probe.resolution, cfg.smethod);
+              particle.holearea = fillholes2(roi, slice_count, probe.nDiodes);
+              particle.inttime = timeline - lasttimeline;
+              if (probe.clockType == ProbeInfo::FIXED)
+                particle.inttime /= probe.clockMhz;
+              else
+                particle.inttime *= freq;
+
               particle.time1hz=time1hz;
               particle.dofReject = dofReject;
 
@@ -885,7 +896,7 @@ int process2d(Config & cfg, netCDF & ncfile, ProbeInfo & probe)
               // Make sure particles are in correct time range
               if (itime >= 0){
                  if (ncfile.hasTASX() == false)
-                   data.tas[itime]=((float)ntohs(buffer.tas));
+                   tas = data.tas[itime]=((float)ntohs(buffer.tas));
 
                  //Fill interarrival time array with all particles
 //                 for (int i=0; i<particle_stack.size(); i++){
@@ -1369,6 +1380,7 @@ void ParseHeader(ifstream & input_file, Config & cfg, vector<ProbeInfo> & probe_
     if (line.find("Fast2D") != string::npos ||	// Found a line describing a FAST2D probe
         line.find("CIP") != string::npos ||	// or a DMT CIP
         line.find("2DS") != string::npos ||	// or a SPEC 2DS
+        line.find("HVPS") != string::npos ||	// or a SPEC HVPS
         line.find("3V-CPI") != string::npos)	// or a SPEC 3V-CPI
     {
       int ndiodes = atoi(extractAttribute(line, "nDiodes").c_str());

@@ -24,18 +24,21 @@
 class ProbeInfo
 {
 public:
-  enum ProbeType { UNKNOWN, PMS2D, HVPS, GREYSCALE, FAST2D, CIP };
+  enum ProbeType { UNKNOWN, PMS2D, FAST2D, F2DS, HVPS, GREYSCALE, CIP };
+  enum ClockType { FIXED, TAS };
 
   ProbeInfo(std::string tp, std::string new_id, std::string sn, int ndiodes, float res,
 		std::string sfx, int binoffset, int numbins)
 
   : type(tp), id(new_id), serialNumber(sn), suffix(sfx), nDiodes(ndiodes), resolution(res),
 	numBins(numbins), firstBin(binoffset), lastBin(numbins), armWidth(6.1),
-	dof_const(2.37), clockMhz(12.0e+06), dofMask(0x01), rle(false)
+	dof_const(2.37), clockMhz(1.0), dofMask(0x01), rle(false), clockType(TAS)
   {
 
     if (type.find("Fast2D") != std::string::npos)
     {
+      clockType = FIXED;
+      clockMhz = 12.0e+06;
       timingMask = 0x000000ffffffffffULL;
 
       if (type.find("_v2") != std::string::npos)
@@ -68,14 +71,15 @@ public:
     if (id[0] == 'H')		// HVPS
     {
       armWidth = 16.25;
-      dof_const = 8.0;
+      dof_const = 5.13;
       clockMhz = 20.0e+06;
-      timingMask = 0x0000ffffffffffffULL;
+      timingMask = 0x00000000ffffffffULL;
     }
 
     if (type.find("CIP") != std::string::npos ||
-        type.find("PIP") != std::string::npos)
+        type.find("PIP") != std::string::npos)	// DMT CIP/PIP
     {
+      clockType = FIXED;
       clockMhz = 1.0e+06;
       rle = true;
       armWidth = 10.0;
@@ -109,6 +113,7 @@ public:
   unsigned long long timingMask;
   unsigned char dofMask;// Mask for dofReject flag.  CIP/PIP, and Fast2D will use.
   bool rle;		// Data buffers are Run Length Encoded.  CIP/PIP are.
+  ClockType clockType;	// Timing words use fixed clock or tas based frequency.
 
   std::vector<float> bin_endpoints;
   std::vector<float> bin_midpoints;
