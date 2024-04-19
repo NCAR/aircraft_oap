@@ -338,6 +338,8 @@ NcVar *netCDF::addVariable(string& varname, string& serialNumber)
   NcVar *var;
 
   const char *units = VarDB_GetUnits(varname.c_str());
+  const char *std_name = VarDB_GetStandardNameName(varname.c_str());
+
   // Make an attempt at units if VarDB returned 'Unk'.
   if (strcmp(units, "Unk") == 0)
   {
@@ -354,6 +356,8 @@ NcVar *netCDF::addVariable(string& varname, string& serialNumber)
       var->add_att("_FillValue", (float)(-32767.0));
       var->add_att("units", units);
       var->add_att("long_name", VarDB_GetTitle(varname.c_str()));
+      if (strcmp(std_name, "None"))
+        var->add_att("standard_name", std_name);
       var->add_att("Category", "PMS Probe");
       var->add_att("SerialNumber", serialNumber.c_str());
       var->add_att("DataQuality", "Good");
