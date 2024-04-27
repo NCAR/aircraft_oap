@@ -410,7 +410,7 @@ int processArgs(int argc, char *argv[])
 {
   int i;
 
-  char *p = strstr(argv[argc-1], ".");
+  char *p = strrchr(argv[argc-1], '.');
   if (p)	// ...and this should equal HVPS or F2DS
     cfg.SetType(p+1);
 
