@@ -31,12 +31,10 @@ Config cfg;
 int  recordCnt = 0;
 bool verbose = false;
 
-const uint16_t SyncWord = 0x3253;       // Particle sync word.
-const uint16_t FlushWord = 0x4e4c;      // NL Flush Buffer.
 
 Particle *probe[2] = { 0, 0 };
 
-int findHouseKeeping(FILE *hkfp, imageBuf *imgRec);
+int findHouseKeeping48(FILE *hkfp, imageBuf *imgRec);
 
 
 
@@ -47,17 +45,80 @@ bool cksum(const uint16_t buff[], int nWords, uint16_t ckSum)
   for (int i = 0; i < nWords; ++i)
     sum += buff[i];
 
-  if (sum != ckSum)
-    printf("Checksum mis-match %u %u\n", sum, ckSum);
+//  if (sum != ckSum)
+//    printf("Checksum mis-match %u %u, record #%d\n", sum, ckSum, recordCnt);
 
   return sum == ckSum;
+}
+
+
+uint64_t findLastTimeWord(uint16_t *p, size_t *pCnt)
+{
+  *pCnt = 0;
+  uint64_t lastWord = 0;
+
+  for (int i = 0; i < 2048; ++i)
+  {
+    if (p[i] == FlushWord)
+      break;
+
+    if (p[i] == HousekeepWord) {
+      i += 52;	// Type32 housekeep size.  Type48 is in separate file.
+      continue;
+    }
+
+    if (p[i] == MaskData) {
+      i += 22;	// Type32 mask packet size.
+      continue;
+    }
+
+
+    if (p[i] == SyncWord)
+    {
+      uint16_t n = 0, test = 0;
+      if (p[i+1] > 0) { ++test; n = p[i+1]; }
+      if (p[i+2] > 0) { ++test; n = p[i+2]; }
+
+      if (test != 1)
+        { printf("bad particle = 0\n"); continue; }
+
+      (*pCnt)++;
+
+
+      if (i < 2043)
+      {
+        bool timingWord = !(n & 0x1000);
+        n &= 0x0fff;
+
+        // grab timingWord.
+        if (timingWord)
+        {
+//printf("ID=%u - i=%d + 5=5 + n=%d = %d\n", p[i+3], i, n, i+5+n);
+          if (i + 5 + n < 2048)
+          {
+            if (cfg.DataFormat() == Type48)
+              lastWord = ((uint64_t *)&p[i+5+n-3])[0] & Type48_TimingWordMask;
+            else
+              lastWord = ((uint64_t)p[i+5+n-2] << 16) + p[i+5+n-1];
+          }
+
+//          printf(" lastTWord=%10lu\n", lastWord);
+        }
+
+        i += 5 + n - 1;	// -1 bacause +1 will happen as loop increments.
+      }
+    }
+    else printf("skipping %d - 0x%04x\n", i, p[i]);
+  }
+
+  return(lastWord);
 }
 
 
 int moreData(FILE *infp, unsigned char buffer[], OAP::P2d_hdr &oapHdr, FILE *hkfp)
 {
   if (verbose)
-    printf("  moreData\n");
+    printf("---  moreData  ---\n");
 
   int rc = fread(buffer, 4114, 1, infp);
 
@@ -66,18 +127,11 @@ int moreData(FILE *infp, unsigned char buffer[], OAP::P2d_hdr &oapHdr, FILE *hkf
 
   ++recordCnt;
   struct imageBuf *tds = (struct imageBuf *)buffer;
-  int pCnt = 0;
-
-  for (int i = 0; i < 2048; ++i)
-  {
-    if (((uint16_t *)tds->rdf)[i] == SyncWord)
-    {
-      ++pCnt;
-    }
-  }
+  size_t pCnt;
+  uint64_t lastTimeWord = findLastTimeWord( (uint16_t *)tds->rdf, &pCnt );
 
   if (verbose)
-    printf("%d/%02d/%02d %02d:%02d:%02d.%03d - pCnt=%d - 0x%04x\n", tds->year, tds->month,
+    printf("%d/%02d/%02d %02d:%02d:%02d.%03d - pCnt=%lu - 0x%04x\n", tds->year, tds->month,
 	tds->day, tds->hour, tds->minute, tds->second, tds->msecond,
 	pCnt, ((uint16_t *)tds->rdf)[0]);
 
@@ -91,11 +145,13 @@ int moreData(FILE *infp, unsigned char buffer[], OAP::P2d_hdr &oapHdr, FILE *hkf
   oapHdr.second = htons(tds->second);
   oapHdr.msec = htons(tds->msecond);
 
-  oapHdr.tas = htons(findHouseKeeping(hkfp, tds));
+  if (hkfp)	// If F2DS - type48
+    oapHdr.tas = htons(findHouseKeeping48(hkfp, tds));
+
   oapHdr.overld = 0;
 
-  probe[0]->setHeader(oapHdr);
-  probe[1]->setHeader(oapHdr);
+  if (probe[0]) probe[0]->setHeader(oapHdr, lastTimeWord);
+  if (probe[1]) probe[1]->setHeader(oapHdr, lastTimeWord);
 
   return rc;
 }
@@ -110,8 +166,13 @@ void processImageFile(FILE *infp, FILE *hkfp, FILE *outfp)
 
   if (probe[0] == 0)
   {
-    probe[0] = new Particle("SH", outfp);
-    probe[1] = new Particle("SV", outfp);
+    if (cfg.Type().compare("F2DS") == 0)
+    {
+      probe[0] = new Particle("SV", outfp, &cfg);
+      probe[1] = new Particle("SH", outfp, &cfg);
+    }
+    else
+      probe[0] = new Particle("H1", outfp, &cfg);
   }
 
   struct imageBuf *tds = (struct imageBuf *)buffer;
@@ -143,12 +204,37 @@ void processImageFile(FILE *infp, FILE *hkfp, FILE *outfp)
       {
 //        printf("%x - %d %d %d %d\n", wp[j], wp[j+1], wp[j+2], wp[j+3], wp[j+4]);
         if (verbose)
-          printf("NL Flush, pos = %d\n", j);
+          printf(" NL Flush, pos = %d\n", j);
         nlCnt++;
-        break;
+        j = 2048;	// bail out, we are done with this record.
       }
+      else
+      if (wp[j] == MaskData)		// MK buffer
+      {
+        // ignoring MK at this time.
+        if (verbose)
+          printf(" MK, pos = %d\n", j);
+        j += 22;
+      }
+      else
+      if (wp[j] == HousekeepWord)	// HK buffer - this should only happen with Type32
+      {
+        if (j + 50 < 2048)
+        {
+          uint32_t tas;
+          float *tasf = (float *)&tas;
+          tas = (uint32_t)(wp[j+49] << 16) | wp[j+50];
+          outHdr.tas = htons((uint16_t)*tasf);
+          if (verbose)
+            printf(" HK found, tas = %5.1f %d\n", *tasf, (int)*tasf);
+        }
+        else
+          if (verbose)
+            printf(" HK : tas location exceeds end of this record\n");
 
-
+        j += 52;
+      }
+      else
       if (wp[j] == SyncWord)		// start particle
       {
         if (verbose)
@@ -199,7 +285,7 @@ void processImageFile(FILE *infp, FILE *hkfp, FILE *outfp)
         imCnt++;
         if (particle[nSLICES] < 256)
         {
-          if (nh)
+          if (nv)
             probe[0]->processParticle((uint16_t *)particle, verbose);
           else
             probe[1]->processParticle((uint16_t *)particle, verbose);
@@ -210,6 +296,9 @@ void processImageFile(FILE *infp, FILE *hkfp, FILE *outfp)
           if (verbose) printf(" not processing particle # %d - n=%d\n", particle[3], particle[4]);
         }
       }
+      else
+        if (verbose)
+          printf("Nothing found, j += 1\n");
     }
   }
 
@@ -219,22 +308,23 @@ void processImageFile(FILE *infp, FILE *hkfp, FILE *outfp)
 }
 
 
-int findHouseKeeping(FILE *hkfp, imageBuf *imgRec)
+int findHouseKeeping48(FILE *hkfp, imageBuf *imgRec)
 {
   char	buffer[1024];
   uint32_t tas;
   float *tasf = (float *)&tas;
 
-  struct hkBuf *hkb = (struct hkBuf *)buffer;
+  struct hk48Buf *hkb = (struct hk48Buf *)buffer;
   struct maskBuf *mkb = (struct maskBuf *)buffer;
 
   while (fread(buffer, 18, 1, hkfp) == 1)
   {
+/*
     if (verbose)
-      printf("%d/%02d/%02d %02d:%02d:%02d.%03d - 0x%04x len=%d\n", hkb->year,
+      printf("HK %d/%02d/%02d %02d:%02d:%02d.%03d - 0x%04x len=%d\n", hkb->year,
 	hkb->month, hkb->day, hkb->hour, hkb->minute, hkb->second, hkb->msecond,
 	((uint16_t *)&hkb->rdf)[0], ((uint16_t *)&hkb->rdf)[1]);
-
+*/
 
     switch (((uint16_t *)&hkb->rdf)[0])
     {
@@ -270,7 +360,7 @@ int findHouseKeeping(FILE *hkfp, imageBuf *imgRec)
     }
   }
 
-  printf("findHouseKeeping: we shouldn't hit this.  EOF?\n");
+  printf("findHouseKeeping48: we shouldn't hit this.  EOF?\n");
 
   return(0);
 }
@@ -295,11 +385,11 @@ void outputXMLheader(FILE *outfp)
   fprintf(outfp, " laserWaveLength=\"%d\"", cfg.WaveLength());
   fprintf(outfp, " serialnumber=\"%s\"", cfg.SerialNumber().c_str());
 //  fprintf(outfp, " suffix=\"%s\"/>\n", cfg.Suffix().c_str());
-  fprintf(outfp, " suffix=\"%s\"/>\n", "_2H");
 
   // Add entry for second array.  2DS is treated as two probes, horizontal and vertical.
   if (cfg.Type().compare("F2DS") == 0)
   {
+    fprintf(outfp, " suffix=\"%s\"/>\n", "_2H");
     fprintf(outfp, "  <probe id=\"SV\"");
     fprintf(outfp, " type=\"%s\"", cfg.Type().c_str());
     fprintf(outfp, " resolution=\"%d\"", cfg.Resolution());
@@ -309,6 +399,8 @@ void outputXMLheader(FILE *outfp)
     fprintf(outfp, " serialnumber=\"%s\"", cfg.SerialNumber().c_str());
     fprintf(outfp, " suffix=\"%s\"/>\n", "_2V");
   }
+  else
+    fprintf(outfp, " suffix=\"%s\"/>\n", "_H1");
 
   fprintf(outfp, "</OAP>\n");
 }
@@ -317,6 +409,10 @@ void outputXMLheader(FILE *outfp)
 int processArgs(int argc, char *argv[])
 {
   int i;
+
+  char *p = strrchr(argv[argc-1], '.');
+  if (p)	// ...and this should equal HVPS or F2DS
+    cfg.SetType(p+1);
 
   for (i = 1; i < argc && argv[i][0] == '-'; ++i)
   {
@@ -374,7 +470,7 @@ int processArgs(int argc, char *argv[])
 
 int main(int argc, char *argv[])
 {
-  FILE *infp, *hkfp, *outfp;
+  FILE *infp, *hkfp = 0, *outfp;
   char fileName[512];
   int indx;
 
@@ -419,12 +515,13 @@ int main(int argc, char *argv[])
 
     printf("\n\nOpening and processing file [%s]\n", fileName);
 
-    strcat(fileName, "HK");
-    if ((hkfp = fopen(fileName, "rb")) == 0)
+    if (cfg.Type() == "F2DS")
     {
-      fprintf(stderr, "Can't open file %s, continuing without housekeeping (for TAS).\n", fileName);
-//      fclose(infp);
-//      continue;
+      strcat(fileName, "HK");
+      if ((hkfp = fopen(fileName, "rb")) == 0)
+      {
+        fprintf(stderr, "Can't open file %s, continuing without housekeeping (for TAS).\n", fileName);
+      }
     }
 
     processImageFile(infp, hkfp, outfp);
