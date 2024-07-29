@@ -298,17 +298,18 @@ void netCDF::CreateDimensions(int numtimes, ProbeInfo &probe, const Config &cfg)
 }
 
 
-NcVar *netCDF::addHistogram(string& varname, string& serialNumber)
+NcVar *netCDF::addHistogram(string& varname, const ProbeInfo &probe, int binoffset)
 {
   NcVar *var;
   NcDim *len_dim = _bindim;
+  char str[128];
 
   const char *units = VarDB_GetUnits(varname.c_str());
   // Make an attempt at units if VarDB returned 'Unk'.
   if (strcmp(units, "Unk") == 0)
   {
     if (varname.compare(0, 3, "A2D") == 0) units = "count";
-    if (varname.compare(0, 3, "C2D") == 0) units = "#/L";
+    if (varname.compare(0, 3, "C2D") == 0) units = "L";
   }
 
   /* Inter-arrival time array has a different histogram length,
@@ -324,10 +325,42 @@ NcVar *netCDF::addHistogram(string& varname, string& serialNumber)
       var->add_att("units", units);
       var->add_att("long_name", VarDB_GetTitle(varname.c_str()));
       var->add_att("Category", "PMS Probe");
-      var->add_att("SerialNumber", serialNumber.c_str());
+      var->add_att("SerialNumber", probe.serialNumber.c_str());
       var->add_att("DataQuality", "Good");
     }
+      return 0;
   }
+
+  if (varname.compare(0, 3, "A2D") == 0) {
+    var->add_att("Resolution", (int)probe.resolution);
+    var->add_att("nDiodes", probe.nDiodes);
+    var->add_att("ResponseTime", (float)0.4);
+    var->add_att("ArmDistance", probe.armWidth * 10);
+  }
+  if (varname.compare(0, 3, "C2D") == 0) {
+    var->add_att("probe_technique", "oap");
+    if (probe.resolution < 100)
+      var->add_att("size_distribution_type", "cloud_drop");
+    else
+      var->add_att("size_distribution_type", "cloud_precipitation");
+    snprintf(str, 128, "2 %c%s TASX", 'A', &varname.c_str()[1]);
+    var->add_att("Dependencies", str);
+    var->add_att("FirstBin", probe.firstBin);
+    var->add_att("LastBin", probe.numBins+binoffset-1);
+    var->add_att("DepthOfField", probe.numBins, &probe.dof[0]);
+    var->add_att("EffectiveAreaWidth", probe.numBins, &probe.eaw[0]);
+    var->add_att("CellSizes", probe.numBins+1, &probe.bin_endpoints[0]);
+    var->add_att("CellSizeUnits", "micrometers");
+    var->add_att("Density", (float)1.0);
+    if (binoffset)
+    {
+      var->add_att("CellSizeNote", "CellSizes are upper bin limits as particle size.");
+      var->add_att("HistogramNote", "Zeroth data bin is an unused legacy placeholder.");
+    }
+    else
+      var->add_att("CellSizeNote", "CellSizes are lower bin limits as particle size.");
+  }
+
   if (var) var->add_att("DateProcessed", dateProcessed().c_str());
 
   return var;
@@ -343,7 +376,7 @@ NcVar *netCDF::addVariable(string& varname, string& serialNumber)
   // Make an attempt at units if VarDB returned 'Unk'.
   if (strcmp(units, "Unk") == 0)
   {
-    if (varname.compare(0, 4, "CONC") == 0) units = "#/L";
+    if (varname.compare(0, 4, "CONC") == 0) units = "L";
     if (varname.compare(0, 4, "PLWC") == 0) units = "g m-3";
     if (varname.compare(0, 4, "DBZ") == 0) units = "dBz";
     if (varname.compare(0, 4, "DBAR") == 0) units = "um";
@@ -369,17 +402,19 @@ NcVar *netCDF::addVariable(string& varname, string& serialNumber)
 
 int netCDF::WriteData(ProbeInfo& probe, ProbeData& data)
 {
-  NcVar *var;
+  NcVar *vconca, *vconcr, *vplwa, *vplwr;
+  NcVar *vdbara, *vdbarr, *vdispa, *vdispr;
+  NcVar *vdbza, *vdbzr, *vreffa, *vreffr;
+  NcVar *vnacca, *vnaccr, *vnreja, *vnrejr;
+  NcVar *vconc100a, *vconc100r, *vconc150a, *vconc150r;
   string varname;
 
   //Total counts and LWC
   varname="CONC2DCA"+probe.suffix; varname[6] = probe.id[0];
-  if ((var = addVariable(varname, probe.serialNumber)))
-    var->put(&data.all.total_conc[0], data.size());
+  vconca = addVariable(varname, probe.serialNumber);
 
   varname="CONC2DCR"+probe.suffix; varname[6] = probe.id[0];
-  if ((var = addVariable(varname, probe.serialNumber)))
-    var->put(&data.round.total_conc[0], data.size());
+  vconcr = addVariable(varname, probe.serialNumber);
 
   /* output 100 micron and 150 micron and above total concentrations.
    * this should be some command line flag at some point.
@@ -387,78 +422,81 @@ int netCDF::WriteData(ProbeInfo& probe, ProbeData& data)
   if (false)
   {
     varname="CONC2DCA100"+probe.suffix; varname[6] = probe.id[0];
-    if ((var = addVariable(varname, probe.serialNumber)))
-      var->put(&data.all.total_conc100[0], data.size());
+    vconc100a = addVariable(varname, probe.serialNumber);
 
     varname="CONC2DCR100"+probe.suffix; varname[6] = probe.id[0];
-    if ((var = addVariable(varname, probe.serialNumber)))
-      var->put(&data.round.total_conc100[0], data.size());
+    vconc100r = addVariable(varname, probe.serialNumber);
 
     varname="CONC2DCA150"+probe.suffix; varname[6] = probe.id[0];
-    if ((var = addVariable(varname, probe.serialNumber)))
-      var->put(&data.all.total_conc150[0], data.size());
+    vconc150a = addVariable(varname, probe.serialNumber);
 
     varname="CONC2DCR150"+probe.suffix; varname[6] = probe.id[0];
-    if ((var = addVariable(varname, probe.serialNumber)))
-      var->put(&data.round.total_conc150[0], data.size());
+    vconc150r = addVariable(varname, probe.serialNumber);
+
+    vconc100a->put(&data.all.total_conc100[0], data.size());
+    vconc100r->put(&data.round.total_conc100[0], data.size());
+    vconc150a->put(&data.all.total_conc150[0], data.size());
+    vconc150r->put(&data.round.total_conc150[0], data.size());
   }
 
   varname="PLWC2DCR"+probe.suffix; varname[6] = probe.id[0];
-  if ((var = addVariable(varname, probe.serialNumber)))
-    var->put(&data.round.lwc[0], data.size());
+  vplwr = addVariable(varname, probe.serialNumber);
 
   varname="PLWC2DCA"+probe.suffix; varname[6] = probe.id[0];
-  if ((var = addVariable(varname, probe.serialNumber)))
-    var->put(&data.all.lwc[0], data.size());
+  vplwa = addVariable(varname, probe.serialNumber);
 
   varname="DBAR2DCR"+probe.suffix; varname[6] = probe.id[0];
-  if ((var = addVariable(varname, probe.serialNumber)))
-    var->put(&data.round.dbar[0], data.size());
+  vdbarr = addVariable(varname, probe.serialNumber);
 
   varname="DBAR2DCA"+probe.suffix; varname[6] = probe.id[0];
-  if ((var = addVariable(varname, probe.serialNumber)))
-    var->put(&data.all.dbar[0], data.size());
+  vdbara = addVariable(varname, probe.serialNumber);
 
   varname="DISP2DCR"+probe.suffix; varname[6] = probe.id[0];
-  if ((var = addVariable(varname, probe.serialNumber)))
-    var->put(&data.round.disp[0], data.size());
+  vdispr = addVariable(varname, probe.serialNumber);
 
   varname="DISP2DCA"+probe.suffix; varname[6] = probe.id[0];
-  if ((var = addVariable(varname, probe.serialNumber)))
-    var->put(&data.all.disp[0], data.size());
+  vdispa = addVariable(varname, probe.serialNumber);
 
   varname="DBZ2DCR"+probe.suffix; varname[5] = probe.id[0];
-  if ((var = addVariable(varname, probe.serialNumber)))
-    var->put(&data.round.dbz[0], data.size());
+  vdbzr = addVariable(varname, probe.serialNumber);
 
   varname="DBZ2DCA"+probe.suffix; varname[5] = probe.id[0];
-  if ((var = addVariable(varname, probe.serialNumber)))
-    var->put(&data.all.dbz[0], data.size());
+  vdbza = addVariable(varname, probe.serialNumber);
 
   varname="REFF2DCR"+probe.suffix; varname[6] = probe.id[0];
-  if ((var = addVariable(varname, probe.serialNumber)))
-    var->put(&data.round.eff_rad[0], data.size());
+  vreffr = addVariable(varname, probe.serialNumber);
 
   varname="REFF2DCA"+probe.suffix; varname[6] = probe.id[0];
-  if ((var = addVariable(varname, probe.serialNumber)))
-    var->put(&data.all.eff_rad[0], data.size());
+  vreffa = addVariable(varname, probe.serialNumber);
 
   varname="NACCEPT2DCR"+probe.suffix; varname[9] = probe.id[0];
-  if ((var = addVariable(varname, probe.serialNumber)))
-    var->put(&data.round.accepted[0], data.size());
+  vnaccr = addVariable(varname, probe.serialNumber);
 
   varname="NACCEPT2DCA"+probe.suffix; varname[9] = probe.id[0];
-  if ((var = addVariable(varname, probe.serialNumber)))
-    var->put(&data.all.accepted[0], data.size());
+  vnacca = addVariable(varname, probe.serialNumber);
 
   varname="NREJECT2DCR"+probe.suffix; varname[9] = probe.id[0];
-  if ((var = addVariable(varname, probe.serialNumber)))
-    var->put(&data.round.rejected[0], data.size());
+  vnrejr = addVariable(varname, probe.serialNumber);
 
   varname="NREJECT2DCA"+probe.suffix; varname[9] = probe.id[0];
-  if ((var = addVariable(varname, probe.serialNumber)))
-    var->put(&data.all.rejected[0], data.size());
+  vnreja = addVariable(varname, probe.serialNumber);
 
+  if (vconca)  vconca->put(&data.all.total_conc[0], data.size());
+  if (vconcr)  vconcr->put(&data.round.total_conc[0], data.size());
+  if (vplwr)   vplwr->put(&data.round.lwc[0], data.size());
+  if (vplwa)   vplwa->put(&data.all.lwc[0], data.size());
+  if (vdbarr)  vdbarr->put(&data.round.dbar[0], data.size());
+  if (vdbara)  vdbara->put(&data.all.dbar[0], data.size());
+  if (vdispr)  vdispr->put(&data.round.disp[0], data.size());
+  if (vdispa)  vdispa->put(&data.all.disp[0], data.size());
+  if (vdbzr)   vdbzr->put(&data.round.dbz[0], data.size());
+  if (vdbza)   vdbza->put(&data.all.dbz[0], data.size());
+  if (vreffr)  vreffr->put(&data.round.eff_rad[0], data.size());
+  if (vreffa)  vreffa->put(&data.all.eff_rad[0], data.size());
+  if (vnaccr)  vnaccr->put(&data.round.accepted[0], data.size());
+  if (vnacca)  vnacca->put(&data.all.accepted[0], data.size());
+  if (vnrejr)  vnrejr->put(&data.round.rejected[0], data.size());
+  if (vnreja)  vnreja->put(&data.all.rejected[0], data.size());
 
   /* These variables are only output when generating a stand alone netCDF file.
    * i.e. They are not ouput if the -o command line is specified and it finds
@@ -466,6 +504,8 @@ int netCDF::WriteData(ProbeInfo& probe, ProbeData& data)
    */
   if (_tas == 0)
   {
+    NcVar *var;
+
     varname="poisson_coeff1"+probe.suffix;
     if ((var = _file->get_var(varname.c_str())) == 0) {
       if (!(var = _file->add_var(varname.c_str(), ncFloat, _timedim))) return netCDF::NC_ERR;

@@ -46,7 +46,7 @@ public:
 */
   NcDim *intbindim() const { return _intbindim; }
 
-  NcVar *addHistogram(std::string& name, std::string& serialNumber);
+  NcVar *addHistogram(std::string& vname, const ProbeInfo& probe, int binoffset);
   NcVar *addVariable(std::string& name, std::string& serialNumber);
 
   static const int NC_ERR = 2;
