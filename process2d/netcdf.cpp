@@ -318,18 +318,15 @@ NcVar *netCDF::addHistogram(string& varname, const ProbeInfo &probe, int binoffs
   if (varname.compare(0, 3, "I2D") == 0) len_dim = _intbindim;
 
   if ((var = _file->get_var(varname.c_str())) == 0)
-  {
-    if ((var = _file->add_var(varname.c_str(), ncFloat, _timedim, _spsdim, len_dim)))
-    {
-      var->add_att("_FillValue", (float)(-32767.0));
-      var->add_att("units", units);
-      var->add_att("long_name", VarDB_GetTitle(varname.c_str()));
-      var->add_att("Category", "PMS Probe");
-      var->add_att("SerialNumber", probe.serialNumber.c_str());
-      var->add_att("DataQuality", "Good");
-    }
+    if ((var = _file->add_var(varname.c_str(), ncFloat, _timedim, _spsdim, len_dim)) == 0)
       return 0;
-  }
+
+  var->add_att("_FillValue", (float)(-32767.0));
+  var->add_att("units", units);
+  var->add_att("long_name", VarDB_GetTitle(varname.c_str()));
+  var->add_att("Category", "PMS Probe");
+  var->add_att("SerialNumber", probe.serialNumber.c_str());
+  var->add_att("DataQuality", "Good");
 
   if (varname.compare(0, 3, "A2D") == 0) {
     var->add_att("Resolution", (int)probe.resolution);
