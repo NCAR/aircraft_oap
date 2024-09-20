@@ -109,6 +109,8 @@ void netCDF::CreateNetCDFfile(const Config & cfg)
   if (_mode != NcFile::Write)
   {
     struct tm st, et;
+    memset(&st, 0, sizeof(struct tm));
+    memset(&et, 0, sizeof(struct tm));
     gmtime_r(&cfg.starttime, &st);
     gmtime_r(&cfg.stoptime, &et);
 
@@ -149,6 +151,7 @@ std::string netCDF::dateProcessed()
   char buffer[64];
 
   t = time(0);
+  memset(&tm, 0, sizeof(struct tm));
   tm = *localtime(&t);
   strftime(buffer, 64, ISO8601_Z, &tm);
 
@@ -193,6 +196,7 @@ void netCDF::readStartEndTime(Config & cfg)
 
     struct tm tm;
     time_t st, et;
+    memset(&tm, 0, sizeof(struct tm));
     strptime(units->as_string(0), frmt, &tm);
     st = mktime(&tm) + v->as_int(0);
     et = mktime(&tm) + v->as_int(var->num_vals()-1);
@@ -258,6 +262,7 @@ NcVar *netCDF::addTimeVariable(const Config & cfg, int size)
   char timeunits[70];
   int year, month, day;
   struct tm st;
+  memset(&st, 0, sizeof(struct tm));
   gmtime_r(&cfg.starttime, &st);
 
   sscanf(cfg.flightDate.c_str(), "%d/%d/%d", &month, &day, &year);

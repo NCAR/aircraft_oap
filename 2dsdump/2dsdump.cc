@@ -68,6 +68,7 @@ float diffTimeStamps(struct recHdr &prevHdr, struct recHdr *thisHdr)
   struct tm tmp;
   double tpf, ttf;
 
+  memset(&tmp, 0, sizeof(struct tm));
   tmp.tm_year = prevHdr.year - 1900;
   tmp.tm_mon = prevHdr.month-1;
   tmp.tm_mday = prevHdr.day;
@@ -76,6 +77,7 @@ float diffTimeStamps(struct recHdr &prevHdr, struct recHdr *thisHdr)
   tmp.tm_sec = prevHdr.second;
   tpf = (double)mktime(&tmp) + (double)prevHdr.msecond / 1000.0;
 
+  memset(&tmp, 0, sizeof(struct tm));
   tmp.tm_year = thisHdr->year - 1900;
   tmp.tm_mon = thisHdr->month-1;
   tmp.tm_mday = thisHdr->day;

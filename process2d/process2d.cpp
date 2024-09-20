@@ -554,6 +554,7 @@ struct tm getTime(const P2d_rec *rec)
 {
   struct tm tm;
 
+  memset(&tm, 0, sizeof(struct tm));
   tm.tm_mday = ntohs(rec->day);
   tm.tm_mon = ntohs(rec->month) - 1;
   tm.tm_year = ntohs(rec->year) - 1900;
@@ -1155,7 +1156,7 @@ int process2d(Config & cfg, netCDF & ncfile, ProbeInfo & probe)
   ncfile.CreateDimensions(numtimes, probe, cfg);
 
   // Define the variables.
-  NcVar *timevar, *var, *a2dr, *a2da, *c2dr, *c2da, *iaep, *i2d;
+  NcVar *timevar, *a2dr, *a2da, *c2dr, *c2da, *iaep, *i2d;
   string varname, eawmethodname;
 
   // Full name for the various effective array width choices

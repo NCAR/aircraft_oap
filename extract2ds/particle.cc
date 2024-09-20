@@ -45,6 +45,7 @@ void Particle::setHeader(const OAP::P2d_hdr &hdr, uint64_t ltw)
 
 
   struct tm tor;
+  memset(&tor, 0, sizeof(struct tm));
   tor.tm_year = ntohs(_compressedTime.year);
   tor.tm_mon = ntohs(_compressedTime.month)-1;
   tor.tm_mday = ntohs(_compressedTime.day);
