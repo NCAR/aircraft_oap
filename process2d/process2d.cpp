@@ -987,7 +987,7 @@ int process2d(Config & cfg, netCDF & ncfile, ProbeInfo & probe)
         else {
            // Found an image slice, make the next slice part of binary image
            int diode = 0;
-           if (probetype == '3' || probetype == 'S')	// 3V-CPI / 2D-S
+           if (probetype == '3' || probetype == 'S' || probetype == 'H')	// SPEC
            {
              for (int byte = bytesPerSlice-1; byte >= 0; byte--)
                for (int bit = 7; bit >= 0; bit--)
