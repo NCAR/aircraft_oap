@@ -241,6 +241,7 @@ void processImageFile(FILE *infp, FILE *hkfp, FILE *outfp)
           printf(" start particle, pos=%d\n", j);
 
         partialPos = 0;
+        memset(particle, 0, sizeof(particle));
         if (j > 2043)	// want particle 5 byte header
         {
           if (verbose) printf(" short header, j=%d\n", j);
@@ -257,6 +258,11 @@ void processImageFile(FILE *infp, FILE *hkfp, FILE *outfp)
         if (nh > 0 && nv > 0)	// One of these must be zero.
         {
           if (verbose) printf(" passing up on syncWord, nh&nv > 0\n");
+          continue;
+        }
+        if (nh > 0 && probe[1] == 0)	// nh should be zero if HVPS
+        {
+          printf(" passing up on syncWord, non-zero nh, shouldn't happen for HVPS\n");
           continue;
         }
 
