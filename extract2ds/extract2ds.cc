@@ -6,7 +6,22 @@ FULL NAME:      Translate SPEC to OAP
 
 DESCRIPTION:    Translate SPEC OAP data to RAF OAP format.
 
-COPYRIGHT:      University Corporation for Atmospheric Research, 2023
+		Loop over input SPEC files, calling processImageFile().
+		processImageFile() then calls Particle class to decompress
+		and write to output file(s).  There is one Particle class
+		for each probe.  A 2DS constitutes two probes.  HVPS is
+		one probe.
+
+		SPEC has two data formats.  Older Type32 and newer Type 48.
+		Biggest difference is the time portion of the timing word
+		increases from 32 bits to 48 bits.  Type 48 can also store
+		uncompressed slices.  And housekeeping is moved to a separate
+		file.
+
+		At the time of this writing, the HVPS is Type32 and the Fast2DS
+		is Type48.
+
+COPYRIGHT:      University Corporation for Atmospheric Research, 2023-24
 -------------------------------------------------------------------------
 */
 
@@ -108,7 +123,7 @@ uint64_t findLastTimeWord(uint16_t *p, size_t *pCnt)
         i += 5 + n - 1;	// -1 bacause +1 will happen as loop increments.
       }
     }
-    else printf("skipping %d - 0x%04x\n", i, p[i]);
+    else if (verbose) printf("skipping %d - 0x%04x\n", i, p[i]);
   }
 
   return(lastWord);
@@ -412,6 +427,22 @@ void outputXMLheader(FILE *outfp)
 }
 
 
+void Usage()
+{
+  fprintf(stderr, "Usage: extract2ds [-v] [-o outfile] input_file(s).F2DS\n");
+  fprintf(stderr, "  -project proj_name\tto set project name.\n");
+  fprintf(stderr, "  -platform tail_num\tto set platform name.\n");
+  fprintf(stderr, "  -flight flight_num\tto set flight number.\n");
+  fprintf(stderr, "  -sn serial_num\tto set probe serial number.\n");
+  fprintf(stderr, "  -offset seconds\tto add a time offset in seconds.\n");
+  fprintf(stderr, "  -o output_file\tto set output file name.\n");
+  fprintf(stderr, "  -a all records, no stuck-bit rejection.\n");
+  fprintf(stderr, "  -h this message.\n");
+  fprintf(stderr, "  -v for verbose.\n");
+  exit(1);
+}
+
+
 int processArgs(int argc, char *argv[])
 {
   int i;
@@ -422,6 +453,14 @@ int processArgs(int argc, char *argv[])
 
   for (i = 1; i < argc && argv[i][0] == '-'; ++i)
   {
+    if (strcmp(argv[i], "-a") == 0)
+    {
+      cfg.SetNoRejection();
+    }
+    if (strncmp(argv[i], "-h", 2) == 0)
+    {
+      Usage();
+    }
     if (strcmp(argv[i], "-v") == 0)
     {
       verbose = true;
@@ -481,17 +520,7 @@ int main(int argc, char *argv[])
   int indx;
 
   if (argc == 1)
-  {
-    fprintf(stderr, "Usage: extract2ds [-v] [-o outfile] input_file(s).F2DS\n");
-    fprintf(stderr, "  -project proj_name\tto set project name.\n");
-    fprintf(stderr, "  -platform tail_num\tto set platform name.\n");
-    fprintf(stderr, "  -flight flight_num\tto set flight number.\n");
-    fprintf(stderr, "  -sn serial_num\tto set probe serial number.\n");
-    fprintf(stderr, "  -offset seconds\tto add a time offset in seconds.\n");
-    fprintf(stderr, "  -o output_file\tto set output file name.\n");
-    fprintf(stderr, "  -v for verbose.\n");
-    return 1;
-  }
+    Usage();
 
 
   indx = processArgs(argc, argv);
