@@ -62,6 +62,10 @@ private:
   // Last timing word in the _compressedBuffer
   uint64_t _lastTimeWord;
 
+  size_t _recordsOutputCnt;
+  size_t _particlesProcessedCnt;
+  size_t _rejectedRecordCnt;
+
   // positions in output buffer of first and last timing words...so can add padding
   // to deltaT of leading and trailing slices.
   int  _posFTW, _posLTW;

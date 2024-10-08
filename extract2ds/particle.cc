@@ -15,7 +15,7 @@ const size_t Particle::_nDiodes = 128;
 
 
 
-Particle::Particle(const char code[], FILE *out, Config *cfg) : _config(cfg), _out_fp(out), _pos(0), _nBits(0), _prevID(0), _lastTimeWord(0)
+Particle::Particle(const char code[], FILE *out, Config *cfg) : _config(cfg), _out_fp(out), _pos(0), _nBits(0), _prevID(0), _lastTimeWord(0), _recordsOutputCnt(0), _particlesProcessedCnt(0), _rejectedRecordCnt(0)
 {
   memset(&_output, 0, sizeof(OAP::P2d_hdr));
   memset(_output.data, 0xFF, OAP::OAP_BUFF_SIZE);
@@ -26,7 +26,8 @@ printf("_uncom=%p\n", _uncompressed);
 
 Particle::~Particle()
 {
-
+  printf("%c%c : %zu records output, %zu particles processed, %zu records rejected\n",
+	_code[0], _code[1], _recordsOutputCnt, _particlesProcessedCnt, _rejectedRecordCnt);
 }
 
 /* ------------------------------------------------------------------------ */
@@ -114,6 +115,9 @@ bool Particle::diodeCountCheck()
   bool rejectRecord = false;
   size_t cnts[_nDiodes], nParticles = 0;
 
+  if (_config->StuckBitRejection() == false)
+    return(rejectRecord);
+
   memset(cnts, 0, sizeof(cnts));
 
   for (size_t i = 0; i < nSlices; ++i)
@@ -144,10 +148,16 @@ bool Particle::diodeCountCheck()
 
 //  if (cnt < _nDiodes * 0.05)
   if (cnt < 11)
+  {
     rejectRecord = true;
-
+    _rejectedRecordCnt++;
+  }
+  else
   if (nParticles < 2)
+  {
     rejectRecord = true;
+    _rejectedRecordCnt++;
+  }
 
   return rejectRecord;
 }
@@ -155,17 +165,15 @@ bool Particle::diodeCountCheck()
 /* ------------------------------------------------------------------------ */
 void Particle::writeBuffer()
 {
-  diodeCountCheck();
-
 if (_output.data != _uncompressed) printf("writeBuff: un != out %p - %p !!!!!!!\n", _output.data, _uncompressed);
 
   memcpy((unsigned char*)&_output.id, _code, 2);
 
-//  if (_pos > 0 && diodeCountCheck() == false)
-  if (_pos > 0 )
+  if (_pos > 0 && diodeCountCheck() == false)
   {
     fixupTimeStamp();
     fwrite(&_output, sizeof(OAP::P2d_rec), 1, _out_fp);
+    _recordsOutputCnt++;
   }
 
   // reset buffer.
@@ -222,6 +230,7 @@ void Particle::processParticle(uint16_t *wp, bool verbose)
   bool timingWord = true, oflow = false;
   if (verbose) printf(" --- processParticle ---\n");
   particleHeaderSanityCheck(wp);
+  _particlesProcessedCnt++;
 
   if (verbose)
     printParticleHeader(wp);
