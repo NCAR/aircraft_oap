@@ -323,9 +323,12 @@ void processImageFile(FILE *infp, FILE *hkfp, FILE *outfp)
     }
   }
 
-  printf("Record cnt = %d, particle Cnt=%d, nullCnt=%d\n", recordCnt, imCnt, nlCnt);
-  printf("                 rejected too long=%d, particle wraps to next record headers=%d\n",
+  printf("Record in cnt = %d, particle Cnt=%d, nullCnt=%d\n", recordCnt, imCnt, nlCnt);
+  printf("     rejected too long=%d, particle wraps to next record headers=%d\n",
 		rejectTooLong, wrapsRecord);
+
+  if (probe[0]) delete probe[0];
+  if (probe[1]) delete probe[1];
 }
 
 
