@@ -33,6 +33,7 @@ public:
   const std::string& OutputFilename() const	{ return _outputFilename; }
   int TimeOffset() const			{ return _timeOffset; }
   bool StoreCompressed() const			{ return _storeCompressed; }
+  bool StuckBitRejection() const		{ return _stuckBitRejection; }
 
   int16_t PacketIDasInt() const			{ return *((int16_t *)_code.c_str()); }
   int Resolution() const			{ return _resolution; }
@@ -53,6 +54,7 @@ public:
   void SetSuffix(const std::string s)		{ _suffix = s; }
   void SetTimeOffset(const std::string s)	{ _timeOffset = atoi(s.c_str()); }
   void SetOutputFilename(const std::string s)	{ _outputFilename = s; }
+  void SetNoRejection()				{ _stuckBitRejection = false; }
 
   void SetResolution(int r)			{ _resolution = r; }
   void SetDiodes(int n)				{ _nDiodes = n; }
@@ -75,6 +77,7 @@ private:
 
   int _timeOffset;
 
+  bool _stuckBitRejection;
   bool _storeCompressed;
 
   int _resolution;
