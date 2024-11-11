@@ -375,7 +375,7 @@ Particle findsize(	short *img[], int nslices, int nDiodes, float res,
    phi = acos(min((nDiodes-1-particle.xcenter)/rad,1.0));
    // find area= triangles(left) + triangles(right) + (remaining wedges)
    particle.circlearea = (particle.xcenter*rad*sin(theta) + (nDiodes-1-particle.xcenter)*rad*sin(phi) +
-                       3.14*rad*rad*((3.14-phi-theta)/3.14));
+                       M_PI*rad*rad*((M_PI-phi-theta)/M_PI));
 
    particle.csize = (rad*2.0)*res;
    if ((particle.xcenter > 1) && (particle.xcenter < (nDiodes-2)))
@@ -1362,6 +1362,9 @@ void ParseHeader(ifstream & input_file, Config & cfg, vector<ProbeInfo> & probe_
         string s, file(proj_dir);
         file += "/" + cfg.project + "/" + cfg.platform + "/PMSspecs";
         PMSspex pms_specs(file);
+
+        s = pms_specs.GetParameter(thisProbe.serialNumber.c_str(), "BIN_EDGES");
+        if (s.length() > 0) thisProbe.SetBinEndpoints(s);
 
         s = pms_specs.GetParameter(thisProbe.serialNumber.c_str(), "FIRST_BIN");
         thisProbe.firstBin = atoi(s.c_str());

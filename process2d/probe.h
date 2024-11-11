@@ -92,10 +92,16 @@ public:
     }
   }
 
+
+  /**
+   * User supplied BIN_EDGES, found in the PMSspecs file most likely.
+   */
+  void SetBinEndpoints(std::string input);
+
   /**
    * Compute sample area of a probe for given diameter.
    * The sample area unit should be meter^2 for all probes.
-   * @param reconstruct Are we doing particle reconstruction, or all-in.
+   * @param eawmethod Are we doing particle reconstruction, center-in, 0wor all-in.
    */
   void ComputeSamplearea(Config::Method eawmethod);
 
