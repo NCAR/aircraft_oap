@@ -20,7 +20,7 @@ env['PUBLISH_PREFIX'] = '/net/www/docs/raf/Software'
 
 env.Require('vardb')
 
-subdirs = ['2dsdump', 'cip/pads2oap', 'cip/padsinfo', 'extract2ds', 'oapinfo', 'translate2ds', 'xpms2d', 'process2d']
+subdirs = ['2dsdump', 'cip/pads2oap', 'cip/padsinfo', 'extract2ds', 'oapinfo', 'xpms2d', 'process2d']
 
 for subdir in subdirs:
     SConscript(os.path.join(subdir, 'SConscript'))
