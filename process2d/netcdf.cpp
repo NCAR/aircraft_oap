@@ -13,10 +13,12 @@
 
 using namespace std;
 
-const char *netCDF::ISO8601_Z = "%FT%T %z";
+const char *NetCDF::ISO8601_Z = "%FT%T %z";
+const char *NetCDF::Category = "CloudAndPrecip";
 
 
-netCDF::netCDF(Config & cfg) : _outputFile(cfg.outputFile), _file(0), _mode(NcFile::Write), _tas(0)
+/* -------------------------------------------------------------------- */
+NetCDF::NetCDF(Config & cfg) : _outputFile(cfg.outputFile), _file(0), _mode(NcFile::write)
 {
   // No file to pre-open or file does not exist.  Bail out.
   if (_outputFile.size() == 0 || access(_outputFile.c_str(), F_OK))
@@ -34,25 +36,26 @@ netCDF::netCDF(Config & cfg) : _outputFile(cfg.outputFile), _file(0), _mode(NcFi
   _file = new NcFile(_outputFile.c_str(), _mode);
 
   // Failed to open netCDF file for writing....
-  if (!_file->is_valid())
+  if (_file->isNull())
   {
-    cerr << "Failed to open netCDF output file "
-	<< _outputFile << endl;
+    cerr << "Failed to open netCDF output file " << _outputFile << endl;
     exit(1);
   }
 
   readStartEndTime(cfg);
 
   // Check for existence of TASX variable.
-  _tas = _file->get_var("TASX");
+  _tas = _file->getVar("TASX");
 
-  if (_tas)
+  if (!_tas.isNull())
     cout << "TASX variable found, will use instead of tas in 2D records.\n";
 
   InitVarDB();
 }
 
-void netCDF::InitVarDB()
+
+/* -------------------------------------------------------------------- */
+void NetCDF::InitVarDB()
 {
   char *proj_dir = getenv("PROJ_DIR");
 
@@ -72,16 +75,18 @@ void netCDF::InitVarDB()
   }
 }
 
-netCDF::~netCDF()
+/* -------------------------------------------------------------------- */
+NetCDF::~NetCDF()
 {
   _file->close();
 }
 
-void netCDF::CreateNetCDFfile(const Config & cfg)
+/* -------------------------------------------------------------------- */
+void NetCDF::CreateNetCDFfile(const Config & cfg)
 {
   cout << " " << cfg.outputFile << "...\n";
 
-  if (_file && _file->is_valid())	// Was successfully opened in ctor, leave.
+  if (_file && !_file->isNull())	// Was successfully opened in ctor, leave.
     return;
 
   /* If user did not specify output file, then create base + .nc of input file.
@@ -93,20 +98,20 @@ void netCDF::CreateNetCDFfile(const Config & cfg)
     ncfilename = cfg.inputFile.substr(pos+1);
     pos = ncfilename.find_last_of(".");
     _outputFile = ncfilename.substr(0,pos) + ".nc";
-    _mode = NcFile::Replace;
+    _mode = NcFile::replace;
   }
   else {
     // User specified an output filname on command line, see if file exists.
-    NcFile test(_outputFile.c_str(), NcFile::Write);
-    if (!test.is_valid())
-      _mode = NcFile::New;
+    NcFile test(_outputFile.c_str(), NcFile::write);
+    if (test.isNull())
+      _mode = NcFile::newFile;
   }
 
   _file = new NcFile(_outputFile.c_str(), _mode);
 
   /* If we are creating a file from scratch, perform the following.
    */
-  if (_mode != NcFile::Write)
+  if (_mode != NcFile::write)
   {
     struct tm st, et;
     memset(&st, 0, sizeof(struct tm));
@@ -114,37 +119,31 @@ void netCDF::CreateNetCDFfile(const Config & cfg)
     gmtime_r(&cfg.starttime, &st);
     gmtime_r(&cfg.stoptime, &et);
 
-    _file->add_att("institution", "NCAR Research Aviation Facility");
-    _file->add_att("Source", "NCAR/RAF Fast-2D Processing Software");
-    _file->add_att("Conventions", "NCAR-RAF/nimbus");
-    _file->add_att("ConventionsURL", "http://www.eol.ucar.edu/raf/Software/netCDF.html");
-    _file->add_att("ProjectName", cfg.project.c_str());
-    _file->add_att("FlightNumber", cfg.flightNumber.c_str());
-    _file->add_att("FlightDate", cfg.flightDate.c_str());
-    _file->add_att("date_created", dateProcessed().c_str());
+    putGlobalAttribute("institution", "NCAR Research Aviation Facility");
+    putGlobalAttribute("Source", "NCAR/RAF Fast-2D Processing Software");
+    putGlobalAttribute("Conventions", "NCAR-RAF/nimbus");
+    putGlobalAttribute("ConventionsURL", "http://www.eol.ucar.edu/raf/Software/netCDF.html");
+    putGlobalAttribute("ProjectName", cfg.project);
+    putGlobalAttribute("FlightNumber", cfg.flightNumber);
+    putGlobalAttribute("FlightDate", cfg.flightDate);
+    putGlobalAttribute("date_created", dateProcessed());
     char tmp[128];
     snprintf(tmp, 128, "%02d:%02d:%02d-%02d:%02d:%02d",
 	st.tm_hour, st.tm_min, st.tm_sec, et.tm_hour, et.tm_min, et.tm_sec);
-    _file->add_att("TimeInterval", tmp);
-    _file->add_att("ReconstructionMethod", cfg.eawmethod);
-    _file->add_att("SizeMethod", cfg.smethod);
-    _file->add_att("Raw_2D_Data_File", cfg.inputFile.c_str());
+    putGlobalAttribute("TimeInterval", tmp);
+    putGlobalAttribute("Raw_2D_Data_File", cfg.inputFile.c_str());
   }
 }
 
-void netCDF::readTrueAirspeed(float tas[], size_t n)
+/* -------------------------------------------------------------------- */
+void NetCDF::readTrueAirspeed(float tas[], size_t n)
 {
-  assert ((int)n == _tas->num_vals());
-
-  NcValues *data = _tas->values();
-  for (size_t i = 0; i < n; ++i)
-    tas[i] = data->as_float(i);
-
-  delete data;
+  assert (n == _tas.getDim(0).getSize());
+  _tas.getVar(tas);
 }
 
 
-std::string netCDF::dateProcessed()
+std::string NetCDF::dateProcessed()
 {
   time_t        t;
   struct tm     tm;
@@ -159,47 +158,52 @@ std::string netCDF::dateProcessed()
 }
 
 
-void netCDF::readStartEndTime(Config & cfg)
+/* -------------------------------------------------------------------- */
+void NetCDF::readStartEndTime(Config & cfg)
 {
-  NcVar *var;
+  NcVar var;
 
-  if ((var = _file->get_var("Time")) == 0)
-    var = _file->get_var("time");
+  if ((var = _file->getVar("Time")).isNull())
+    var = _file->getVar("time");
 
   /* If we found a Time variable, acquire the start/end time from the netCDF
    * file.  This is the time frame we want to process against.
    */
-  if (var)
+  if (!var.isNull())
   {
-    if (var->num_vals() == 0)
+    if (var.getDim(0).getSize() == 0)
       return;
 
-    NcValues *v = var->values();
-    NcAtt *units, *frmt_att;
-    char *frmt;
+    int nValues = var.getDim(0).getSize();
+    float *timeValues = new float[nValues];
+    var.getVar(timeValues);
+    NcVarAtt unitsAtt, frmtAtt;
+    char frmt[64], units[64];
 
-    units = var->get_att("units");
-    frmt_att = var->get_att("strptime_format");
+    unitsAtt = var.getAtt("units");
+    frmtAtt = var.getAtt("strptime_format");
 
-    if (units == 0)
+    if (unitsAtt.isNull())
     {
       cerr << "No units for Time variable, fatal." << endl;
       exit(1);
     }
 
-    if (frmt_att == 0)
+    unitsAtt.getValues(units);
+    if (frmtAtt.isNull())
     {
-      frmt = (char *)"seconds since %F %T %z";
+      strcpy(frmt, "seconds since %F %T %z");
     }
     else
-      frmt = frmt_att->as_string(0);
+      frmtAtt.getValues(frmt);
 
     struct tm tm;
     time_t st, et;
     memset(&tm, 0, sizeof(struct tm));
-    strptime(units->as_string(0), frmt, &tm);
-    st = mktime(&tm) + v->as_int(0);
-    et = mktime(&tm) + v->as_int(var->num_vals()-1);
+    strptime(units, frmt, &tm);
+    st = et = mktime(&tm);
+    st += (time_t)timeValues[0];
+    et += (time_t)timeValues[nValues-1];
     cout << "NetCDF start time : " << ctime(&st);
     cout << "         end time : " << ctime(&et);
 
@@ -230,33 +234,35 @@ void netCDF::readStartEndTime(Config & cfg)
     cfg.starttime = st;
     cfg.stoptime = et;
 
-    delete v;
+    delete [] timeValues;
   }
 }
 
-NcDim *netCDF::addDimension(const char name[], int size)
+/* -------------------------------------------------------------------- */
+NcDim NetCDF::addDimension(const char name[], int size)
 {
-  NcDim *dim = _file->get_dim(name);
+  NcDim dim = _file->getDim(name);
 
-  if (dim) {
+  if (!dim.isNull()) {
     cout << "Found dimension " << name << endl;
   }
   else {
-    dim = _file->add_dim(name, size);
-    if (dim)
-      cout << "Created dimension " << name << endl;
-    else
+    dim = _file->addDim(name, size);
+    if (dim.isNull())
       cout << "Failed to create dimension " << name << endl;
+    else
+      cout << "Created dimension " << name << endl;
   }
 
   return dim;
 }
 
-NcVar *netCDF::addTimeVariable(const Config & cfg, int size)
+/* -------------------------------------------------------------------- */
+NcVar NetCDF::addTimeVariable(const Config & cfg, int size)
 {
-  _timevar = _file->get_var("Time");
+  _timevar = _file->getVar("Time");
 
-  if (_timevar)
+  if (!_timevar.isNull())
     return _timevar;
 
   char timeunits[70];
@@ -267,46 +273,80 @@ NcVar *netCDF::addTimeVariable(const Config & cfg, int size)
 
   sscanf(cfg.flightDate.c_str(), "%d/%d/%d", &month, &day, &year);
   snprintf(timeunits, 70, "seconds since %04d-%02d-%02d %02d:%02d:%02d +0000", year,month,day,st.tm_hour,st.tm_min,st.tm_sec);
-  _timevar = _file->add_var("Time", ncInt, _timedim);
+  _timevar = _file->addVar("Time", ncInt, _timedim);
 
-  if (_timevar == 0)
+  if (_timevar.isNull())
   {
     cout << "Failed to create Time variable.\n";
     return _timevar;
   }
-  _timevar->add_att("long_name", "time of measurement");
-  _timevar->add_att("standard_name", "time");
-  _timevar->add_att("units", timeunits);
-  _timevar->add_att("strptime_format", "seconds since %F %T %z");
+  putVarAttribute(_timevar, "long_name", "time of measurement");
+  putVarAttribute(_timevar, "standard_name", "time");
+  putVarAttribute(_timevar, "units", timeunits);
+  putVarAttribute(_timevar, "strptime_format", "seconds since %F %T %z");
 
   int time[size];
   for (int i = 0; i < size; i++) time[i] = i;
-  if (!_timevar->put(time, size))
-    cout << "Failed to write Time data to file.\n";
+  _timevar.putVar((const int *)time);
 
   return _timevar;
 }
 
-void netCDF::CreateDimensions(int numtimes, ProbeInfo &probe, const Config &cfg)
+
+/* -------------------------------------------------------------------- */
+void NetCDF::CreateDimensions(int numtimes, ProbeInfo &probe, const Config &cfg)
 {
-  char tmp[1024];
+  char tmp[128], coord_name[128];
+  NcVar var;
 
   // Define the dimensions.
   _timedim = addDimension("Time", numtimes);
   _spsdim = addDimension("sps1", 1);
-  snprintf(tmp, 1024, "Vector%d", probe.numBins);
-  _bindim = addDimension(tmp, probe.numBins);
-  snprintf(tmp, 1024, "Vector%d", probe.numBins+1);
+  _bndsdim = addDimension("bnds", 2);
+
+  strcpy(coord_name, probe.serialNumber.c_str());
+  strcat(coord_name, "_P2D");
+  _bindim = addDimension(coord_name, probe.numBins);
+
+  // Create coordinate variable, if it doesn't exist
+  if ((var = _file->getVar(coord_name)).isNull())
+    var = _file->addVar(coord_name, ncFloat, _bindim);
+
+  if (!var.isNull())
+  {
+    putVarAttribute(var, "units", "um");
+    snprintf(tmp, 128, "%s arithmetic midpoint bin size in diameter", probe.type.c_str());
+    putVarAttribute(var, "long_name", tmp);
+    putVarAttribute(var, "bounds", coord_name);
+  }
+
+  // Create bounds variable, if it doesn't exist
+  if ((var = _file->getVar(coord_name)).isNull())
+  {
+    strcat(coord_name, "_bnds");
+    std::vector< NcDim > dimes;
+    dimes.push_back(_bindim);
+    dimes.push_back(_bndsdim);
+    if (!(var = _file->addVar(coord_name, ncFloat, dimes)).isNull())
+    {
+      putVarAttribute(var, "units", "um");
+      snprintf(tmp, 128, "lower and upper bounds for %s", probe.type.c_str());
+      putVarAttribute(var, "long_name", tmp);
+    }
+  }
+
+  snprintf(tmp, 128, "histogram%d", probe.numBins+1);
   _bindim_plusone = addDimension(tmp, probe.numBins+1);
   _intbindim = addDimension("interarrival_endpoints", cfg.nInterarrivalBins);
 //  _intbindim = addDimension("interarrival_endpoints", cfg.nInterarrivalBins+1);
 }
 
 
-NcVar *netCDF::addHistogram(string& varname, const ProbeInfo &probe, int binoffset)
+/* -------------------------------------------------------------------- */
+NcVar NetCDF::addHistogram(string& varname, const ProbeInfo &probe, int binoffset)
 {
-  NcVar *var;
-  NcDim *len_dim = _bindim;
+  NcVar var;
+  NcDim len_dim = _bindim;
   char str[128];
 
   const char *units = VarDB_GetUnits(varname.c_str());
@@ -322,55 +362,65 @@ NcVar *netCDF::addHistogram(string& varname, const ProbeInfo &probe, int binoffs
    */
   if (varname.compare(0, 3, "I2D") == 0) len_dim = _intbindim;
 
-  if ((var = _file->get_var(varname.c_str())) == 0)
-    if ((var = _file->add_var(varname.c_str(), ncFloat, _timedim, _spsdim, len_dim)) == 0)
-      return 0;
+  if ((var = _file->getVar(varname)).isNull())
+  {
+    std::vector< NcDim > dimes;
+    dimes.push_back(_timedim);
+    dimes.push_back(_spsdim);
+    dimes.push_back(len_dim);
+    if ((var = _file->addVar(varname, ncFloat, dimes)).isNull())
+    {
+      cerr << "addHistogram: - Failed to create new variable " << varname << endl;
+      return var;
+    }
+    putVarAttribute(var, "_FillValue", (float)(-32767.0));
+  }
 
-  var->add_att("_FillValue", (float)(-32767.0));
-  var->add_att("units", units);
-  var->add_att("long_name", VarDB_GetTitle(varname.c_str()));
-  var->add_att("Category", "PMS Probe");
-  var->add_att("SerialNumber", probe.serialNumber.c_str());
-  var->add_att("DataQuality", "Good");
+  putVarAttribute(var, "units", units);
+  putVarAttribute(var, "long_name", VarDB_GetTitle(varname.c_str()));
+  putVarAttribute(var, "Category", "Cloud");
+  putVarAttribute(var, "SerialNumber", probe.serialNumber.c_str());
+  putVarAttribute(var, "DataQuality", "Good");
 
   if (varname.compare(0, 3, "A2D") == 0) {
-    var->add_att("Resolution", (int)probe.resolution);
-    var->add_att("nDiodes", probe.nDiodes);
-    var->add_att("ResponseTime", (float)0.4);
-    var->add_att("ArmDistance", probe.armWidth * 10);
+    putVarAttribute(var, "Resolution", (int)probe.resolution);
+    putVarAttribute(var, "nDiodes", probe.nDiodes);
+    putVarAttribute(var, "ResponseTime", (float)0.4);
+    putVarAttribute(var, "ArmDistance", probe.armWidth * 10);
   }
   if (varname.compare(0, 3, "C2D") == 0) {
-    var->add_att("probe_technique", "oap");
+    putVarAttribute(var, "probe_technique", "oap");
     if (probe.resolution < 100)
-      var->add_att("size_distribution_type", "cloud_drop");
+      putVarAttribute(var, "size_distribution_type", "cloud_drop");
     else
-      var->add_att("size_distribution_type", "cloud_precipitation");
+      putVarAttribute(var, "size_distribution_type", "cloud_precipitation");
     snprintf(str, 128, "2 %c%s TASX", 'A', &varname.c_str()[1]);
-    var->add_att("Dependencies", str);
-    var->add_att("FirstBin", probe.firstBin);
-    var->add_att("LastBin", probe.numBins+binoffset-1);
-    var->add_att("DepthOfField", probe.numBins, &probe.dof[0]);
-    var->add_att("EffectiveAreaWidth", probe.numBins, &probe.eaw[0]);
-    var->add_att("CellSizes", probe.numBins+1, &probe.bin_endpoints[0]);
-    var->add_att("CellSizeUnits", "micrometers");
-    var->add_att("Density", (float)1.0);
+    putVarAttribute(var, "Dependencies", str);
+    putVarAttribute(var, "FirstBin", probe.firstBin);
+    putVarAttribute(var, "LastBin", probe.numBins+binoffset-1);
+    putVarAttribute(var, "DepthOfField", probe.dof);
+    putVarAttribute(var, "EffectiveAreaWidth", probe.eaw);
+    putVarAttribute(var, "CellSizes", probe.bin_endpoints);
+    putVarAttribute(var, "CellSizeUnits", "micrometers");
+    putVarAttribute(var, "Density", (float)1.0);
     if (binoffset)
     {
-      var->add_att("CellSizeNote", "CellSizes are upper bin limits as particle size.");
-      var->add_att("HistogramNote", "Zeroth data bin is an unused legacy placeholder.");
+      putVarAttribute(var, "CellSizeNote", "CellSizes are upper bin limits as particle size.");
+      putVarAttribute(var, "HistogramNote", "Zeroth data bin is an unused legacy placeholder.");
     }
     else
-      var->add_att("CellSizeNote", "CellSizes are lower bin limits as particle size.");
+      putVarAttribute(var, "CellSizeNote", "CellSizes are lower bin limits as particle size.");
   }
 
-  if (var) var->add_att("DateProcessed", dateProcessed().c_str());
+  putVarAttribute(var, "DateProcessed", dateProcessed().c_str());
 
   return var;
 }
 
-NcVar *netCDF::addVariable(string& varname, string& serialNumber)
+/* -------------------------------------------------------------------- */
+NcVar NetCDF::addVariable(string& varname, string& serialNumber)
 {
-  NcVar *var;
+  NcVar var;
 
   const char *units = VarDB_GetUnits(varname.c_str());
   const char *std_name = VarDB_GetStandardNameName(varname.c_str());
@@ -384,31 +434,32 @@ NcVar *netCDF::addVariable(string& varname, string& serialNumber)
     if (varname.compare(0, 4, "DBAR") == 0) units = "um";
   }
 
-  if ((var = _file->get_var(varname.c_str())) == 0)
+  if ((var = _file->getVar(varname)).isNull())
   {
-    if ((var = _file->add_var(varname.c_str(), ncFloat, _timedim)))
+    if (!(var = _file->addVar(varname, ncFloat, _timedim)).isNull())
     {
-      var->add_att("_FillValue", (float)(-32767.0));
-      var->add_att("units", units);
-      var->add_att("long_name", VarDB_GetTitle(varname.c_str()));
-      if (strcmp(std_name, "None"))
-        var->add_att("standard_name", std_name);
-      var->add_att("Category", "PMS Probe");
-      var->add_att("SerialNumber", serialNumber.c_str());
-      var->add_att("DataQuality", "Good");
+      putVarAttribute(var, "_FillValue", (float)(-32767.0));
+      putVarAttribute(var, "units", units);
+      putVarAttribute(var, "long_name", VarDB_GetTitle(varname.c_str()));
+      if (std_name && strcmp(std_name, "None"))
+        putVarAttribute(var, "standard_name", std_name);
+      putVarAttribute(var, "Category", Category);
+      putVarAttribute(var, "SerialNumber", serialNumber.c_str());
+      putVarAttribute(var, "DataQuality", "Good");
     }
   }
   return var;
 }
 
 
-int netCDF::WriteData(ProbeInfo& probe, ProbeData& data)
+/* -------------------------------------------------------------------- */
+int NetCDF::WriteData(ProbeInfo& probe, ProbeData& data)
 {
-  NcVar *vconca, *vconcr, *vplwa, *vplwr;
-  NcVar *vdbara, *vdbarr, *vdispa, *vdispr;
-  NcVar *vdbza, *vdbzr, *vreffa, *vreffr;
-  NcVar *vnacca, *vnaccr, *vnreja, *vnrejr;
-  NcVar *vconc100a, *vconc100r, *vconc150a, *vconc150r;
+  NcVar vconca, vconcr, vplwa, vplwr;
+  NcVar vdbara, vdbarr, vdispa, vdispr;
+  NcVar vdbza, vdbzr, vreffa, vreffr;
+  NcVar vnacca, vnaccr, vnreja, vnrejr;
+  NcVar vconc100a, vconc100r, vconc150a, vconc150r;
   string varname;
 
   //Total counts and LWC
@@ -435,10 +486,10 @@ int netCDF::WriteData(ProbeInfo& probe, ProbeData& data)
     varname="CONC2DCR150"+probe.suffix; varname[6] = probe.id[0];
     vconc150r = addVariable(varname, probe.serialNumber);
 
-    vconc100a->put(&data.all.total_conc100[0], data.size());
-    vconc100r->put(&data.round.total_conc100[0], data.size());
-    vconc150a->put(&data.all.total_conc150[0], data.size());
-    vconc150r->put(&data.round.total_conc150[0], data.size());
+    vconc100a.putVar(&data.all.total_conc100[0]);
+    vconc100r.putVar(&data.round.total_conc100[0]);
+    vconc150a.putVar(&data.all.total_conc150[0]);
+    vconc150r.putVar(&data.round.total_conc150[0]);
   }
 
   varname="PLWC2DCR"+probe.suffix; varname[6] = probe.id[0];
@@ -483,103 +534,146 @@ int netCDF::WriteData(ProbeInfo& probe, ProbeData& data)
   varname="NREJECT2DCA"+probe.suffix; varname[9] = probe.id[0];
   vnreja = addVariable(varname, probe.serialNumber);
 
-  if (vconca)  vconca->put(&data.all.total_conc[0], data.size());
-  if (vconcr)  vconcr->put(&data.round.total_conc[0], data.size());
-  if (vplwr)   vplwr->put(&data.round.lwc[0], data.size());
-  if (vplwa)   vplwa->put(&data.all.lwc[0], data.size());
-  if (vdbarr)  vdbarr->put(&data.round.dbar[0], data.size());
-  if (vdbara)  vdbara->put(&data.all.dbar[0], data.size());
-  if (vdispr)  vdispr->put(&data.round.disp[0], data.size());
-  if (vdispa)  vdispa->put(&data.all.disp[0], data.size());
-  if (vdbzr)   vdbzr->put(&data.round.dbz[0], data.size());
-  if (vdbza)   vdbza->put(&data.all.dbz[0], data.size());
-  if (vreffr)  vreffr->put(&data.round.eff_rad[0], data.size());
-  if (vreffa)  vreffa->put(&data.all.eff_rad[0], data.size());
-  if (vnaccr)  vnaccr->put(&data.round.accepted[0], data.size());
-  if (vnacca)  vnacca->put(&data.all.accepted[0], data.size());
-  if (vnrejr)  vnrejr->put(&data.round.rejected[0], data.size());
-  if (vnreja)  vnreja->put(&data.all.rejected[0], data.size());
+  if (!vconca.isNull())  vconca.putVar(&data.all.total_conc[0]);
+  if (!vconcr.isNull())  vconcr.putVar(&data.round.total_conc[0]);
+  if (!vplwr.isNull())   vplwr.putVar(&data.round.lwc[0]);
+  if (!vplwa.isNull())   vplwa.putVar(&data.all.lwc[0]);
+  if (!vdbarr.isNull())  vdbarr.putVar(&data.round.dbar[0]);
+  if (!vdbara.isNull())  vdbara.putVar(&data.all.dbar[0]);
+  if (!vdispr.isNull())  vdispr.putVar(&data.round.disp[0]);
+  if (!vdispa.isNull())  vdispa.putVar(&data.all.disp[0]);
+  if (!vdbzr.isNull())   vdbzr.putVar(&data.round.dbz[0]);
+  if (!vdbza.isNull())   vdbza.putVar(&data.all.dbz[0]);
+  if (!vreffr.isNull())  vreffr.putVar(&data.round.eff_rad[0]);
+  if (!vreffa.isNull())  vreffa.putVar(&data.all.eff_rad[0]);
+  if (!vnaccr.isNull())  vnaccr.putVar(&data.round.accepted[0]);
+  if (!vnacca.isNull())  vnacca.putVar(&data.all.accepted[0]);
+  if (!vnrejr.isNull())  vnrejr.putVar(&data.round.rejected[0]);
+  if (!vnreja.isNull())  vnreja.putVar(&data.all.rejected[0]);
 
   /* These variables are only output when generating a stand alone netCDF file.
    * i.e. They are not ouput if the -o command line is specified and it finds
    * an existing TAS.
    */
-  if (_tas == 0)
+  if (_tas.isNull())
   {
-    NcVar *var;
+    NcVar var;
 
     varname="poisson_coeff1"+probe.suffix;
-    if ((var = _file->get_var(varname.c_str())) == 0) {
-      if (!(var = _file->add_var(varname.c_str(), ncFloat, _timedim))) return netCDF::NC_ERR;
-      if (!var->add_att("units", "unitless")) return netCDF::NC_ERR;
-      if (!var->add_att("long_name", "Interarrival Time Fit Coefficient 1")) return netCDF::NC_ERR;
+    if ((var = _file->getVar(varname)).isNull()) {
+      if ((var = _file->addVar(varname, ncFloat, _timedim)).isNull()) return NetCDF::NC_ERR;
+      putVarAttribute(var, "units", "unitless");
+      putVarAttribute(var, "long_name", "Interarrival Time Fit Coefficient 1");
     }
-    if (!var->put(&data.cpoisson1[0], data.size())) return netCDF::NC_ERR;
+    var.putVar(&data.cpoisson1[0]);
 
     varname="poisson_coeff2"+probe.suffix;
-    if ((var = _file->get_var(varname.c_str())) == 0) {
-      if (!(var = _file->add_var(varname.c_str(), ncFloat, _timedim))) return netCDF::NC_ERR;
-      if (!var->add_att("units", "1/seconds")) return netCDF::NC_ERR;
-      if (!var->add_att("long_name", "Interarrival Time Fit Coefficient 2")) return netCDF::NC_ERR;
+    if ((var = _file->getVar(varname)).isNull()) {
+      if ((var = _file->addVar(varname, ncFloat, _timedim)).isNull()) return NetCDF::NC_ERR;
+      putVarAttribute(var, "units", "1/seconds");
+      putVarAttribute(var, "long_name", "Interarrival Time Fit Coefficient 2");
     }
-    if (!var->put(&data.cpoisson2[0], data.size())) return netCDF::NC_ERR;
+    var.putVar(&data.cpoisson2[0]);
 
     varname="poisson_coeff3"+probe.suffix;
-    if ((var = _file->get_var(varname.c_str())) == 0) {
-      if (!(var = _file->add_var(varname.c_str(), ncFloat, _timedim))) return netCDF::NC_ERR;
-      if (!var->add_att("units", "1/seconds")) return netCDF::NC_ERR;
-      if (!var->add_att("long_name", "Interarrival Time Fit Coefficient 3")) return netCDF::NC_ERR;
+    if ((var = _file->getVar(varname)).isNull()) {
+      if ((var = _file->addVar(varname, ncFloat, _timedim)).isNull()) return NetCDF::NC_ERR;
+      putVarAttribute(var, "units", "1/seconds");
+      putVarAttribute(var, "long_name", "Interarrival Time Fit Coefficient 3");
     }
-    if (!var->put(&data.cpoisson3[0], data.size())) return netCDF::NC_ERR;
+    var.putVar(&data.cpoisson3[0]);
 
     varname="poisson_cutoff"+probe.suffix;
-    if ((var = _file->get_var(varname.c_str())) == 0) {
-      if (!(var = _file->add_var(varname.c_str(), ncFloat, _timedim))) return netCDF::NC_ERR;
-      if (!var->add_att("units", "seconds")) return netCDF::NC_ERR;
-      if (!var->add_att("long_name", "Interarrival Time Lower Limit")) return netCDF::NC_ERR;
+    if ((var = _file->getVar(varname)).isNull()) {
+      if ((var = _file->addVar(varname, ncFloat, _timedim)).isNull()) return NetCDF::NC_ERR;
+      putVarAttribute(var, "units", "seconds");
+      putVarAttribute(var, "long_name", "Interarrival Time Lower Limit");
     }
-    if (!var->put(&data.pcutoff[0], data.size())) return netCDF::NC_ERR;
+    var.putVar(&data.pcutoff[0]);
 
     varname="poisson_correction"+probe.suffix;
-    if ((var = _file->get_var(varname.c_str())) == 0) {
-      if (!(var = _file->add_var(varname.c_str(), ncFloat, _timedim))) return netCDF::NC_ERR;
-      if (!var->add_att("units", "unitless")) return netCDF::NC_ERR;
-      if (!var->add_att("long_name", "Count/Concentration Correction Factor for Interarrival Rejection")) return netCDF::NC_ERR;
+    if ((var = _file->getVar(varname)).isNull()) {
+      if ((var = _file->addVar(varname, ncFloat, _timedim)).isNull()) return NetCDF::NC_ERR;
+      putVarAttribute(var, "units", "unitless");
+      putVarAttribute(var, "long_name", "Count/Concentration Correction Factor for Interarrival Rejection");
     }
-    if (!var->put(&data.corrfac[0], data.size())) return netCDF::NC_ERR;
+    var.putVar(&data.corrfac[0]);
 
     varname="TAS"+probe.suffix;
-    if ((var = _file->get_var(varname.c_str())) == 0) {
-      if (!(var = _file->add_var(varname.c_str(), ncFloat, _timedim))) return netCDF::NC_ERR;
-      if (!var->add_att("units", "m/s")) return netCDF::NC_ERR;
-      if (!var->add_att("long_name", "True Air Speed")) return netCDF::NC_ERR;
+    if ((var = _file->getVar(varname)).isNull()) {
+      if ((var = _file->addVar(varname, ncFloat, _timedim)).isNull()) return NetCDF::NC_ERR;
+      putVarAttribute(var, "units", "m/s");
+      putVarAttribute(var, "long_name", "True Air Speed");
     }
-    if (!var->put(&data.tas[0], data.size())) return netCDF::NC_ERR;
+    var.putVar(&data.tas[0]);
 
     varname="SA"+probe.suffix;
-    if ((var = _file->get_var(varname.c_str())) == 0) {
-      if (!(var = _file->add_var(varname.c_str(), ncFloat, _bindim))) return netCDF::NC_ERR;
-      if (!var->add_att("units", "m2")) return netCDF::NC_ERR;
-      if (!var->add_att("long_name", "Sample area per channel")) return netCDF::NC_ERR;
+    if ((var = _file->getVar(varname)).isNull()) {
+      if ((var = _file->addVar(varname, ncFloat, _bindim)).isNull()) return NetCDF::NC_ERR;
+      putVarAttribute(var, "units", "m2");
+      putVarAttribute(var, "long_name", "Sample area per channel");
     }
-    if (!var->put(&probe.samplearea[0], probe.numBins)) return netCDF::NC_ERR;
+    var.putVar(&probe.samplearea[0]);
 
     //Bins
     varname="bin_endpoints"+probe.suffix;
-    if ((var = _file->get_var(varname.c_str())) == 0) {
-      if (!(var = _file->add_var(varname.c_str(), ncFloat, _bindim_plusone))) return netCDF::NC_ERR;
-      if (!var->add_att("units", "microns")) return netCDF::NC_ERR;
+    if ((var = _file->getVar(varname)).isNull()) {
+      if ((var = _file->addVar(varname, ncFloat, _bindim_plusone)).isNull()) return NetCDF::NC_ERR;
+      putVarAttribute(var, "units", "microns");
     }
-    if (!var->put(&probe.bin_endpoints[0], probe.numBins+1)) return netCDF::NC_ERR;
+    var.putVar(&probe.bin_endpoints[0]);
 
     varname="bin_midpoints"+probe.suffix;
-    if ((var = _file->get_var(varname.c_str())) == 0) {
-      if (!(var = _file->add_var(varname.c_str(), ncFloat, _bindim))) return netCDF::NC_ERR;
-      if (!var->add_att("units", "microns")) return netCDF::NC_ERR;
-      if (!var->add_att("long_name", "Size Channel Midpoints")) return netCDF::NC_ERR;
+    if ((var = _file->getVar(varname)).isNull()) {
+      if ((var = _file->addVar(varname, ncFloat, _bindim)).isNull()) return NetCDF::NC_ERR;
+      putVarAttribute(var, "units", "microns");
+      putVarAttribute(var, "long_name", "Size Channel Midpoints");
     }
-    if (!var->put(&probe.bin_midpoints[0], probe.numBins)) return netCDF::NC_ERR;
+    var.putVar(&probe.bin_midpoints[0]);
   }
 
   return 0;
 }
+
+/* -------------------------------------------------------------------- */
+void NetCDF::putGlobalAttribute(const char attrName[], float value)
+{
+  _file->putAtt(std::string(attrName), ncFloat, value);
+}
+
+void NetCDF::putGlobalAttribute(const char attrName[], const char *value)
+{
+  _file->putAtt(attrName, value);
+}
+
+void NetCDF::putGlobalAttribute(const char attrName[], const std::string value)
+{
+  putGlobalAttribute(attrName, value.c_str());
+}
+
+
+void NetCDF::putVarAttribute(NcVar & var, const char attrName[], int value)
+{
+  var.putAtt(std::string(attrName), ncInt, value);
+}
+
+void NetCDF::putVarAttribute(NcVar & var, const char attrName[], std::vector<float> values)
+{
+  var.putAtt(std::string(attrName), ncFloat, values.size(), &values[0]);
+}
+
+void NetCDF::putVarAttribute(NcVar & var, const char attrName[], float value)
+{
+  var.putAtt(std::string(attrName), ncFloat, value);
+}
+
+void NetCDF::putVarAttribute(NcVar & var, const char attrName[], const char *value)
+{
+  var.putAtt(attrName, value);
+}
+
+void NetCDF::putVarAttribute(NcVar & var, const char attrName[], const std::string value)
+{
+  putVarAttribute(var, attrName, value.c_str());
+}
+

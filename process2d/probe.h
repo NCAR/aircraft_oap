@@ -101,7 +101,7 @@ public:
   /**
    * Compute sample area of a probe for given diameter.
    * The sample area unit should be meter^2 for all probes.
-   * @param eawmethod Are we doing particle reconstruction, center-in, 0wor all-in.
+   * @param eawmethod Are we doing particle reconstruction, center-in, or all-in.
    */
   void ComputeSamplearea(Config::Method eawmethod);
 

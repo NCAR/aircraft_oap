@@ -1,18 +1,24 @@
-#include <netcdfcpp.h>
+#include <ncFile.h>
+#include <ncDim.h>
+#include <ncVar.h>
+#include <ncAtt.h>
+#include <ncType.h>
 
 class Config;
 class ProbeInfo;
 class ProbeData;
 
+using namespace netCDF;
+
 /**
  * Class to handle opening/creating the netCDF file and writing
  * variable data.
  */
-class netCDF
+class NetCDF
 {
 public:
-  netCDF(Config & cfg);
-  ~netCDF();
+  NetCDF(Config & cfg);
+  ~NetCDF();
 
   NcFile *ncid() const { return _file; }
 
@@ -24,12 +30,12 @@ public:
    * Add dimension to netCDF file.  If dimension already exists,
    * then a pointer to that dimension is returned.
    */
-  NcDim *addDimension(const char name[], int size);
+  NcDim addDimension(const char name[], int size);
 
-  NcVar *addTimeVariable(const Config & cfg, int size);
+  NcVar addTimeVariable(const Config & cfg, int size);
 
   bool hasTASX()
-  { return _tas ? true : false; }
+  { return _tas.isNull() ? false : true; }
 
   /**
    * Check for the existence of TASX.  Read it into provided space.
@@ -44,10 +50,19 @@ public:
   NcDim *bindim() const { return _bindim; }
   NcDim *bindim_plusone() const { return _bindim_plusone; }
 */
-  NcDim *intbindim() const { return _intbindim; }
+  NcDim intbindim() const { return _intbindim; }
 
-  NcVar *addHistogram(std::string& vname, const ProbeInfo& probe, int binoffset);
-  NcVar *addVariable(std::string& name, std::string& serialNumber);
+  NcVar addHistogram(std::string& vname, const ProbeInfo& probe, int binoffset);
+  NcVar addVariable(std::string& name, std::string& serialNumber);
+
+  void  putGlobalAttribute(const char attrName[], float value);
+  void  putGlobalAttribute(const char attrName[], const char *value);
+  void  putGlobalAttribute(const char attrName[], const std::string value);
+  void  putVarAttribute(NcVar & var, const char attrName[], const char *value);
+  void  putVarAttribute(NcVar & var, const char attrName[], float value);
+  void  putVarAttribute(NcVar & var, const char attrName[], int value);
+  void  putVarAttribute(NcVar & var, const char attrName[], std::vector<float> values);
+  void  putVarAttribute(NcVar & var, const char attrName[], const std::string value);
 
   static const int NC_ERR = 2;
 
@@ -63,9 +78,10 @@ private:
   NcFile *_file;
   NcFile::FileMode _mode;
 
-  NcDim *_timedim, *_spsdim, *_bindim, *_bindim_plusone, *_intbindim;
-  NcVar *_timevar;
-  NcVar *_tas;
+  NcDim _timedim, _spsdim, _bindim, _bndsdim, _bindim_plusone, _intbindim;
+  NcVar _timevar;
+  NcVar _tas;
 
   static const char *ISO8601_Z;
+  static const char *Category;
 };

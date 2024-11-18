@@ -170,16 +170,17 @@ int uncompressCIP(unsigned char *dest, const unsigned char src[], int nbytes)
 
 
 //--------Find index for maximum element of an array---------
-int maxindex(float x[],int n)
+int maxindex(std::vector<float> x)
 {
-  int ixmax=0;
-  double xmax=0;
-  for (int i=0; i<n; i++){
-    if (x[i]>xmax){
-      xmax=x[i];
-      ixmax=i;
+  int ixmax = 0;
+  double xmax = 0.0;
+  for (size_t i = 0; i < x.size(); i++) {
+    if (x[i] > xmax) {
+      xmax = x[i];
+      ixmax = i;
     }
   }
+
   return ixmax;
 }
 
@@ -211,12 +212,14 @@ double invert3(double m[3][3], double n[3][3]) {
 
 
 // ----------------DOUBLE POISSON FIT ROUTINE----------------
-double dpoisson_fit(float x[], float y[], double a[3], int n){
+double dpoisson_fit(std::vector<float> x, std::vector<float> y, double a[])
+{
    //update the "a" fit matrix for a double-poisson fit.
    //Sum of squares of residual values is returned.
    //Uses the Gauss-Newton nonlinear least squares regression method.
    //See Numerical Methods for Engineers, Chapra & Canale 1998 p.468
 
+   int n = y.size();
    double kc, f[n], diff[n], J[3][n];  //The function, difference, and Jacobian
    kc=log10(exp(1));                   //for normalization to 1
    double ysum=0, olda1;
@@ -235,10 +238,10 @@ double dpoisson_fit(float x[], float y[], double a[3], int n){
    if (ysum < 10) return -1;
 
    //Find first guess
-   int imax=maxindex(y,n);
-   a[0]=0.8;
-   a[1]=1.0/x[imax];
-   a[2]=1.0e6;//1.0/(x[imax]/1.0e3);
+   int imax = maxindex(y);
+   a[0] = 0.8;
+   a[1] = 1.0 / x[imax];
+   a[2] = 1.0e6; // 1.0 / (x[imax]/1.0e3);
 
    //Iterate function from min to max iteration count, stopping if change is under 1%
    while (((iteration < maxiterations) && (percentchange > 1.0)) || (iteration < miniterations)){
@@ -648,7 +651,7 @@ unsigned long long endianswap_ull(unsigned long long x)
 //================================================================================================
 // ------------PROCESS 2D-----------------------
 //================================================================================================
-int process2d(Config & cfg, netCDF & ncfile, ProbeInfo & probe)
+int process2d(Config & cfg, NetCDF & ncfile, ProbeInfo & probe)
 {
   /*-----Processing options-------------------------------------------------------
       start/stop time: In UTC seconds
@@ -717,9 +720,9 @@ int process2d(Config & cfg, netCDF & ncfile, ProbeInfo & probe)
   ProbeData data(numtimes);
 
   // Shattering correction and interarrival setup
-  const int nitq=400;	// number of interarrival times to keep for fitting
-  int iitq=0;		// current index of itq
-  double bestfit[3]={0};
+  const int nitq = 400;	// number of interarrival times to keep for fitting
+  int iitq = 0;		// current index of itq
+  double bestfit[3] = { 0.0, 0.0, 0.0 };
   double itq[nitq]={1};
 
   int *count_it[numtimes];
@@ -730,9 +733,11 @@ int process2d(Config & cfg, netCDF & ncfile, ProbeInfo & probe)
     count_it[i] = count_it[0] + (i * (cfg.nInterarrivalBins+binoffset));
   }
 
-  float it_endpoints[cfg.nInterarrivalBins+1], it_midpoints[cfg.nInterarrivalBins], fitspec[cfg.nInterarrivalBins];
-  for (int i = 0; i <= cfg.nInterarrivalBins; i++) it_endpoints[i] = pow(10, ((float)i-35)/5.0);
-  for (int i = 0; i < cfg.nInterarrivalBins; i++) it_midpoints[i] = pow(10, ((float)i-34.5)/5.0);
+  std::vector<float> it_endpoints, it_midpoints, fitspec;
+  for (int i = 0; i <= cfg.nInterarrivalBins; i++)
+    it_endpoints.push_back(pow(10, ((float)i-35)/5.0));
+  for (int i = 0; i < cfg.nInterarrivalBins; i++)
+    it_midpoints.push_back(pow(10, ((float)i-34.5)/5.0));
 
   if (ncfile.hasTASX())
     ncfile.readTrueAirspeed(&data.tas[0], numtimes);
@@ -915,8 +920,10 @@ int process2d(Config & cfg, netCDF & ncfile, ProbeInfo & probe)
                     }
                  }
 
-                 for (int i = 0; i < cfg.nInterarrivalBins; i++) fitspec[i] = count_it[itime][i+binoffset];
-                 dpoisson_fit(it_midpoints, fitspec, bestfit, cfg.nInterarrivalBins);
+                 fitspec.clear();
+                 for (int i = 0; i < cfg.nInterarrivalBins; i++)
+                   fitspec.push_back(count_it[itime][i+binoffset]);
+                 dpoisson_fit(it_midpoints, fitspec, bestfit);
                  data.cpoisson1[itime]=(float)bestfit[0];  //Save factors
                  data.cpoisson2[itime]=(float)bestfit[1];
                  data.cpoisson3[itime]=(float)bestfit[2];
@@ -1156,7 +1163,7 @@ int process2d(Config & cfg, netCDF & ncfile, ProbeInfo & probe)
   ncfile.CreateDimensions(numtimes, probe, cfg);
 
   // Define the variables.
-  NcVar *timevar, *a2dr, *a2da, *c2dr, *c2da, *iaep, *i2d;
+  NcVar timevar, a2dr, a2da, c2dr, c2da, iaep, i2d;
   string varname, eawmethodname;
 
   // Full name for the various effective array width choices
@@ -1165,36 +1172,34 @@ int process2d(Config & cfg, netCDF & ncfile, ProbeInfo & probe)
   if (cfg.eawmethod == Config::CENTER_IN) eawmethodname = "Center-in";
 //  if (cfg.eawmethod == Config::EQUIV_AREA_DIAM) eawmethodname = "Equivelant Area Diameter";
 
-  if ((timevar = ncfile.addTimeVariable(cfg, numtimes)) == 0)
-    return netCDF::NC_ERR;
+  if ((timevar = ncfile.addTimeVariable(cfg, numtimes)).isNull())
+    return NetCDF::NC_ERR;
 
   varname = "interarrival_endpoints";
-  if ((iaep = dataFile->get_var(varname.c_str())) == 0) {
-    iaep = dataFile->add_var(varname.c_str(), ncFloat, ncfile.intbindim());
+  if ((iaep = dataFile->getVar(varname)).isNull()) {
+    iaep = dataFile->addVar(varname, ncFloat, ncfile.intbindim());
   }
 
   // Counts.  These are not in the ProbeData class yet, hence they are written here. @todo
   varname="A2DCA"+probe.suffix; varname[3] = probe.id[0];
-  if ((a2da = ncfile.addHistogram(varname, probe, binoffset)))
+  if (!(a2da = ncfile.addHistogram(varname, probe, binoffset)).isNull())
   {
-    if (!a2da->add_att("Rejected", "Roundness below 0.1, interarrival time below 1/20th of distribution peak"))
-      return netCDF::NC_ERR;
-    if (!a2da->add_att("ParticleAcceptMethod", eawmethodname.c_str())) return netCDF::NC_ERR;
+    ncfile.putVarAttribute(a2da, "Rejected", "Roundness below 0.1, interarrival time below 1/20th of distribution peak");
+    ncfile.putVarAttribute(a2da, "ParticleAcceptMethod", eawmethodname);
   }
 
   varname="A2DCR"+probe.suffix; varname[3] = probe.id[0];
-  if ((a2dr = ncfile.addHistogram(varname, probe, binoffset)))
+  if (!(a2dr = ncfile.addHistogram(varname, probe, binoffset)).isNull())
   {
-    if (!a2dr->add_att("Rejected", "Roundness below 0.5, interarrival time below 1/20th of distribution peak"))
-      return netCDF::NC_ERR;
-    if (!a2dr->add_att("ParticleAcceptMethod", eawmethodname.c_str())) return netCDF::NC_ERR;
+    ncfile.putVarAttribute(a2dr, "Rejected", "Roundness below 0.5, interarrival time below 1/20th of distribution peak");
+    ncfile.putVarAttribute(a2dr, "ParticleAcceptMethod", eawmethodname);
   }
 
   varname="I2DCA"+probe.suffix; varname[3] = probe.id[0];
-  if ((i2d = ncfile.addHistogram(varname, probe, binoffset)))
+  if (!(i2d = ncfile.addHistogram(varname, probe, binoffset)).isNull())
   {
-    if (!i2d->add_att("CellSizes", cfg.nInterarrivalBins, it_endpoints)) return netCDF::NC_ERR;
-    if (!i2d->add_att("CellSizeUnits", "seconds")) return netCDF::NC_ERR;
+    ncfile.putVarAttribute(i2d, "CellSizes", it_endpoints);
+    ncfile.putVarAttribute(i2d, "CellSizeUnits", "seconds");
   }
 
   //Concentration
@@ -1204,12 +1209,12 @@ int process2d(Config & cfg, netCDF & ncfile, ProbeInfo & probe)
   varname="C2DCR"+probe.suffix; varname[3] = probe.id[0];
   c2dr = ncfile.addHistogram(varname, probe, binoffset);
 
-  if (iaep) iaep->put(it_endpoints, cfg.nInterarrivalBins+1);
-  if (a2da) a2da->put(&count_all[0][0], numtimes, 1, probe.numBins+binoffset);
-  if (a2dr) a2dr->put(&count_round[0][0], numtimes, 1, probe.numBins+binoffset);
-  if (i2d) i2d->put(&count_it[0][0], numtimes, 1, cfg.nInterarrivalBins+binoffset);
-  if (c2da) c2da->put(&conc_all[0][0], numtimes, 1, probe.numBins+binoffset);
-  if (c2dr) c2dr->put(&conc_round[0][0], numtimes, 1, probe.numBins+binoffset);
+  if (!iaep.isNull()) iaep.putVar(&it_endpoints[0]); //, cfg.nInterarrivalBins+1);
+  if (!a2da.isNull()) a2da.putVar(&count_all[0][0]); //, numtimes, 1, probe.numBins+binoffset);
+  if (!a2dr.isNull()) a2dr.putVar(&count_round[0][0]); //, numtimes, 1, probe.numBins+binoffset);
+  if (!i2d.isNull()) i2d.putVar(&count_it[0][0]); //, numtimes, 1, cfg.nInterarrivalBins+binoffset);
+  if (!c2da.isNull()) c2da.putVar(&conc_all[0][0]); //, numtimes, 1, probe.numBins+binoffset);
+  if (!c2dr.isNull()) c2dr.putVar(&conc_round[0][0]); //, numtimes, 1, probe.numBins+binoffset);
 
   cout << endl;
 
@@ -1470,8 +1475,6 @@ int main(int argc, char *argv[])
   // Make sure all time calculations are in UTC.
   putenv((char *)"TZ=UTC");
 
-  new NcError(NcError::silent_nonfatal);
-
   processArgs(argc, argv, config);
 
   // Open raw file, test for existence
@@ -1494,7 +1497,7 @@ int main(int argc, char *argv[])
 
   input_file.close();
 
-  netCDF ncFile(config);
+  NetCDF ncFile(config);
   ReadBlankOuts(config, probes);
 
   // Process all probes found in the file
