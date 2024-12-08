@@ -89,21 +89,38 @@ void MainCanvas::reset(ADS_DataFile *file, OAP::P2d_rec *rec)
 void MainCanvas::setTitle(ADS_DataFile *file, OAP::P2d_rec *rec)
 {
   if (file)
+  {
+    std::string title;
+
+    if (file->ProjectNumber().length() > 0)
+      title.append(file->ProjectNumber());
+
+    if (file->FlightNumber().length() > 0)
     {
-    std::stringstream title;
-    title << file->ProjectNumber() << ", " << file->FlightNumber() << " - ";
-    if (rec)
-      {
-      title << std::setfill('0') << std::setw(2) << rec->month << '/' << rec->day
-	    << '/' << std::setw(4) << rec->year;
-      }
+      if (title.length() > 0) title.append(", ");
+      title.append(file->FlightNumber());
+    }
+
+    if (file->FlightDate().length() > 0)
+    {
+      if (title.length() > 0) title.append(" - ");
+      title.append(file->FlightDate());
+    }
     else
-      title << file->FlightDate();
+    if (rec)
+    {
+      std::stringstream date;
+      if (title.length() > 0) title.append(" - ");
+      date << std::setfill('0') << std::setw(2) << rec->month << '/' << rec->day
+	    << '/' << std::setw(4) << rec->year;
+      title.append(date.str());
+    }
 
     ClearArea(0, 0, 1200, 64);
     pen->SetFont(fonts->Font(0));
-    pen->DrawText(Surface(), 300, 25, title.str().c_str());
-    }
+    if (title.length())
+      pen->DrawText(Surface(), 300, 25, title.c_str());
+  }
 }
 
 /* -------------------------------------------------------------------- */
@@ -546,7 +563,7 @@ void MainCanvas::drawFast2D(OAP::P2d_rec *record, Probe *probe, float version, i
 /* -------------------------------------------------------------------- */
 void MainCanvas::draw2DS(OAP::P2d_rec *record, Probe *probe, float version, int probeNum, PostScript *ps)
 {
-  unsigned char *p;
+//  unsigned char *p;
 
   static int x = 0;
 

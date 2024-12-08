@@ -176,7 +176,7 @@ void ADS_DataFile::initADS2(UserConfig *cfg)
   _projectName = _hdr->ProjectNumber();
   _flightNumber = _hdr->FlightNumber();
   _flightDate = _hdr->FlightDate();
-printf("ADS2 hdr length = %d\n", _hdr->HeaderLength());
+printf("ADS2 hdr length = %ld\n", _hdr->HeaderLength());
   if (_hdr->isValid() == false)
     return;
 
