@@ -34,7 +34,7 @@ aircraft_oap is available via [MacPorts](https://www.macports.org/) or follow th
 To install these programs on your computer, ensure the following packages (and the corresponding -devel versions for Linux) are installed:
 ```
  openmotif (starting to show up as just "motif" on RHEL8 & Fedora).
- netcdf, netcdf-cxx
+ netcdf, netcdf-cxx4
  python (needed by vardb)
  log4cpp (needed by vardb)
  xerces-c (needed by vardb)
@@ -48,7 +48,7 @@ To install these programs on your computer, ensure the following packages (and t
 libxt-dev
 libmotif-dev
 libnetcdf-dev
-libnetcdf-cxx-legacy-dev
+libnetcdf-cxx4-dev
 liblog4cpp5-dev
 libxerces-c-dev
 libboost-regex-dev
