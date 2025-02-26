@@ -378,7 +378,7 @@ NcVar NetCDF::addHistogram(string& varname, const ProbeInfo &probe, int binoffse
 
   putVarAttribute(var, "units", units);
   putVarAttribute(var, "long_name", VarDB_GetTitle(varname.c_str()));
-  putVarAttribute(var, "Category", "Cloud");
+  putVarAttribute(var, "Category", Category);
   putVarAttribute(var, "SerialNumber", probe.serialNumber.c_str());
   putVarAttribute(var, "DataQuality", "Good");
 
