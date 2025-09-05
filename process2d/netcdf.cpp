@@ -35,10 +35,11 @@ NetCDF::NetCDF(Config & cfg) : _outputFile(cfg.outputFile), _file(0), _mode(NcFi
   // Attempt to open for writing.
   _file = new NcFile(_outputFile.c_str(), _mode);
 
+
   // Failed to open netCDF file for writing....
-  if (_file->isNull())
+  if (_file == 0 || _file->isNull())
   {
-    cerr << "Failed to open netCDF output file " << _outputFile << endl;
+    cerr << "process2d: Failed to open netCDF output file " << _outputFile << endl;
     exit(1);
   }
 
