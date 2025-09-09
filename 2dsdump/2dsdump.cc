@@ -1,3 +1,7 @@
+/**
+ * This reads raw compressed SPEC data files and does basic info or full ascii
+ * art.  Works with Type32 (HVPS) and Type48 (F2DS) files.
+ */
 
 #include <algorithm>
 #include <cstdint>
