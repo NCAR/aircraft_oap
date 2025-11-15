@@ -13,12 +13,7 @@ BuildArch: x86_64
 
 BuildRequires: python3-scons
 Requires: libpng
-
-%if 0%{?rhel} <= 7
-Requires: openmotif
-%else
 Requires: motif
-%endif
 
 Source: %{name}.tar.gz
 
