@@ -297,7 +297,7 @@ NcVar NetCDF::addTimeVariable(const Config & cfg, int size)
 /* -------------------------------------------------------------------- */
 void NetCDF::CreateDimensions(int numtimes, ProbeInfo &probe, const Config &cfg)
 {
-  char tmp[128], coord_name[128];
+  char tmp[128], coord_name[128], bnds_name[128];
   NcVar var;
 
   // Define the dimensions.
@@ -307,6 +307,8 @@ void NetCDF::CreateDimensions(int numtimes, ProbeInfo &probe, const Config &cfg)
 
   strcpy(coord_name, probe.serialNumber.c_str());
   strcat(coord_name, "_P2D");
+  strcpy(bnds_name, coord_name);
+  strcat(bnds_name, "_bnds");
   _bindim = addDimension(coord_name, probe.numBins);
 
   // Create coordinate variable, if it doesn't exist
@@ -318,17 +320,16 @@ void NetCDF::CreateDimensions(int numtimes, ProbeInfo &probe, const Config &cfg)
     putVarAttribute(var, "units", "um");
     snprintf(tmp, 128, "%s arithmetic midpoint bin size in diameter", probe.type.c_str());
     putVarAttribute(var, "long_name", tmp);
-    putVarAttribute(var, "bounds", coord_name);
+    putVarAttribute(var, "bounds", bnds_name);
   }
 
   // Create bounds variable, if it doesn't exist
-  if ((var = _file->getVar(coord_name)).isNull())
+  if ( !(var = _file->getVar(coord_name)).isNull() )
   {
-    strcat(coord_name, "_bnds");
     std::vector< NcDim > dimes;
     dimes.push_back(_bindim);
     dimes.push_back(_bndsdim);
-    if (!(var = _file->addVar(coord_name, ncFloat, dimes)).isNull())
+    if (!(var = _file->addVar(bnds_name, ncFloat, dimes)).isNull())
     {
       putVarAttribute(var, "units", "um");
       snprintf(tmp, 128, "lower and upper bounds for %s", probe.type.c_str());
