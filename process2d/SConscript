@@ -3,7 +3,7 @@
 tools = ['default', 'prefixoptions', 'vardb', 'raf', 'netcdfcxx4']
 env = Environment(tools=tools)
 
-env.Append(CXXFLAGS='-g -std=c++11 -Wall')
+env.Append(CXXFLAGS='-g -std=c++20 -Werror -Wall')
 
 sources = Split("""
 process2d.cpp

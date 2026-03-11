@@ -228,7 +228,9 @@ void Particle::processParticle(uint16_t *wp, bool verbose)
 
   uint16_t value, id = wp[PID], clear, shaded;
   bool timingWord = true, oflow = false;
+
   if (verbose) printf(" --- processParticle ---\n");
+
   particleHeaderSanityCheck(wp);
   _particlesProcessedCnt++;
 
@@ -259,7 +261,7 @@ if (nWords == 0) printf("assert V nWords == 0, no good\n");
     nWords = wp[H_CHN] & 0x0FFF;
     timingWord = !(wp[H_CHN] & 0x1000);
     oflow = wp[H_CHN] & 0x8000;
-if (verbose) printf("\nStart particle H, pos=%lu\n", _pos);
+if (verbose) printf("\nStart particle H, pos=%lu, oflow=%d\n", _pos, oflow);
 if (nWords == 0) printf("assert H nWords == 0, no good\n");
   }
 
