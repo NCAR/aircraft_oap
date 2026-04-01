@@ -286,9 +286,9 @@ NcVar NetCDF::addTimeVariable(const Config & cfg, int size)
   putVarAttribute(_timevar, "units", timeunits);
   putVarAttribute(_timevar, "strptime_format", "seconds since %F %T %z");
 
-  int time[size];
+  std::vector<int> time(size);
   for (int i = 0; i < size; i++) time[i] = i;
-  _timevar.putVar((const int *)time);
+  _timevar.putVar((const int *)time.data());
 
   return _timevar;
 }

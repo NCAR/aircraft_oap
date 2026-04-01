@@ -509,7 +509,7 @@ float poisson_spot_correction(float area_img, float area_hole, bool allin){
      //Use the area option in paper: sqrt(Sspot/Sedge)
      ratio = sqrt(area_hole/(area_img+area_hole));
      int ip=1;
-     while(ratio > Dspot_Dedge[ip]) ip++;
+     while(ip < 164 && ratio > Dspot_Dedge[ip]) ip++;
 //cout<<Zd[ip-1]<<endl;
      correction = Dedge_D0[ip-1];
    }
@@ -1263,7 +1263,7 @@ void Read2dStartEndTime(Config & config, ifstream & input_file)
   if (config.starttime > config.stoptime)
   {
     cerr << "Date/time of first record is greater than date/time of last record!\n";
-    config.stoptime += 240000;  // Midnight crossing
+    config.stoptime += 86400;  // Midnight crossing
   }
 }
 
@@ -1473,7 +1473,7 @@ int main(int argc, char *argv[])
     return usage(argv[0]);
 
   // Make sure all time calculations are in UTC.
-  putenv((char *)"TZ=UTC");
+  setenv("TZ", "UTC", 1);
 
   processArgs(argc, argv, config);
 
