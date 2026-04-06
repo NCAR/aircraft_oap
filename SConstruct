@@ -30,7 +30,7 @@ if "xpms2d" in COMMAND_LINE_TARGETS:
    subdirs = ['xpms2d']
 
 if "publish" in COMMAND_LINE_TARGETS:
-   pub = env.Install('$PUBLISH_PREFIX', ["doc/OAPfiles.html"])
+   pub = env.Install('$PUBLISH_PREFIX', ["doc/OAPfiles.html","doc/pms2d_proc.html"])
    env.Alias('publish', pub)
 
 env.SetHelp()
