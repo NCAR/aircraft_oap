@@ -16,7 +16,7 @@ ENTRY POINTS:	GetDataFileName()
 STATIC FNS:	PrintPS()
 		Save()
 
-DESCRIPTION:	
+DESCRIPTION:
 
 COPYRIGHT:	University Corporation for Atmospheric Research, 1997-2018
 -------------------------------------------------------------------------
@@ -296,7 +296,7 @@ void OpenURL(Widget w, XtPointer client, XtPointer call)
       opener("http://www.eol.ucar.edu/raf/Software");
       break;
     case 3:
-      opener("http://www.eol.ucar.edu/raf/Software/xpms2d.html");
+      opener("http://www.eol.ucar.edu/raf/Software/xpms2d/xpms2d.html");
       break;
     }
 
