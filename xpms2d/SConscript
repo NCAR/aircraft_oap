@@ -49,5 +49,5 @@ env.Default(xpms2d)
 env.Install("$INSTALL_PREFIX/bin", 'src/xpms2d')
 
 if "publish" in COMMAND_LINE_TARGETS:
-   pub = env.Install('$PUBLISH_PREFIX', ["src/xpms2d.html"] + Glob("src/images/*.png"))
+   pub = env.Install('$PUBLISH_PREFIX', ["doc/xpms2d.html"] + Glob("doc/*.png"))
    env.Alias('publish', pub)

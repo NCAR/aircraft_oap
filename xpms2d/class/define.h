@@ -9,6 +9,9 @@ FULL NAME:	Include File to Include the Include Files
 #ifndef DEFINE_H
 #define DEFINE_H
 
+// clean up Xm.h warnings/errors about register no longer a keyword
+#define register
+
 #include <cmath>
 #include <cstdlib>
 #include <cstdio>
