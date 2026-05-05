@@ -43,6 +43,7 @@ enum PKT_IDX { H_CHN=1, V_CHN=2, PID=3, nSLICES=4 };
 
 const uint16_t SyncWord = 0x3253;	// Particle sync word.
 const uint16_t FlushWord = 0x4e4c;	// NL Flush Buffer.
+int timingWordSize = 3;		// 2 for HVPS / Type32 data
 
 // Options
 bool verbose = false;
@@ -113,7 +114,7 @@ int moreData(FILE *infp, unsigned char buffer[])
   int	pCnt = 0, nSlices = 0;
 
   for (int i = 0; i < 2043; ++i)
-    if (wp[i] == SyncWord && (wp[i+H_CHN] == 0 || wp[i+V_CHN] == 0))
+    if (wp[i] == SyncWord && ((wp[i+H_CHN] & 0x0FFF) == 0 || (wp[i+V_CHN] & 0x0FFF) == 0))
     {
       ++pCnt;
       nSlices += ((uint16_t *)tds->rdf)[i+nSLICES];
@@ -180,7 +181,7 @@ void processParticle(uint16_t *wp)
 
   prevID[idx-1] = id;
 
-  if (wp[V_CHN] != 0)
+  if ((wp[V_CHN] & 0x0FFF) != 0)
   {
     nWords = wp[V_CHN] & 0x0FFF;
     timingWord = !(wp[V_CHN] & 0x1000);
@@ -192,7 +193,7 @@ void processParticle(uint16_t *wp)
   }
 
   wp += 5;
-  if (timingWord) nWords -= 3;
+  if (timingWord) nWords -= timingWordSize;
 
   for (i = 0; i < nWords; ++i)
   {
@@ -209,7 +210,7 @@ void processParticle(uint16_t *wp)
       continue;
     }
 
-    if (wp[i] == 0x7FFF)	// Uncompressed slice.
+    if (wp[i] == 0x7FFF && timingWordSize == 3)	// Uncompressed slice.
     {
       if (verbose)
         printf("                 -- uncomressed slice -- \n");
@@ -263,7 +264,14 @@ void processParticle(uint16_t *wp)
   if (timingWord)
   {
     static unsigned long prevTimeWord = 0;
-    unsigned long tWord = ((unsigned long *)&wp[nWords])[0] & 0x0000FFFFFFFFFFFF;
+    unsigned long tWord;
+
+    if (timingWordSize == 2)
+      tWord = ((unsigned long)wp[nWords] << 16) | wp[nWords+1];
+    else
+      tWord = ((unsigned long)wp[nWords] << 32)
+            | ((unsigned long)wp[nWords+1] << 16)
+            | wp[nWords+2];
 
     printf("\n  Timing = %lu, deltaT=%lu\t - %.6fsec\n", tWord, tWord - prevTimeWord, (float)(tWord-prevTimeWord)/20000000);
     prevTimeWord = tWord;
@@ -296,7 +304,7 @@ void processImageFile(FILE *infp)
         nlCnt++;
 
       for (; j < 2043; ++j)
-        if (wp[j] == SyncWord && (wp[j+1] == 0 || wp[j+2] == 0))		// start particle
+        if (wp[j] == SyncWord && ((wp[j+H_CHN] & 0x0FFF) == 0 || (wp[j+V_CHN] & 0x0FFF) == 0))
         {
           ++imCnt;
           tsCnt += wp[j+4];
@@ -402,8 +410,8 @@ void processHouseKeepingFile(FILE *infp)
           printf("  %6.1f", (double)((int16_t *)&hkb->rdf)[i] * 0.07323 - 64.8);
         for (int i = 22; i < 24; ++i)
           printf("  %6.1f", (double)((int16_t *)&hkb->rdf)[i] * 0.0048828);		// +- 5Vdc
-        printf(" - %6.1f", (double)((int16_t *)&hkb->rdf)[28] * 0.077547 - 26.24);	// RH in %
-        printf(" %6.1f", (double)((int16_t *)&hkb->rdf)[29] * 0.018356 - 3.75);		// Canister pressure in psi
+        printf(" - %6.1f", (double)((int16_t *)&hkb->rdf)[28] * 0.77547 - 26.24);	// RH in %
+        printf(" %6.1f", (double)((int16_t *)&hkb->rdf)[29] * 0.018356 - 3.76);		// Canister pressure in psi
         printf(" %6.1f  - V", (double)((int16_t *)&hkb->rdf)[34] * 0.00488);
 //        printf(" %6.1f  - V", (double)((int16_t *)&hkb->rdf)[34] * 0.000152588);
         for (int i = 36; i < 50; ++i)
@@ -484,6 +492,9 @@ int main(int argc, char *argv[])
     fprintf(stderr, "Can't open %s.\n", fileName);
     return(1);
   }
+
+  if (strstr(fileName, ".HVPS") || strstr(fileName, ".2DS"))	// Type 32 data
+    timingWordSize = 2;
 
   putenv((char *)"TZ=UTC");
 
