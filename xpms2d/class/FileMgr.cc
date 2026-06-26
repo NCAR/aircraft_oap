@@ -21,7 +21,7 @@ FileManager::FileManager()
   numberFiles = 0;
   currentFile = 0;
 
-}	/* END CONTRUCTOR */
+}	/* END CONSTRUCTOR */
 
 /* -------------------------------------------------------------------- */
 void FileManager::NewFile(char fileName[], OAP::UserConfig &cfg)

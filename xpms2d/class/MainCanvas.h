@@ -35,7 +35,7 @@ public:
   int	SpaceAvailable() const	{ return(Height() - y); }
 
   /**
-   * Test if string s1 is all of same charcter c.  Similar to memcmp, but testing
+   * Test if string s1 is all of same character c.  Similar to memcmp, but testing
    * for a fixed value as if s1 was created by memset(3).
    * @returns 0 if nBytes of s1 matches c, else returns 1 for non-match.
    */

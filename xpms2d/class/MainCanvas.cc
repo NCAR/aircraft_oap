@@ -170,7 +170,7 @@ memset(part1, 0, sizeof(part1));
     }
 
   // In the old ADS2, overld gets stamped in the one record early,
-  // not in the actual record that was interupted.  Compensate here.
+  // not in the actual record that was interrupted.  Compensate here.
   size_t overLoad = old2d ? prevOverLoad : record->overld;
 
   if (probe->stats.duplicate)

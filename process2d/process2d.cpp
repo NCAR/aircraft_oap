@@ -334,7 +334,7 @@ Particle findsize(	short *img[], int nslices, int nDiodes, float res,
    particle.allin	= allin;
    particle.xsize	= (maxdiode-mindiode+1)*res;
    particle.ysize	= (maxslice-minslice+1)*res;
-   // Equialent Area Diameter sizing.
+   // Equivalent Area Diameter sizing.
    particle.eadsize	= sqrt((area * res * res * 4) / M_PI);
    particle.area	= area;
 
@@ -694,7 +694,7 @@ int process2d(Config & cfg, NetCDF & ncfile, ProbeInfo & probe)
   float *count_all[numtimes], *conc_all[numtimes];
   float *count_round[numtimes], *conc_round[numtimes];
 
-  // Allocate contiguos data block.
+  // Allocate contiguous data block.
   size_t N = numtimes * (probe.numBins+binoffset);
   count_all[0] = new float[N];
   count_round[0] = new float[N];
@@ -1170,7 +1170,7 @@ int process2d(Config & cfg, NetCDF & ncfile, ProbeInfo & probe)
   if (cfg.eawmethod == Config::RECONSTRUCTION) eawmethodname = "Reconstruction";
   if (cfg.eawmethod == Config::ENTIRE_IN) eawmethodname = "All-in";
   if (cfg.eawmethod == Config::CENTER_IN) eawmethodname = "Center-in";
-//  if (cfg.eawmethod == Config::EQUIV_AREA_DIAM) eawmethodname = "Equivelant Area Diameter";
+//  if (cfg.eawmethod == Config::EQUIV_AREA_DIAM) eawmethodname = "Equivalent Area Diameter";
 
   if ((timevar = ncfile.addTimeVariable(cfg, numtimes)).isNull())
     return NetCDF::NC_ERR;
@@ -1439,7 +1439,7 @@ int usage(const char* argv0)
   cerr << "   -reconstruction" << endl;
   cerr << "         Apply reconstruction for partially images particles"<<endl;
   cerr << "   -ead" << endl;
-  cerr << "         Apply equivelant area diamemter sizing" << endl;
+  cerr << "         Apply equivalent area diamemter sizing" << endl;
   cerr << "   -noshattercorrect" << endl;
   cerr << "         Turn off shattering rejection and corrections" << endl;
   cerr << "   -fb #" << endl;
@@ -1513,7 +1513,7 @@ int main(int argc, char *argv[])
     int errorcode = process2d(config, ncFile, probes[i]);
 
     if (!errorcode)
-      cout << endl << "Sucessfully processed probe " << i << endl;
+      cout << endl << "Successfully processed probe " << i << endl;
     else
       cout << endl << "Error on probe " << i << endl;
   }

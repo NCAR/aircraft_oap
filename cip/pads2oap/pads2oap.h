@@ -78,7 +78,7 @@ public:
 
   /**
    * @param id Probe ID, used to distinguish between multiple probes in the same file.
-   * @param resolution probe resoultion in micrometers.
+   * @param resolution probe resolution in micrometers.
    * @param nDiodes is the number of diodes.
    * @param serialnumber is the probe serial number.  Strictly meta-data.
    * @param suffix is used when merging data into a netCDF.  All generated variables

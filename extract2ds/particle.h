@@ -29,7 +29,7 @@ public:
 
   /**
    * Set timestamp.  This should be the stamp from the previous record, which
-   * would coorespond to the start of the upcoming record.  We will then ADD
+   * would correspond to the start of the upcoming record.  We will then ADD
    * time words to get a final time stamp.
    */
   void setHeader(const OAP::P2d_hdr &hdr, uint64_t ltw);
@@ -49,7 +49,7 @@ private:
   FILE *_out_fp;
   unsigned char _code[8];	// only really need 2 bytes
   OAP::P2d_rec _compressedTime;	// Header/timestamp from current compressed record.
-  OAP::P2d_rec _output;		//   ...which gets compied into here and modified.
+  OAP::P2d_rec _output;		//   ...which gets compiled into here and modified.
   unsigned char *_uncompressed;
 
   size_t _pos;		// write position into output buffer.

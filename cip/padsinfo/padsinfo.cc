@@ -5,7 +5,7 @@ OBJECT NAME:	padsinfo.cc
 FULL NAME:	PADS CIP File Info
 
 DESCRIPTION:	Display information from a DMT PADS CIP/PIP file, including
-		indivdual record headers.
+		individual record headers.
 
 COPYRIGHT:	University Corporation for Atmospheric Research, 2014-2018
 -------------------------------------------------------------------------
@@ -366,7 +366,7 @@ void ParticleCount(pads_rec *p2d, size_t nDiodes)
     if (memcmp(&image[i*bytesPerSlice], syncStr, nSyncB) == 0 && sizeCounter > 0)
     {
       if (sizeCounter > 511) sizeCounter = 511;
-      ++perSecondCounts[sizeCounter-1];	// -1 to compensate for seperate timing word.
+      ++perSecondCounts[sizeCounter-1];	// -1 to compensate for separate timing word.
       ++recordCounts[sizeCounter-1];
       sizeCounter = 0;
     }

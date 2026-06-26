@@ -314,7 +314,7 @@ if (debug) printf("%08x %08x %08x\n", pSlice, p[i], p[i+1]);
         slice = ~ntohl(p[i]);
 
         /* Potential problem/bug with computing of x1, x2.  Works good if all
-         * edge touches are contigious (water), not so good for snow, where
+         * edge touches are contiguous (water), not so good for snow, where
          * it will all get bunched up.  Counts total number of contacts for
          * each edge.
          */
@@ -576,7 +576,7 @@ if (debug) printf("%08x %08x %08x\n", ppSlice, pSlice, p[0]);
 
 
         /* Potential problem/bug with computing of x1, x2.  Works good if all
-         * edge touches are contigious (water), not so good for snow, where
+         * edge touches are contiguous (water), not so good for snow, where
          * it will all get bunched up.  Counts total number of contacts for
          * each edge.
          */
@@ -834,7 +834,7 @@ printf("CIP sync in process\n");
         cp->time = startTime + (msec / 1000);
         cp->msec = msec % 1000;
         cp->deltaTime = cp->timeWord - prevTimeWord;
-        cp->timeWord /= 1000;	// Store as millseconds for this probe, since this is not a 48 bit word
+        cp->timeWord /= 1000;	// Store as milliseconds for this probe, since this is not a 48 bit word
         totalLiveTime += checkRejectionCriteria(cp, output);
         output.particles.EnQueue((void *)cp);
       }
@@ -859,7 +859,7 @@ printf("CIP sync in process\n");
     slice = ~(*p);
 
     /* Potential problem/bug with computing of x1, x2.  Works good if all
-     * edge touches are contigious (water), not so good for snow, where
+     * edge touches are contiguous (water), not so good for snow, where
      * it will all get bunched up.  Counts total number of contacts for
      * each edge.
      */
@@ -1006,7 +1006,7 @@ if (debug)
         cp->time = startTime + (msec / 1000);
         cp->msec = msec % 1000;
         cp->deltaTime = cp->timeWord - prevTimeWord;
-        cp->timeWord /= 1000;	// Store as millseconds for this probe, since this is not a 48 bit word
+        cp->timeWord /= 1000;	// Store as milliseconds for this probe, since this is not a 48 bit word
         totalLiveTime += checkRejectionCriteria(cp, output);
         output.particles.EnQueue((void *)cp);
       }
@@ -1031,7 +1031,7 @@ if (debug)
     slice = ~(ntohll((long long *)p));
 
     /* Potential problem/bug with computing of x1, x2.  Works good if all
-     * edge touches are contigious (water), not so good for snow, where
+     * edge touches are contiguous (water), not so good for snow, where
      * it will all get bunched up.  Counts total number of contacts for
      * each edge.
      */

@@ -175,11 +175,11 @@ Sync and timing word legend:
 
 <h4>First line of text</h4>
 <ul>
-<li>Time stamp is stamped at the moment the data sytem is interrupted to
+<li>Time stamp is stamped at the moment the data system is interrupted to
 download the data (End of Record).
 <li><kbd class="att">TAS</kbd> = True Air Speed.
 <li><kbd class="att">overLoad</kbd> = The length of time the probe was
-shut down while downloading this record (shouldn't exceed 86 millseconds
+shut down while downloading this record (shouldn't exceed 86 milliseconds
 [red] for RAF data) in milliseconds.
 <li><kbd class="att">nParticles</kbd> = The number if particles detected
 by the software in the record.
@@ -317,21 +317,21 @@ saved by first sizing the plot canvas.</dd>
 <dt><h3>View Menu</h3></dt>
  <dd><dl>
  <dt><h4>View Hex</h4></dt>
- <dd>Pops up a seperate window with an ASCII hex dump of each PMS2D record.
+ <dd>Pops up a separate window with an ASCII hex dump of each PMS2D record.
  <dt><h4>View Histograms</h4>
- <dd>Pops up a seperate window with ASCII bin count histogram data per 2D record.
+ <dd>Pops up a separate window with ASCII bin count histogram data per 2D record.
 <p>
 <img src="x2dhisto.png">
 <p align=center>Figure 5.  Histogram for each record.  There are 64 columns for resolution(i) from 1 to 64.
 
  <dt><h4>View Particle Data</h4></dt>
- <dd>Pops up a seperate window with particle by particle blow of the records being displayed.  Information includes particle height, width, area, time word, and whether the particle was rejected or accepted.  Printing, Saving, and Searching are available options.</dd>
+ <dd>Pops up a separate window with particle by particle blow of the records being displayed.  Information includes particle height, width, area, time word, and whether the particle was rejected or accepted.  Printing, Saving, and Searching are available options.</dd>
 <p>
  <dt><h4>Normal</h4></dt>
  <dd>This is the default ASCII output displayed below each record.  A histogram of bin sizing will be displayed on the right.</dd>
 <p>
  <dt><h4>Diagnostic</h4></dt>
- <dd>Changes the ASCII output below each record to display information about timing words and probe frequency.  Diode count histogram will be displayed on the right.  this is the number of times each diode was shadowed, not inluding sync and timing words.</dd>
+ <dd>Changes the ASCII output below each record to display information about timing words and probe frequency.  Diode count histogram will be displayed on the right.  this is the number of times each diode was shadowed, not including sync and timing words.</dd>
 <p>
  <dt><h4>Raw Data Records</h4></dt>
  <dd>This will display the raw 2d record with no processing.  Just loop through all slices and draw them.  It will then display the processed record below the raw record.  Useful for debugging xpms2d.</dd>
@@ -343,7 +343,7 @@ saved by first sizing the plot canvas.</dd>
  <dt><h4>Toggle Timing Words</h4></dt>
  <dd>Toggles on/off display of timing words.</dd>
  <dt><h4>Toggle Histograms</h4></dt>
- <dd>Toggles on/off display of histgrams at the end of image data.</dd>
+ <dd>Toggles on/off display of histograms at the end of image data.</dd>
  <dt><h4>Wrap Display</h4></dt>
  <dd>The HVPS has more than a 1024 "slices" per buffer.  By default <b>xpms2d</b> will just run the display off the edge.  By toggling this option, records will "wrap" on the display so all particles are visible.</dd>
  <dt><h4>Toggle Synthetic Data</h4></dt>

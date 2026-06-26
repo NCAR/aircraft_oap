@@ -102,7 +102,7 @@ void NetCDF::CreateNetCDFfile(const Config & cfg)
     _mode = NcFile::replace;
   }
   else {
-    // User specified an output filname on command line, see if file exists.
+    // User specified an output filename on command line, see if file exists.
     NcFile test(_outputFile.c_str(), NcFile::write);
     if (test.isNull())
       _mode = NcFile::newFile;
@@ -554,7 +554,7 @@ int NetCDF::WriteData(ProbeInfo& probe, ProbeData& data)
   if (!vnreja.isNull())  vnreja.putVar(&data.all.rejected[0]);
 
   /* These variables are only output when generating a stand alone netCDF file.
-   * i.e. They are not ouput if the -o command line is specified and it finds
+   * i.e. They are not output if the -o command line is specified and it finds
    * an existing TAS.
    */
   if (_tas.isNull())

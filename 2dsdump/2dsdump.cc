@@ -62,7 +62,7 @@ bool cksum(const uint16_t buff[], int nWords, uint16_t ckSum)
     sum += buff[i];
 
   if (sum != ckSum)
-    printf("Checksum mis-match %u %u\n", sum, ckSum);
+    printf("Checksum mismatch %u %u\n", sum, ckSum);
 
   return sum == ckSum;
 }

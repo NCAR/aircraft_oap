@@ -5,7 +5,7 @@ OBJECT NAME:	oapinfo.cc
 FULL NAME:	OAP File Info
 
 DESCRIPTION:	Display information from a NCAR PMS2D/OAP file, including
-		indivdual record headers.
+		individual record headers.
 
 COPYRIGHT:	University Corporation for Atmospheric Research, 2012
 -------------------------------------------------------------------------
