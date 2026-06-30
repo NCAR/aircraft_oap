@@ -50,7 +50,7 @@ bool verbose = false;
 bool timeOnly = false;
 bool asciiArt = false;
 char fileName[512];
-int  recordCnt = 0, totalParticleCnt = 0, totalSliceCnt = 0;
+int  recordCnt = 0, totalParticleCnt = 0, totalSliceCnt = 0, startIdx = 0;
 
 
 /* ------------------------------------------------------------------------ */
@@ -148,7 +148,7 @@ void finishSlice(int nBits)
 /* ------------------------------------------------------------------------ */
 void printParticleHeader(uint16_t *hdr, int idx)
 {
-  printf("  %x - ID=%6d nSlices=%3d ", hdr[0], hdr[PID], hdr[nSLICES]);
+  printf("  %x - idx=%4d - ID=%6d nSlices=%3d ", hdr[0], startIdx, hdr[PID], hdr[nSLICES]);
 
   printf("%c nWords=%4d %s",
 	idx == H_CHN ? 'H' : 'V',
@@ -330,6 +330,7 @@ void processImageFile(FILE *infp)
         if (verbose)
           printf(" start particle, pos=%d\n", j);
 
+        startIdx = j;
         partialPos = 0;
         if (j > 2043)	// want particle 5 byte header
         {

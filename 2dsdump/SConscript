@@ -1,6 +1,6 @@
 # -*- python -*-
 
-env = Environment(tools = ['default', 'raf'])
+env = Environment(tools = ['default'])
 env.Append(CXXFLAGS='-g -std=c++20 -Werror -Wall')
 
 sources = Split("""
