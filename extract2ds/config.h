@@ -34,6 +34,7 @@ public:
   int TimeOffset() const			{ return _timeOffset; }
   bool StoreCompressed() const			{ return _storeCompressed; }
   bool StuckBitRejection() const		{ return _stuckBitRejection; }
+  bool RawDataOnly() const			{ return _raw4KbuffersOnly; }
 
   int16_t PacketIDasInt() const			{ return *((int16_t *)_code.c_str()); }
   int Resolution() const			{ return _resolution; }
@@ -55,6 +56,7 @@ public:
   void SetTimeOffset(const std::string s)	{ _timeOffset = atoi(s.c_str()); }
   void SetOutputFilename(const std::string s)	{ _outputFilename = s; }
   void SetNoRejection()				{ _stuckBitRejection = false; }
+  void SetRawBuffersOnly()			{ _raw4KbuffersOnly = true; }
 
   void SetResolution(int r)			{ _resolution = r; }
   void SetDiodes(int n)				{ _nDiodes = n; }
@@ -77,6 +79,7 @@ private:
 
   int _timeOffset;
 
+  bool _raw4KbuffersOnly;
   bool _stuckBitRejection;
   bool _storeCompressed;
 

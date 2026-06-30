@@ -40,6 +40,7 @@ COPYRIGHT:      University Corporation for Atmospheric Research, 2023-24
 // Output OAP file version number.
 static const int FILE_VERSION = 1;
 
+static const int SPEC_REC_SZ = 4114;	// timestamp, 4k data, cksum
 
 Config cfg;
 
@@ -135,7 +136,7 @@ int moreData(FILE *infp, unsigned char buffer[], OAP::P2d_hdr &oapHdr, FILE *hkf
   if (verbose)
     printf("---  moreData  ---\n");
 
-  int rc = fread(buffer, 4114, 1, infp);
+  int rc = fread(buffer, SPEC_REC_SZ, 1, infp);
 
   if (rc != 1)
     return rc;
@@ -433,6 +434,7 @@ void outputXMLheader(FILE *outfp)
 void Usage()
 {
   fprintf(stderr, "Usage: extract2ds [-v] [-o outfile] input_file(s).F2DS\n");
+  fprintf(stderr, "  -raw\tto output raw 4K image buffers only.\n");
   fprintf(stderr, "  -project proj_name\tto set project name.\n");
   fprintf(stderr, "  -platform tail_num\tto set platform name.\n");
   fprintf(stderr, "  -flight flight_num\tto set flight number.\n");
@@ -467,6 +469,11 @@ int processArgs(int argc, char *argv[])
     if (strcmp(argv[i], "-v") == 0)
     {
       verbose = true;
+    }
+    else
+    if (strcmp(argv[i], "-raw") == 0)
+    {
+      cfg.SetRawBuffersOnly();
     }
     else
     if (strcmp(argv[i], "-project") == 0)
@@ -538,7 +545,9 @@ int main(int argc, char *argv[])
   }
 
 
-  outputXMLheader(outfp);
+  if (!cfg.RawDataOnly())
+    outputXMLheader(outfp);
+
   putenv((char *)"TZ=UTC");
 
   for (; indx < argc; ++indx)
@@ -562,7 +571,20 @@ int main(int argc, char *argv[])
       }
     }
 
-    processImageFile(infp, hkfp, outfp);
+    if (cfg.RawDataOnly())
+    {
+      int rc;
+      char buffer[SPEC_REC_SZ];
+
+      do
+      {
+        if ((rc = fread(buffer, SPEC_REC_SZ, 1, infp)) == 1)
+          fwrite(buffer, SPEC_REC_SZ, 1, outfp);
+      }
+      while (rc == 1);
+    }
+    else
+      processImageFile(infp, hkfp, outfp);
 
     if (infp) fclose(infp);
     if (hkfp) fclose(hkfp);
