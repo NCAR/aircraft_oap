@@ -120,13 +120,17 @@ void NetCDF::CreateNetCDFfile(const Config & cfg)
     gmtime_r(&cfg.starttime, &st);
     gmtime_r(&cfg.stoptime, &et);
 
-    putGlobalAttribute("institution", "NCAR Research Aviation Facility");
-    putGlobalAttribute("Source", "NCAR/RAF Fast-2D Processing Software");
+    putGlobalAttribute("institution", "National Center for Atmospheric Research");
+    putGlobalAttribute("creator_name", "NCAR EOL - Research Aviation Facility");
+    putGlobalAttribute("source", "aitborne observations");
     putGlobalAttribute("Conventions", "NCAR-RAF/nimbus");
-    putGlobalAttribute("ConventionsURL", "http://www.eol.ucar.edu/raf/Software/netCDF.html");
-    putGlobalAttribute("ProjectName", cfg.project);
+    putGlobalAttribute("ConventionsURL", "https://www.eol.ucar.edu/raf/Software/netCDF.html");
+    putGlobalAttribute("ProcessorURL", "https://github.com/ncar/aircraft_oap/process2d");
+    putGlobalAttribute("format", "NetCDF4");
+    putGlobalAttribute("project", cfg.project);
+    putGlobalAttribute("platform_identifier", cfg.platform);
     putGlobalAttribute("FlightNumber", cfg.flightNumber);
-    putGlobalAttribute("FlightDate", cfg.flightDate);
+    putGlobalAttribute("flight_start_date", cfg.flightDate);
     putGlobalAttribute("date_created", dateProcessed());
     char tmp[128];
     snprintf(tmp, 128, "%02d:%02d:%02d-%02d:%02d:%02d",
