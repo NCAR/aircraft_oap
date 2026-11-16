@@ -76,8 +76,6 @@ private:
   time_t _prevDAQtime, _thisDAQtime;
   int _prevMsec, _thisMsec;
 
-  size_t _resolution;
-
   static const size_t _nDiodes;
   static const uint64_t _syncWord;
   static const unsigned char _syncString[3];
