@@ -2,7 +2,7 @@
 
 env = Environment()
 
-env.Append(CCFLAGS='-g -Wall')
+env.Append(CCFLAGS='-g -Werror -Wall')
 
 sources = Split("""
 pads2oap.cc
