@@ -70,7 +70,7 @@ void Particle::fixupTimeStamp()
   if (_lastTimeWord < _thisTimeWord && _config->DataFormat() == Type32)
   {
     deltaT += 4294967295;	// Rolled over
-    printf("tWord rollover = %10lu %10lu %lu\n", _thisTimeWord, _lastTimeWord, deltaT);
+    printf("tWord rollover = %10llu %10llu %llu\n", _thisTimeWord, _lastTimeWord, deltaT);
   }
 
   deltaT -= _thisTimeWord;
@@ -413,7 +413,7 @@ if (_output.data != _uncompressed) printf(" pp3.2: un != out %p - %p !!!!!!!\n",
       tWord = ((uint64_t)wp[nWords] << 16) + wp[nWords+1];
 
     if (verbose)
-      printf("\n   Timing = %10lu, deltaT=%lu\n", tWord, (tWord - _lastTimeWord));
+      printf("\n   Timing = %10llu, deltaT=%llu\n", tWord, (tWord - _lastTimeWord));
     _thisTimeWord = tWord;
 
     memcpy(&_uncompressed[_pos+8], (unsigned char*)&_syncWord, 8);
