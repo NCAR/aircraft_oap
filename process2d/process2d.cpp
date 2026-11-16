@@ -220,7 +220,9 @@ double dpoisson_fit(std::vector<float> x, std::vector<float> y, double a[])
    //See Numerical Methods for Engineers, Chapra & Canale 1998 p.468
 
    int n = y.size();
-   double kc, f[n], diff[n], J[3][n];  //The function, difference, and Jacobian
+   double kc;
+   std::vector<double> f(n), diff(n);  //The function and difference
+   std::vector<std::vector<double>> J(3, std::vector<double>(n));  //The Jacobian
    kc=log10(exp(1));                   //for normalization to 1
    double ysum=0, olda1;
    float damp=0.2;                     //Damping factor to prevent runaways
@@ -412,15 +414,13 @@ Particle findsize(	short *img[], int nslices, int nDiodes, float res,
 // ----------------HOLE FILL ROUTINE----------------
 short fillholes2(short *img_original[], int nslices, int nDiodes)
 {
-  short img[nslices][nDiodes]; //create a new image for processing
+  //create a new, blank image for processing
+  std::vector<std::vector<short>> img(nslices, std::vector<short>(nDiodes, 0));
   short backval=1, foreval=0;  //values that indicate background and foreground
   short label=1, area_added=0;
   stack<int> sx, sy;
   int itest[4], jtest[4];
   bool edgetouch;
-
-  //Make blank image
-  memset(img, 0, sizeof(img));
 
   //Check pixels for background values (to be filled)
   for (int i = 0; i < nslices; i++) {
@@ -679,7 +679,7 @@ int process2d(Config & cfg, NetCDF & ncfile, ProbeInfo & probe)
   // allocate space for roi.
   int bytesPerSlice = probe.nDiodes / 8;
   int slicesPerRecord = 4096 / bytesPerSlice;
-  short *roi[slicesPerRecord*3];
+  std::vector<short *> roi(slicesPerRecord*3);
   for (int i = 0; i < slicesPerRecord*3; ++i)
     roi[i] = new short[probe.nDiodes];
 
@@ -691,8 +691,8 @@ int process2d(Config & cfg, NetCDF & ncfile, ProbeInfo & probe)
   assert(numtimes >= 0);
 
   //Count and concentration arrays setup
-  float *count_all[numtimes], *conc_all[numtimes];
-  float *count_round[numtimes], *conc_round[numtimes];
+  std::vector<float *> count_all(numtimes), conc_all(numtimes);
+  std::vector<float *> count_round(numtimes), conc_round(numtimes);
 
   // Allocate contiguous data block.
   size_t N = numtimes * (probe.numBins+binoffset);
@@ -725,7 +725,7 @@ int process2d(Config & cfg, NetCDF & ncfile, ProbeInfo & probe)
   double bestfit[3] = { 0.0, 0.0, 0.0 };
   double itq[nitq]={1};
 
-  int *count_it[numtimes];
+  std::vector<int *> count_it(numtimes);
   count_it[0] = new int [numtimes*(cfg.nInterarrivalBins+binoffset)];
   memset((void *)count_it[0], 0, sizeof(int)*numtimes*(cfg.nInterarrivalBins+binoffset));
   for (int i = 1; i < numtimes; i++)
@@ -869,8 +869,8 @@ int process2d(Config & cfg, NetCDF & ncfile, ProbeInfo & probe)
            long time1hz = min((long)(lastbuffertime + difftimeline), (long)buffertime);
 
            if (time1hz >= cfg.starttime) {
-              particle = findsize(roi, slice_count, probe.nDiodes, probe.resolution, cfg.smethod);
-              particle.holearea = fillholes2(roi, slice_count, probe.nDiodes);
+              particle = findsize(roi.data(), slice_count, probe.nDiodes, probe.resolution, cfg.smethod);
+              particle.holearea = fillholes2(roi.data(), slice_count, probe.nDiodes);
               particle.inttime = timeline - lasttimeline;
               if (probe.clockType == ProbeInfo::FIXED)
                 particle.inttime /= probe.clockMhz;
@@ -891,7 +891,7 @@ int process2d(Config & cfg, NetCDF & ncfile, ProbeInfo & probe)
            if (cfg.debug) {
               cout<<islice<<endl;
               showparticle(particle);
-              showroi(roi, slice_count, probe.nDiodes);
+              showroi(roi.data(), slice_count, probe.nDiodes);
            }
 
            // Check the particle time to see if a new 1-s period has been crossed.
@@ -1054,7 +1054,7 @@ int process2d(Config & cfg, NetCDF & ncfile, ProbeInfo & probe)
   // Compute sample volume, concentration, total number, and LWC
   cout << "\nComputing derived parameters...";
 
-  float zFac[probe.numBins], dia2[probe.numBins], dia3[probe.numBins];
+  std::vector<float> zFac(probe.numBins), dia2(probe.numBins), dia3(probe.numBins);
   for (int i = 0; i < probe.numBins; i++) {
     zFac[i] = pow((double)probe.bin_midpoints[i] / 1000.0, 6.0);
     dia2[i] = probe.bin_midpoints[i] * probe.bin_midpoints[i];
