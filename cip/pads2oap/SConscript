@@ -2,7 +2,7 @@
 
 env = Environment()
 
-env.Append(CCFLAGS='-g -Werror -Wall')
+env.Append(CCFLAGS='-g -Werror -Wall -Wsign-compare')
 
 sources = Split("""
 pads2oap.cc
