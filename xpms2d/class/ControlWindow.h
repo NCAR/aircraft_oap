@@ -57,7 +57,7 @@ public:
 
 
 private:
-  Widget	timeText, fileB[MAX_DATAFILES], butt[8],
+  Widget	timeText, butt[8],
 		probeB[MAX_PROBES], densB[4], densTxt,
 		delayScale, timeScale, cncB[4], ratioB[7];
 

@@ -63,7 +63,7 @@ void	CanvasExpose(Widget, XtPointer, XtPointer),
 	CanvasResize(Widget, XtPointer, XtPointer);
 
 void	MagnifyExpose(Widget, XtPointer, XtPointer),
-	MagnifyInput(Widget, XtPointer, XtPointer),
+//	MagnifyInput(Widget, XtPointer, XtPointer),	// unfinished, see cb_mag.cc
 	MagnifyResize(Widget, XtPointer, XtPointer);
 
 void	ApplyTimeChange(Widget, XtPointer, XtPointer),

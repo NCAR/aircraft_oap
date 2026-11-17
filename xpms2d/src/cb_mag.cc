@@ -33,6 +33,8 @@ void MagnifyResize(Widget w, XtPointer client, XtPointer call)
 }	/* END MAGNIFYRESIZE */
 
 /* -------------------------------------------------------------------- */
+/* Unfinished input handling for the magnify window.  The callback is not
+ * registered (see MagnifyWindow.cc).  Kept for future work.
 void MagnifyInput(Widget w, XtPointer client, XtPointer call)
 {
   XmDrawingAreaCallbackStruct	*evt;
@@ -41,6 +43,7 @@ void MagnifyInput(Widget w, XtPointer client, XtPointer call)
   evt = (XmDrawingAreaCallbackStruct *)call;
   xe = (XAnyEvent *)evt->event;
 
-}	/* END MAGNIFYINPUT */
+}	// END MAGNIFYINPUT
+*/
 
 /* END CB_MAG.CC */

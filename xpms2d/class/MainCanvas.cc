@@ -24,6 +24,7 @@ extern XPen	*pen;
 
 #include <algorithm>
 #include <cassert>
+#include <vector>
 #include <iomanip>
 #include <sstream>
 
@@ -457,7 +458,6 @@ void MainCanvas::drawFast2D(OAP::P2d_rec *record, Probe *probe, float version, i
 {
   Particle	*cp = 0;
   int		nextColor, cntr = 0;
-  bool		colorIsBlack = false;
   unsigned char *p;
   size_t	bytesPerSlice = probe->nDiodes() / 8;
 
@@ -538,11 +538,6 @@ void MainCanvas::drawFast2D(OAP::P2d_rec *record, Probe *probe, float version, i
     {
       if (ps) ps->SetColor(color->GetColorPS(nextColor));
       else pen->SetColor(color->GetColor(nextColor));
-
-      if (nextColor == 0)	// if Black
-        colorIsBlack = true;
-      else
-        colorIsBlack = false;
 
       for (; i < probe->nSlices() && !probe->isSyncWord(p) && !probe->isOverloadWord(p)
 		; p += bytesPerSlice)
@@ -675,7 +670,6 @@ void MainCanvas::drawCIP(OAP::P2d_rec *record, Probe *probe, float version, int 
 {
   Particle	*cp = 0;
   int		nextColor, cntr = 0;
-  bool		colorIsBlack = false;
   unsigned char	*p;
 
   if (memcmp((void *)record, (void *)&prevRec[record->id], sizeof(OAP::P2d_rec)) == 0)
@@ -741,11 +735,6 @@ void MainCanvas::drawCIP(OAP::P2d_rec *record, Probe *probe, float version, int 
     {
       if (ps) ps->SetColor(color->GetColorPS(nextColor));
       else pen->SetColor(color->GetColor(nextColor));
-
-      if (nextColor == 0)	// if Black
-        colorIsBlack = true;
-      else
-        colorIsBlack = false;
 
       for (; i < probe->nSlices() && !probe->isSyncWord(p); p += 8)
         drawSlice(ps, i++, p, probe);
@@ -1056,7 +1045,7 @@ void MainCanvas::drawSlice(PostScript *ps, int x, const unsigned char *slice, Pr
 
   size_t	cnt = 0;
   size_t	nBytes = nDiodes / 8;
-  XPoint	pts[nDiodes];
+  std::vector<XPoint> pts(nDiodes);
 
   if (memcmp(slice, Probe::BlankSlice, nBytes) == 0)
     return;
@@ -1102,7 +1091,7 @@ void MainCanvas::drawSlice(PostScript *ps, int x, const unsigned char *slice, Pr
           }
       }
 
-    pen->DrawPoints(Surface(), pts, cnt);
+    pen->DrawPoints(Surface(), pts.data(), cnt);
     }
 }
 

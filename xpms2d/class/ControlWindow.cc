@@ -275,7 +275,7 @@ void ControlWindow::SetProbes()
 
       XtRemoveAllCallbacks(probeB[i], XmNvalueChangedCallback);
       XtAddCallback(probeB[i], XmNvalueChangedCallback,
-                  (XtCallbackProc)SetProbe, (XtPointer)prb_id);
+                  (XtCallbackProc)SetProbe, (XtPointer)(uintptr_t)prb_id);
       XmToggleButtonSetState(probeB[i], False, False);
       }
     }

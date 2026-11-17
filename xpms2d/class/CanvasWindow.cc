@@ -30,9 +30,6 @@ static struct menu	fileMenu[] = {
 	{ "quit", Quit, NULL, },
 	{ NULL, NULL, NULL }};
 
-static struct menu	legendMenu[] = {
-//	{ "editParms", EditMainParms, NULL, },
-	{ NULL, NULL, NULL }};
 
 static struct menu	viewMenu[] = {
 	{ "viewHex", ViewHex, NULL, },
