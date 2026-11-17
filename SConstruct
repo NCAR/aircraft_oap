@@ -4,7 +4,10 @@
 
 import os
 import sys
-sys.path.append(os.path.abspath('vardb/site_scons'))
+# Put the bundled eol_scons first, so it wins over any personal copy in
+# ~/.scons/site_scons.  Packagers (e.g. MacPorts) only have the bundled one
+# so this ensures local tests reproduce what packagers see.
+sys.path.insert(0, os.path.abspath('vardb/site_scons'))
 import eol_scons
 
 
