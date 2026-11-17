@@ -363,7 +363,7 @@ void MainCanvas::drawPMS2D(OAP::P2d_rec *record, Probe *probe, float version, in
 
       uint32_t timeWord = (uint32_t)((float)cp->timeWord * probe->stats.frequency);
 
-      if (timeWord >= probe->stats.DASelapsedTime)
+      if (timeWord >= (uint32_t)probe->stats.DASelapsedTime)
         {
         snprintf(buffer, 256, "%u", timeWord);
 
@@ -775,7 +775,7 @@ void MainCanvas::drawHVPS(OAP::P2d_rec *record, Probe *probe, float version, int
 
   for (size_t i = 0; i < 2048; )
     {
-    if (_wrap && line >= Width()-(LEFT_MARGIN<<1))
+    if (_wrap && line >= (size_t)(Width()-(LEFT_MARGIN<<1)))
       {
       line = LEFT_MARGIN;
       y += 190 + _pixelsPerY - (HVPS_MASKED<<1);

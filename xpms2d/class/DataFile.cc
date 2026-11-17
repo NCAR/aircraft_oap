@@ -477,15 +477,15 @@ bool ADS_DataFile::NextPMS2dRecord(OAP::P2d_rec *buff)
     return(true);
     }
 
-  if (currPhys >= _indices.size())
+  if ((size_t)currPhys >= _indices.size())
 //  if (_indices[currPhys].index == -1)
     return(false);
 
-  if (++currLR >= P2dLRpPR)
+  if ((size_t)++currLR >= P2dLRpPR)
     {
     currLR = 0;
 
-    if (++currPhys >= _indices.size())
+    if ((size_t)++currPhys >= _indices.size())
 //    if (_indices[++currPhys].index == -1)
       {
       --currPhys;
